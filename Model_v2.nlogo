@@ -1,4 +1,5 @@
-turtles-own [culture creator-gene]
+turtles-own [culture creator-gene cluster]
+globals [this-cluster max-cluster num-cluster]
 
 to setup
   clear-all
@@ -11,6 +12,7 @@ to go
   tick
   neighbours-interaction
   make-event
+  if ticks mod sample-interval = 0 [ update-plot ]
 end
 
 to setup-patches
@@ -188,15 +190,64 @@ to output-print2 [par1 par2]
   output-print par1
   output-print par2
 end
+
+to-report calc-cluster
+  find-clusters
+  report num-cluster
+end
+
+to update-plot
+  find-clusters
+  set-current-plot "Connected Regions"
+  set-plot-x-range 0 ticks
+  set-plot-y-range 0 num-agents
+  set-current-plot-pen "Number"
+  plotxy ticks num-cluster
+  set-current-plot-pen "Largest"
+  plotxy ticks max-cluster
+end
+
+to find-clusters
+  set max-cluster 0
+  set num-cluster 0
+  let seed one-of turtles
+  ask turtles [set cluster nobody]
+  while [seed != nobody]
+    [
+    ask seed
+      [
+      set cluster self
+      set this-cluster 1
+      set num-cluster num-cluster + 1
+      grow-cluster
+      ]
+    if this-cluster > max-cluster [set max-cluster this-cluster]
+    set seed one-of turtles with [cluster = nobody]
+    ]
+end
+
+to grow-cluster
+  ask other turtles with [(cluster = nobody) and (similar-cultures? culture [culture] of myself)]
+    [
+    set this-cluster this-cluster + 1
+    set cluster [cluster] of myself
+    ]
+end
+
+to-report similar-cultures? [list-A list-B]
+  ifelse ignore-fixed-features-in-similarity
+  [report (similarity-wo-fixed list-A list-B) = 1]
+  [report (similarity list-A list-B) = 1]
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 213
 10
-716
-514
+650
+448
 -1
 -1
-15.0
+13.0
 1
 10
 1
@@ -235,14 +286,14 @@ NIL
 
 SLIDER
 12
-61
+63
 184
-94
+96
 num-agents
 num-agents
 2
 10000
-172.0
+100.0
 10
 1
 NIL
@@ -257,7 +308,7 @@ num-features
 num-features
 1
 20
-6.0
+7.0
 1
 1
 NIL
@@ -287,7 +338,7 @@ prob-creator-gene
 prob-creator-gene
 0
 1
-0.24
+0.2
 0.01
 1
 NIL
@@ -302,7 +353,7 @@ fixed-features
 fixed-features
 0
 num-features
-0.0
+3.0
 1
 1
 NIL
@@ -319,10 +370,10 @@ gradual-trait-update
 0
 
 OUTPUT
-1050
-10
-1329
-549
+1212
+11
+1491
+550
 11
 
 BUTTON
@@ -351,7 +402,7 @@ interaction-neighbours-per-tick
 interaction-neighbours-per-tick
 0
 10
-1.0
+4.0
 1
 1
 NIL
@@ -383,11 +434,56 @@ prob-event
 prob-event
 0
 1
-1.0
+0.1
 0.01
 1
 NIL
 HORIZONTAL
+
+SWITCH
+13
+520
+253
+553
+ignore-fixed-features-in-similarity
+ignore-fixed-features-in-similarity
+0
+1
+-1000
+
+SLIDER
+720
+12
+892
+45
+sample-interval
+sample-interval
+10
+1000
+100.0
+10
+1
+NIL
+HORIZONTAL
+
+PLOT
+720
+74
+1077
+322
+Connected Regions
+Time
+Value
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"Number" 1.0 0 -16777216 true "" ""
+"Largest" 1.0 0 -2674135 true "" ""
 
 @#$#@#$#@
 ## WHAT IS IT?
