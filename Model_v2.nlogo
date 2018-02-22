@@ -7,6 +7,12 @@ to setup
   reset-ticks
 end
 
+to go
+  tick
+  neighbours-interaction
+  make-event
+end
+
 to setup-patches
   ask patches [ set pcolor white ]
 end
@@ -25,15 +31,172 @@ to setup-turtles
       [ set culture fput random num-traits culture ]
   ]
 end
+
+to neighbours-interaction
+  ask n-of interaction-neighbours-per-tick turtles
+  [
+    let culture-A []
+    let turtle-A 0
+    let culture-B []
+    let turtle-B 0
+    let P 0
+    let d []
+    set culture-A culture
+    ;set color blue
+    set turtle-A self
+    ; selecting one of 10 closest turtles to him without himself
+    ask one-of min-n-of 10 other turtles [distance turtle-A]
+    [
+      set culture-B culture
+      set turtle-B self
+      ;set color green
+    ]
+    ;output-print4 "selected cultureA" culture-A "selected culture B" culture-B
+    set P similarity culture-A culture-B
+    ;output-print2 "similarity between cultures" P
+    if (P > 0 and P < 1) and random-float 1 < P[
+
+      ; get list with differences - indexes of items that don't match
+      set d list-different-item-indexes culture-A culture-B
+     ; output-print2 "diferences between cultures culture" culture-A
+      if  length d > 0
+      [
+        let i one-of d
+        set culture replace-item i culture updated-item-value (item i culture-A) (item i culture-B)
+        output-print2 "updating culture" culture
+    ]]
+  ]
+end
+
+to make-event
+  let p-event prob-event
+  if (p-event > 0 and p-event <= 1) and random-float 1 < p-event [
+    ;output-print "event today!"
+    ask one-of turtles with [creator-gene]
+    [
+      let ev self
+      let culture-Event []
+      let culture-B []
+      let turtle-B 0
+      let d []
+      set culture-Event culture
+      ask other turtles
+      [
+        let P-similar 0
+        let p-final 0
+        set culture-B culture
+        set turtle-B self
+        set P-similar similarity culture-Event culture-B
+        ;output-print2 "distance" distance ev
+        set p-final P-similar * ( rev-prob-linear-from-max (distance ev) max-distance-in-world )
+        ;output-print4 "p-final" p-final "P-similar:" P-similar
+        if (p-final > 0 and p-final < 1) and random-float 1 < p-final
+        [
+          set d list-different-item-indexes culture-B culture-Event
+          if length d > 0
+          [
+            output-print2 "updating patch by event! old culture:" culture-B
+            let i one-of d
+            set culture replace-item i culture updated-item-value (item i culture-B) (item i culture-Event)
+            output-print2 "updating patch by event! new culture:" culture
+          ]
+        ]
+    ]
+    ]
+
+ ]
+end
+
+
+to-report similarity-wo-fixed [list-A list-B]
+  let n 0
+  let l (length list-A)
+  let similarities 0
+  repeat l
+    [
+    if (item n list-A = item n list-B) and (n >=  fixed-features)
+      [set similarities similarities + 1]
+    set n n + 1
+    ]
+  report similarities / (l - fixed-features)
+end
+
+to-report similarity [list-A list-B]
+  let n 0
+  let l length list-A
+  let similarities 0
+  repeat l
+    [
+    if item n list-A = item n list-B [set similarities similarities + 1]
+    set n n + 1
+    ]
+  report similarities / l
+end
+
+to-report list-different-item-indexes [list-A list-B]
+  let n 0
+  let differences []
+  repeat length list-A
+    [
+    if (item n list-A != item n list-B) and (n >=  fixed-features)
+      [set differences lput n differences]
+    set n n + 1
+    ]
+  report differences
+end
+
+to-report updated-item-value [obs-val source-val]
+  ifelse gradual-trait-update = "Centered"
+  [report  round (obs-val + (( source-val - obs-val ) / 2) )] ; "Centered" option
+  [ifelse gradual-trait-update = "Wrapped"
+    [report add-around obs-val source-val  num-features]  ; "Continous" option
+    [report source-val] ; else "None" also
+  ]
+end
+
+to-report distance-around [val1 val2 set-ln]
+  ifelse val1 < val2
+  [report (val1 - 0) + (set-ln - val2)]
+  [report (val2 - 0) + (set-ln - val1)]
+end
+
+to-report add-around [o-v val-to set-ln]
+  let incr round ( (distance-around o-v val-to set-ln) / 2 )
+ ; output-print incr
+  ifelse o-v < val-to
+  [ifelse incr <= o-v
+    [report o-v - incr ]
+    [report set-ln - incr + o-v]]
+  [ifelse incr + o-v < set-ln
+    [report incr + o-v]
+    [report incr - (set-ln - o-v)]]
+end
+
+to-report rev-prob-linear-from-max [val max-val]
+  report 1 - val / max-val
+end
+; calculare max posiible ditance in this world
+to-report max-distance-in-world
+  report sqrt ( ( world-width / 2) ^ 2 + ( world-height / 2 ) ^ 2 )
+end
+; just helper to have less lines if we want check some value in output print
+to output-print4 [par1 par2 par3 par4]
+  output-print2 par1 par2
+  output-print2 par3 par4
+end
+to output-print2 [par1 par2]
+  output-print par1
+  output-print par2
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
+213
 10
-647
-448
+716
+514
 -1
 -1
-13.0
+15.0
 1
 10
 1
@@ -54,10 +217,10 @@ ticks
 30.0
 
 BUTTON
-20
-23
-83
-56
+12
+13
+75
+46
 NIL
 setup
 NIL
@@ -71,27 +234,42 @@ NIL
 1
 
 SLIDER
-13
-113
-185
-146
+12
+61
+184
+94
 num-agents
 num-agents
 2
-100
-10.0
-1
+10000
+172.0
+10
 1
 NIL
 HORIZONTAL
 
 SLIDER
 12
-159
+103
 184
-192
+136
 num-features
 num-features
+1
+20
+6.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+11
+181
+183
+214
+num-traits
+num-traits
 1
 20
 7.0
@@ -102,29 +280,110 @@ HORIZONTAL
 
 SLIDER
 10
-204
+220
 182
-237
-num-traits
-num-traits
+253
+prob-creator-gene
+prob-creator-gene
+0
 1
-20
-7.0
-1
+0.24
+0.01
 1
 NIL
 HORIZONTAL
 
 SLIDER
+12
+142
+184
+175
+fixed-features
+fixed-features
+0
+num-features
+0.0
+1
+1
+NIL
+HORIZONTAL
+
+CHOOSER
+13
+306
+151
+351
+gradual-trait-update
+gradual-trait-update
+"None" "Centered" "Wrapped"
+0
+
+OUTPUT
+1050
+10
+1329
+549
+11
+
+BUTTON
+79
+13
+142
+46
+NIL
+go
+T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+SLIDER
+14
+575
+241
+608
+interaction-neighbours-per-tick
+interaction-neighbours-per-tick
+0
+10
+1.0
+1
+1
+NIL
+HORIZONTAL
+
+BUTTON
+145
+13
+208
+46
+step
+go
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+SLIDER
 9
-250
+257
 181
-283
-prob-creator-gene
-prob-creator-gene
+290
+prob-event
+prob-event
 0
 1
-0.2
+1.0
 0.01
 1
 NIL
