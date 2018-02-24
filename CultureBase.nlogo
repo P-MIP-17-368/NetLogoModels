@@ -549,7 +549,7 @@ prob-event
 prob-event
 0
 1
-0.084
+0.0
 0.001
 1
 NIL
@@ -564,7 +564,7 @@ prob-creator-gene
 prob-creator-gene
 0
 1
-0.2
+0.03
 0.01
 1
 NIL
@@ -579,7 +579,7 @@ fixed-features
 fixed-features
 0
 num-features
-0.0
+1.0
 1
 1
 NIL
@@ -592,7 +592,7 @@ SWITCH
 267
 gradual-trait-update
 gradual-trait-update
-0
+1
 1
 -1000
 
@@ -1048,6 +1048,41 @@ setup-square
     <enumeratedValueSet variable="num-traits">
       <value value="5"/>
       <value value="7"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="fixed features in axelrod experiment" repetitions="10" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>calc-cluster</metric>
+    <metric>ticks</metric>
+    <enumeratedValueSet variable="ignore-fixed-features-in-similarity">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-features">
+      <value value="6"/>
+      <value value="7"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prob-creator-gene">
+      <value value="0.03"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prob-event">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="gradual-trait-update">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sample-interval">
+      <value value="370"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="gradual-centered">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-traits">
+      <value value="7"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="fixed-features">
+      <value value="0"/>
+      <value value="1"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
