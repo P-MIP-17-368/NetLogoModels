@@ -1,5 +1,5 @@
 turtles-own [culture creator-gene cluster]
-globals [this-cluster max-cluster num-cluster]
+globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-one]
 
 to setup
   clear-all
@@ -26,7 +26,7 @@ to setup-turtles
     set shape "dot"
     set creator-gene (random-float 1 < prob-creator-gene)
     ifelse creator-gene
-      [set color red]
+      [set color black]
       [set color black]
     set culture []
     repeat num-features
@@ -72,7 +72,7 @@ end
 
 to make-event
   let p-event prob-event
-  if (p-event > 0 and p-event <= 1) and random-float 1 < p-event [
+  if (p-event > 0 and p-event <= 1) and random-float 1 < p-event  and prob-creator-gene > 0 [
     ;output-print "event today!"
     ask one-of turtles with [creator-gene]
     [
@@ -183,12 +183,15 @@ to-report max-distance-in-world
 end
 ; just helper to have less lines if we want check some value in output print
 to output-print4 [par1 par2 par3 par4]
-  output-print2 par1 par2
-  output-print2 par3 par4
+  if verbose
+  [
+    output-print2 par1 par2
+    output-print2 par3 par4]
 end
 to output-print2 [par1 par2]
+  if verbose [
   output-print par1
-  output-print par2
+    output-print par2]
 end
 
 to-report calc-cluster
@@ -198,18 +201,21 @@ end
 
 to update-plot
   find-clusters
-  set-current-plot "Connected Regions"
+  set-current-plot "Culture clustering"
   set-plot-x-range 0 ticks
   set-plot-y-range 0 num-agents
   set-current-plot-pen "Number"
   plotxy ticks num-cluster
   set-current-plot-pen "Largest"
   plotxy ticks max-cluster
+  set-current-plot-pen ">1"
+  plotxy ticks num-cluster-bigger-than-one
 end
 
 to find-clusters
   set max-cluster 0
   set num-cluster 0
+  set num-cluster-bigger-than-one 0
   let seed one-of turtles
   ask turtles [set cluster nobody]
   while [seed != nobody]
@@ -222,6 +228,7 @@ to find-clusters
       grow-cluster
       ]
     if this-cluster > max-cluster [set max-cluster this-cluster]
+    if this-cluster > 1 [set num-cluster-bigger-than-one num-cluster-bigger-than-one + 1]
     set seed one-of turtles with [cluster = nobody]
     ]
 end
@@ -238,6 +245,28 @@ to-report similar-cultures? [list-A list-B]
   ifelse ignore-fixed-features-in-similarity
   [report (similarity-wo-fixed list-A list-B) = 1]
   [report (similarity list-A list-B) = 1]
+end
+
+to-report incompatible-cultures
+  find-clusters
+  let inc 0
+  let m 1
+  ask turtles [
+    let c culture
+    let clst cluster
+    ask other turtles with [cluster != clst]
+    [
+      let s similarity-wo-fixed c culture
+      if s = 0  [set inc inc + 1]
+      if s < m [set m s]
+    ]
+  ]
+  report list inc m
+end
+
+to color-cluster [clstr c]
+  ask turtles with [cluster = clstr]
+  [set color c]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -292,8 +321,8 @@ SLIDER
 num-agents
 num-agents
 2
-10000
-100.0
+1000
+742.0
 10
 1
 NIL
@@ -338,7 +367,7 @@ prob-creator-gene
 prob-creator-gene
 0
 1
-0.2
+0.0
 0.01
 1
 NIL
@@ -353,7 +382,7 @@ fixed-features
 fixed-features
 0
 num-features
-3.0
+0.0
 1
 1
 NIL
@@ -367,13 +396,13 @@ CHOOSER
 gradual-trait-update
 gradual-trait-update
 "None" "Centered" "Wrapped"
-0
+2
 
 OUTPUT
-1212
-11
-1491
-550
+1269
+45
+1548
+500
 11
 
 BUTTON
@@ -394,15 +423,15 @@ NIL
 1
 
 SLIDER
-14
-575
-241
-608
+266
+451
+493
+484
 interaction-neighbours-per-tick
 interaction-neighbours-per-tick
 0
-10
-4.0
+100
+51.0
 1
 1
 NIL
@@ -434,17 +463,17 @@ prob-event
 prob-event
 0
 1
-0.1
+0.0
 0.01
 1
 NIL
 HORIZONTAL
 
 SWITCH
-13
-520
-253
-553
+7
+451
+247
+484
 ignore-fixed-features-in-similarity
 ignore-fixed-features-in-similarity
 0
@@ -452,26 +481,26 @@ ignore-fixed-features-in-similarity
 -1000
 
 SLIDER
-720
-12
-892
-45
+721
+10
+893
+43
 sample-interval
 sample-interval
 10
 1000
-100.0
+500.0
 10
 1
 NIL
 HORIZONTAL
 
 PLOT
-720
-74
-1077
-322
-Connected Regions
+659
+47
+1261
+500
+Culture clustering
 Time
 Value
 0.0
@@ -484,6 +513,18 @@ true
 PENS
 "Number" 1.0 0 -16777216 true "" ""
 "Largest" 1.0 0 -2674135 true "" ""
+">1" 1.0 0 -15040220 true "" ""
+
+SWITCH
+1326
+10
+1429
+43
+verbose
+verbose
+1
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
