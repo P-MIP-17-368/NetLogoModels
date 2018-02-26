@@ -1,7 +1,8 @@
 turtles-own [culture creator-gene cluster]
-globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-one]
+globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-x color-list]
 
 to setup
+  set-color-list
   clear-all
   setup-patches
   setup-turtles
@@ -24,6 +25,7 @@ to setup-turtles
   ask turtles [
     setxy random-xcor random-ycor
     set shape "dot"
+
     set creator-gene (random-float 1 < prob-creator-gene)
     ifelse creator-gene
       [set color black]
@@ -65,6 +67,7 @@ to neighbours-interaction
       [
         let i one-of d
         set culture replace-item i culture updated-item-value (item i culture-A) (item i culture-B)
+        if color-track [ update-clustering self ]
         output-print2 "updating culture" culture
     ]]
   ]
@@ -89,9 +92,13 @@ to make-event
         set culture-B culture
         set turtle-B self
         set P-similar similarity culture-Event culture-B
-        ;output-print2 "distance" distance ev
-        set p-final P-similar * ( rev-prob-linear-from-max (distance ev) max-distance-in-world )
-        ;output-print4 "p-final" p-final "P-similar:" P-similar
+        ifelse use-event-distance [
+          output-print2 "distance" distance ev
+          set p-final P-similar * ( rev-prob-linear-from-max (distance ev) max-distance-in-world )
+          output-print4 "p-final" p-final "P-similar:" P-similar
+        ][
+          set p-final P-similar
+        ]
         if (p-final > 0 and p-final < 1) and random-float 1 < p-final
         [
           set d list-different-item-indexes culture-B culture-Event
@@ -100,6 +107,7 @@ to make-event
             output-print2 "updating patch by event! old culture:" culture-B
             let i one-of d
             set culture replace-item i culture updated-item-value (item i culture-B) (item i culture-Event)
+            if color-track [update-clustering self]
             output-print2 "updating patch by event! new culture:" culture
           ]
         ]
@@ -108,6 +116,8 @@ to make-event
 
  ]
 end
+
+
 
 
 to-report similarity-wo-fixed [list-A list-B]
@@ -208,14 +218,15 @@ to update-plot
   plotxy ticks num-cluster
   set-current-plot-pen "Largest"
   plotxy ticks max-cluster
-  set-current-plot-pen ">1"
-  plotxy ticks num-cluster-bigger-than-one
+  set-current-plot-pen ">xthr"
+  plotxy ticks num-cluster-bigger-than-x
+  ;set-color
 end
 
 to find-clusters
   set max-cluster 0
   set num-cluster 0
-  set num-cluster-bigger-than-one 0
+  set num-cluster-bigger-than-x 0
   let seed one-of turtles
   ask turtles [set cluster nobody]
   while [seed != nobody]
@@ -228,10 +239,12 @@ to find-clusters
       grow-cluster
       ]
     if this-cluster > max-cluster [set max-cluster this-cluster]
-    if this-cluster > 1 [set num-cluster-bigger-than-one num-cluster-bigger-than-one + 1]
+    if this-cluster > xthr [set num-cluster-bigger-than-x num-cluster-bigger-than-x + 1]
     set seed one-of turtles with [cluster = nobody]
     ]
 end
+
+
 
 to grow-cluster
   ask other turtles with [(cluster = nobody) and (similar-cultures? culture [culture] of myself)]
@@ -247,26 +260,203 @@ to-report similar-cultures? [list-A list-B]
   [report (similarity list-A list-B) = 1]
 end
 
+; calculation - how many incompatible cultures in model (not used in simulation - maybe invoked from command center)
+; return list of 2 elements: first how many culturally incompatible (similarity = 0) clusters, seconds the lowest cultural similarity among agent
 to-report incompatible-cultures
   find-clusters
   let inc 0
   let m 1
-  ask turtles [
+  ask one-of turtles [
     let c culture
     let clst cluster
+    if any? other turtles with [cluster != clst and (similarity-wo-fixed c culture) = 0] [set inc inc + 1]
     ask other turtles with [cluster != clst]
     [
       let s similarity-wo-fixed c culture
-      if s = 0  [set inc inc + 1]
       if s < m [set m s]
     ]
   ]
   report list inc m
 end
 
+to check-incompatible-cultures
+  let r incompatible-cultures
+  output-print "count of incompatible cultures:"
+  output-print first r
+  output-print "lowest compatibility"
+  output-print last r
+end
+
 to color-cluster [clstr c]
   ask turtles with [cluster = clstr]
   [set color c]
+end
+
+;remove-duplicates [cluster-who cluster] of turtles
+
+
+
+to-report cluster-who [c]
+  report [who] of [cluster] of c
+end
+
+to-report culture-flex [c]
+  report sublist c fixed-features num-features
+end
+
+to dos
+  find-clusters
+  foreach filter-occurs-lessthan 10 [cluster-who cluster] of turtles
+  [x ->
+    show culture-flex turtle x
+  ]
+end
+
+to-report filter-occurs-lessthan [x lst]
+  let i 0
+  let c nobody
+  let res []
+  foreach sort lst
+  [
+    v ->
+    ;show v
+      ifelse c = v [
+        set i i + 1
+    ][
+      if i >= x and c != nobody [
+          set res lput c res
+      ]
+      set c v
+      set i 1
+    ]
+  ]
+  if i >= x [
+    set res lput c res
+  ]
+  report res
+end
+
+to-report gen-color-list
+  let il (range 1 14)
+  report sentence (shuffle  map [x -> x * 10 + 5] il)  shuffle (sentence map [x -> x * 10 + 1] il   (map [x -> x * 10 + 8] il))
+end
+
+to set-color-list
+  set color-list gen-color-list
+end
+
+to-report filter-list-by-second [list1 list2]
+  report filter [x -> not member? x list2 ] list1
+end
+
+to-report take-color-from-list
+
+  if empty? color-list [
+    set color-list filter-list-by-second gen-color-list remove-duplicates [color] of turtles
+    output-print2 "color list updated" color-list
+  ]
+  let c first color-list
+  set color-list but-first color-list
+  output-print2 "taken color form list" c
+  report c
+end
+
+to update-clustering [t]
+  ask t [
+    output-print2 "update-clustering 4 turtle" t
+    let v-color black
+    let v-culture culture
+    let v-cluster cluster
+  ;  if culture-flex v-culture != culture-flex [culture] of v-cluster [
+
+    ; first need to update cluster agent was a member before
+    ifelse v-cluster = self
+    ; need update whole cluster when it points to himself
+    [
+      output-print2 "cluster - himself" v-cluster
+      ; get agents that are pointing to this cluster
+      let agent-set other turtles with [cluster = v-cluster]
+      ifelse not any? agent-set  [
+        output-print2 "no more with cluster, setting black" v-cluster
+        set color black
+      ][
+        ; there more agents - update them.
+      ; check whether they need to be coloured
+      ifelse count agent-set > xthr [
+      ; if among them exists any not black
+        ifelse any? agent-set with [color != black] [
+          set v-color [color] of one-of agent-set with [color != black]
+          output-print2 "taking from agent color" v-color
+        ][;if all are black then take new color
+          set v-color take-color-from-list
+          output-print2 "all black. take color" v-color
+      ]][
+        output-print2 "setting black" v-cluster
+        ask agent-set [set color black]
+      ]
+    ]
+      ask agent-set [
+        set color v-color
+        set cluster one-of agent-set
+    ]][
+      ;if cluster point elsewhere then need check whether old cluster is not to small to be coloured. If so color to black
+      output-print2 "cluster - other" v-cluster
+    if any? other turtles with [cluster = v-cluster and color != black] [
+      let agent-set-other other turtles with [cluster = v-cluster]
+      if count agent-set-other <= xthr  [ask agent-set-other [set color black]]
+    ]]
+
+    ; then we update our new cluster. find new cluster by culture
+      ifelse any? other turtles with [culture-flex culture = culture-flex v-culture] [
+        set v-cluster [cluster] of one-of turtles with [culture-flex culture = culture-flex v-culture]
+        set cluster v-cluster
+        set color [color] of v-cluster
+      output-print4 "taken from" v-cluster "color" color
+      if color = black        [ let agent-set other turtles with [cluster = v-cluster]
+        if  any? agent-set and count agent-set  > xthr [
+          set v-color take-color-from-list
+          output-print4 "lengt agent set > x" count agent-set "taking color" v-color
+          ask agent-set [ set color v-color ]
+    ]]]
+      [ ; if nothing we it is own cluster
+        set v-cluster self
+        set cluster v-cluster
+        set color black]
+
+  ]
+  ;]
+end
+
+to set-color
+  find-clusters
+  let cluster-list []
+  set cluster-list filter-occurs-lessthan xthr [cluster-who cluster] of turtles
+  if length color-list < 40
+  [set color-list sentence color-list gen-color-list]
+  if num-cluster-bigger-than-x < 50
+  [
+    foreach cluster-list
+      [x ->
+        let c nobody
+        ifelse any? turtles with [cluster = turtle x and color != black]
+        [set c [color] of one-of turtles with [cluster = turtle x and color != black]
+        output-print2 "found color from cluster" c ][
+          set c take-color-from-list
+        ]
+        ask turtles with [cluster = turtle x] [
+        set color c
+      ]
+   ]]
+end
+
+to reset-color
+  set color-list []
+  ask turtles [set color black]
+  set-color
+end
+
+to update-size
+  ask turtles [set size  turtle-size]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -322,7 +512,7 @@ num-agents
 num-agents
 2
 1000
-742.0
+882.0
 10
 1
 NIL
@@ -337,7 +527,7 @@ num-features
 num-features
 1
 20
-7.0
+6.0
 1
 1
 NIL
@@ -367,7 +557,7 @@ prob-creator-gene
 prob-creator-gene
 0
 1
-0.0
+0.22
 0.01
 1
 NIL
@@ -396,12 +586,12 @@ CHOOSER
 gradual-trait-update
 gradual-trait-update
 "None" "Centered" "Wrapped"
-2
+0
 
 OUTPUT
 1269
 45
-1548
+1644
 500
 11
 
@@ -431,7 +621,7 @@ interaction-neighbours-per-tick
 interaction-neighbours-per-tick
 0
 100
-51.0
+62.0
 1
 1
 NIL
@@ -463,7 +653,7 @@ prob-event
 prob-event
 0
 1
-0.0
+0.22
 0.01
 1
 NIL
@@ -481,25 +671,25 @@ ignore-fixed-features-in-similarity
 -1000
 
 SLIDER
-721
-10
-893
-43
+661
+14
+833
+47
 sample-interval
 sample-interval
 10
 1000
-500.0
+90.0
 10
 1
 NIL
 HORIZONTAL
 
 PLOT
-659
-47
-1261
-500
+661
+62
+1263
+515
 Culture clustering
 Time
 Value
@@ -513,7 +703,7 @@ true
 PENS
 "Number" 1.0 0 -16777216 true "" ""
 "Largest" 1.0 0 -2674135 true "" ""
-">1" 1.0 0 -15040220 true "" ""
+">xthr" 1.0 0 -15040220 true "" ""
 
 SWITCH
 1326
@@ -525,6 +715,120 @@ verbose
 1
 1
 -1000
+
+MONITOR
+837
+12
+915
+57
+NIL
+num-cluster
+17
+1
+11
+
+SLIDER
+928
+15
+1100
+48
+xthr
+xthr
+0
+20
+14.0
+1
+1
+NIL
+HORIZONTAL
+
+SWITCH
+14
+361
+177
+394
+use-event-distance
+use-event-distance
+0
+1
+-1000
+
+SWITCH
+13
+493
+127
+526
+color-track
+color-track
+1
+1
+-1000
+
+BUTTON
+12
+532
+104
+565
+NIL
+reset-color
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+SLIDER
+133
+531
+305
+564
+turtle-size
+turtle-size
+0.4
+2
+0.6
+0.1
+1
+NIL
+HORIZONTAL
+
+BUTTON
+314
+533
+410
+566
+NIL
+update-size
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+450
+530
+634
+563
+NIL
+check-incompatible-cultures
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
