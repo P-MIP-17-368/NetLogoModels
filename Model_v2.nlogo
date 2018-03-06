@@ -99,6 +99,7 @@ to make-event
         ][
           set p-final P-similar
         ]
+        set p-final event-impact * p-final
         if (p-final > 0 and p-final < 1) and random-float 1 < p-final
         [
           set d list-different-item-indexes culture-B culture-Event
@@ -527,7 +528,7 @@ num-features
 num-features
 1
 20
-6.0
+9.0
 1
 1
 NIL
@@ -572,17 +573,17 @@ fixed-features
 fixed-features
 0
 num-features
-0.0
+2.0
 1
 1
 NIL
 HORIZONTAL
 
 CHOOSER
-13
-306
-151
-351
+8
+360
+146
+405
 gradual-trait-update
 gradual-trait-update
 "None" "Centered" "Wrapped"
@@ -653,7 +654,7 @@ prob-event
 prob-event
 0
 1
-0.22
+1.0
 0.01
 1
 NIL
@@ -679,7 +680,7 @@ sample-interval
 sample-interval
 10
 1000
-90.0
+100.0
 10
 1
 NIL
@@ -716,17 +717,6 @@ verbose
 1
 -1000
 
-MONITOR
-837
-12
-915
-57
-NIL
-num-cluster
-17
-1
-11
-
 SLIDER
 928
 15
@@ -743,10 +733,10 @@ NIL
 HORIZONTAL
 
 SWITCH
-14
-361
-177
-394
+8
+412
+171
+445
 use-event-distance
 use-event-distance
 0
@@ -829,6 +819,31 @@ NIL
 NIL
 NIL
 1
+
+TEXTBOX
+791
+619
+941
+637
+NIL
+11
+0.0
+1
+
+SLIDER
+11
+293
+183
+326
+event-impact
+event-impact
+0
+1
+0.01
+0.01
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
