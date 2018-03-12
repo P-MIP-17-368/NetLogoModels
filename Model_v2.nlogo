@@ -392,8 +392,10 @@ to update-clustering [t]
           set v-color take-color-from-list
           output-print2 "all black. take color" v-color
       ]][
-        output-print2 "setting black" v-cluster
-        ask agent-set [set color black]
+          ifelse any? agent-set with [color != black] [
+            output-print2 "setting black" v-cluster
+            ask agent-set [set color black]]
+          [output-print2 "selfcluster: others black" v-cluster]
       ]
     ]
       ask agent-set [
@@ -404,7 +406,9 @@ to update-clustering [t]
       output-print2 "cluster - other" v-cluster
     if any? other turtles with [cluster = v-cluster and color != black] [
       let agent-set-other other turtles with [cluster = v-cluster]
-      if count agent-set-other <= xthr  [ask agent-set-other [set color black]]
+      if count agent-set-other <= xthr
+        [ask agent-set-other [set color black]
+        output-print2 "cluster - others. color black" v-cluster]
     ]]
 
     ; then we update our new cluster. find new cluster by culture
@@ -413,7 +417,7 @@ to update-clustering [t]
         set cluster v-cluster
         set color [color] of v-cluster
       output-print4 "taken from" v-cluster "color" color
-      if color = black        [ let agent-set other turtles with [cluster = v-cluster]
+      if color = black        [ let agent-set turtles with [cluster = v-cluster]
         if  any? agent-set and count agent-set  > xthr [
           set v-color take-color-from-list
           output-print4 "lengt agent set > x" count agent-set "taking color" v-color
@@ -474,8 +478,8 @@ GRAPHICS-WINDOW
 1
 1
 0
-1
-1
+0
+0
 1
 -16
 16
@@ -622,7 +626,7 @@ interaction-neighbours-per-tick
 interaction-neighbours-per-tick
 0
 100
-62.0
+32.0
 1
 1
 NIL
@@ -654,7 +658,7 @@ prob-event
 prob-event
 0
 1
-1.0
+0.0
 0.01
 1
 NIL
@@ -750,7 +754,7 @@ SWITCH
 526
 color-track
 color-track
-1
+0
 1
 -1000
 
@@ -839,7 +843,7 @@ event-impact
 event-impact
 0
 1
-0.01
+0.5
 0.01
 1
 NIL
