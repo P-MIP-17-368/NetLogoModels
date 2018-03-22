@@ -1,4 +1,4 @@
-turtles-own [culture creator-gene cluster]
+turtles-own [culture creator-gene cluster ll]
 globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-x color-list]
 
 to setup
@@ -13,7 +13,10 @@ to go
   tick
   neighbours-interaction
   make-event
-  if ticks mod sample-interval = 0 [ update-plot ]
+  if ticks mod sample-interval = 0 [
+    update-plot
+    if check-end? [stop]
+  ]
 end
 
 to setup-patches
@@ -25,8 +28,8 @@ to setup-turtles
   ask turtles [
     setxy random-xcor random-ycor
     set shape "dot"
-
     set creator-gene (random-float 1 < prob-creator-gene)
+    set ll false
     ifelse creator-gene
       [set color black]
       [set color black]
@@ -48,8 +51,8 @@ to neighbours-interaction
     set culture-A culture
     ;set color blue
     set turtle-A self
-    ; selecting one of 10 closest turtles to him without himself
-    ask one-of min-n-of 10 other turtles [distance turtle-A]
+    ; selecting one of neighbours-to-choose-from closest turtles to him without himself
+    ask one-of min-n-of neighbours-to-choose-from other turtles [distance turtle-A]
     [
       set culture-B culture
       set turtle-B self
@@ -463,6 +466,41 @@ end
 to update-size
   ask turtles [set size  turtle-size]
 end
+
+to-report check-end?
+  let end? true
+  ifelse num-cluster = 1
+   [ set end? true ]
+   [ ask turtles [
+      let turtle-A 0
+      let culture-A []
+      set turtle-A self
+      set culture-A culture
+      ask min-n-of neighbours-to-choose-from other turtles [distance turtle-A] [set ll true]
+      let stopped false
+      ask other turtles with [ (creator-gene or ll) and (cluster != [cluster] of turtle-A) ] [
+       let P -1
+       let d -1
+       let culture-B []
+       set culture-B culture
+       set P similarity culture-A culture-B
+       ifelse use-event-distance [
+        set d P * ( rev-prob-linear-from-max (distance turtle-A) max-distance-in-world )
+       ] [
+        set d P
+       ]
+       if ( P != 0 and creator-gene = false ) or ( d * event-impact != 0 and ll = false ) or ( ( P != 0 or d * event-impact != 0 ) and ( creator-gene = true and ll = true ) ) [
+        set end? false
+        set stopped true
+        stop
+       ]
+      ]
+     ask min-n-of neighbours-to-choose-from other turtles [distance turtle-A] [set ll false]
+     if stopped [stop]
+    ]
+   ]
+  report end?
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 213
@@ -478,8 +516,8 @@ GRAPHICS-WINDOW
 1
 1
 0
-0
-0
+1
+1
 1
 -16
 16
@@ -493,9 +531,9 @@ ticks
 
 BUTTON
 12
-13
+14
 75
-46
+47
 NIL
 setup
 NIL
@@ -517,7 +555,7 @@ num-agents
 num-agents
 2
 1000
-882.0
+5.0
 10
 1
 NIL
@@ -532,7 +570,7 @@ num-features
 num-features
 1
 20
-9.0
+7.0
 1
 1
 NIL
@@ -562,7 +600,7 @@ prob-creator-gene
 prob-creator-gene
 0
 1
-0.22
+0.5
 0.01
 1
 NIL
@@ -626,7 +664,7 @@ interaction-neighbours-per-tick
 interaction-neighbours-per-tick
 0
 100
-32.0
+2.0
 1
 1
 NIL
@@ -658,7 +696,7 @@ prob-event
 prob-event
 0
 1
-0.0
+0.22
 0.01
 1
 NIL
@@ -684,7 +722,7 @@ sample-interval
 sample-interval
 10
 1000
-100.0
+10.0
 10
 1
 NIL
@@ -730,7 +768,7 @@ xthr
 xthr
 0
 20
-14.0
+1.0
 1
 1
 NIL
@@ -754,7 +792,7 @@ SWITCH
 526
 color-track
 color-track
-0
+1
 1
 -1000
 
@@ -843,8 +881,23 @@ event-impact
 event-impact
 0
 1
-0.5
+1.0
 0.01
+1
+NIL
+HORIZONTAL
+
+SLIDER
+264
+488
+458
+521
+neighbours-to-choose-from
+neighbours-to-choose-from
+1
+10
+2.0
+1
 1
 NIL
 HORIZONTAL
