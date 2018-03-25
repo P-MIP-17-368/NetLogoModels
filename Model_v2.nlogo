@@ -171,9 +171,11 @@ to-report updated-item-value [obs-val source-val]
 end
 
 to-report distance-around [val1 val2 set-ln]
-  ifelse val1 < val2
-  [report (val1 - 0) + (set-ln - val2)]
-  [report (val2 - 0) + (set-ln - val1)]
+  ;looks that the is simple way to calculate this
+  report set-ln -  abs ( val1 - val2 )
+ ; ifelse val1 < val2
+ ; [report (val1 - 0) + (set-ln - val2)]
+ ; [report (val2 - 0) + (set-ln - val1)]
 end
 
 to-report add-around [o-v val-to set-ln]
@@ -259,9 +261,7 @@ to grow-cluster
 end
 
 to-report similar-cultures? [list-A list-B]
-  ifelse ignore-fixed-features-in-similarity
-  [report (similarity-wo-fixed list-A list-B) = 1]
-  [report (similarity list-A list-B) = 1]
+  report (similarity-wo-fixed list-A list-B) = 1
 end
 
 ; calculation - how many incompatible cultures in model (not used in simulation - maybe invoked from command center)
@@ -555,7 +555,7 @@ num-agents
 num-agents
 2
 1000
-5.0
+902.0
 10
 1
 NIL
@@ -615,7 +615,7 @@ fixed-features
 fixed-features
 0
 num-features
-2.0
+1.0
 1
 1
 NIL
@@ -664,7 +664,7 @@ interaction-neighbours-per-tick
 interaction-neighbours-per-tick
 0
 100
-2.0
+26.0
 1
 1
 NIL
@@ -696,22 +696,11 @@ prob-event
 prob-event
 0
 1
-0.22
+0.15
 0.01
 1
 NIL
 HORIZONTAL
-
-SWITCH
-7
-451
-247
-484
-ignore-fixed-features-in-similarity
-ignore-fixed-features-in-similarity
-0
-1
--1000
 
 SLIDER
 661
@@ -722,7 +711,7 @@ sample-interval
 sample-interval
 10
 1000
-10.0
+980.0
 10
 1
 NIL
@@ -768,7 +757,7 @@ xthr
 xthr
 0
 20
-1.0
+10.0
 1
 1
 NIL
@@ -881,7 +870,7 @@ event-impact
 event-impact
 0
 1
-1.0
+0.34
 0.01
 1
 NIL
@@ -896,7 +885,7 @@ neighbours-to-choose-from
 neighbours-to-choose-from
 1
 10
-2.0
+5.0
 1
 1
 NIL
