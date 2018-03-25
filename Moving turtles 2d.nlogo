@@ -1,4 +1,5 @@
-turtles-own [culture creator-gene cluster ll]
+turtles-own [creator-gene ;currently not used
+  neighborhood-id ]
 globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-x color-list]
 
 
@@ -15,12 +16,22 @@ to setup-patches
 end
 
 to setup-turtles
+  let i 0 ; index of turtle in neighborhood
+  let neighborhood-id-i 1
   create-turtles num-agents
   ask turtles [
     setxy random-xcor random-ycor
     set shape "dot"
+    ; iterate index in neighborhood until reach number of neighborhood - then take next neighborhood and reset index in neighborhood
+    ifelse i < neighbours-to-choose-from
+    [set i i + 1]
+    [set neighborhood-id-i neighborhood-id-i + 1
+      set i  0
+    ]
+    set neighborhood-id neighborhood-id-i
+
+
     set creator-gene (random-float 1 < prob-creator-gene)
-    set ll false
     ifelse creator-gene
       [set color red]
       [set color black]
@@ -33,23 +44,30 @@ to go
 end
 
 to neighbours-interaction
-  ask n-of interaction-neighbours-per-tick turtles
+  ask n-of interaction-turtles-per-tick turtles
   [
     let turtle-A 0
     let turtle-B 0
+    let n-id neighborhood-id
     let P 0
     let d max-distance-in-world
     ;set color blue
     set turtle-A self
+    ifelse  (random-float 1) < similar-over-neighborhood    [
+    set turtle-B one-of min-n-of similar-to-choose-from other turtles [distance turtle-A]]
     ; selecting one of neighbours-to-choose-from closest turtles to him without himself
-    ask one-of min-n-of neighbours-to-choose-from other turtles [distance turtle-A]
+      [set turtle-B one-of other turtles with [neighborhood-id = n-id]]
+
+    ask  turtle-B
     [
       set d distance turtle-A
-      set turtle-B self
     ]
+
+
     set P rev-prob-linear-from-max d max-distance-in-world
     ;output-print2 "similarity between cultures" P
     if (P > 0 and P < 1) and random-float 1 < P[
+      ;if distance more that 0 move to it by some percent of current distance
       if d > 0 [
         face turtle-B
         fd d * move-percent
@@ -57,6 +75,8 @@ to neighbours-interaction
 ]
   ]
 end
+
+
 
 
 
@@ -82,8 +102,8 @@ GRAPHICS-WINDOW
 1
 1
 0
-1
-1
+0
+0
 1
 -16
 16
@@ -121,7 +141,7 @@ num-agents
 num-agents
 0
 1000
-879.0
+1000.0
 1
 1
 NIL
@@ -143,15 +163,15 @@ NIL
 HORIZONTAL
 
 SLIDER
-15
-181
-235
-214
-interaction-neighbours-per-tick
-interaction-neighbours-per-tick
+16
+225
+236
+258
+interaction-turtles-per-tick
+interaction-turtles-per-tick
 0
 100
-22.0
+24.0
 1
 1
 NIL
@@ -166,7 +186,7 @@ neighbours-to-choose-from
 neighbours-to-choose-from
 0
 100
-22.0
+30.0
 1
 1
 NIL
@@ -207,15 +227,45 @@ NIL
 1
 
 SLIDER
-22
-227
-194
-260
+20
+309
+192
+342
 move-percent
 move-percent
 0
 1
-0.2
+0.5
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+17
+182
+190
+215
+similar-to-choose-from
+similar-to-choose-from
+0
+100
+30.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+24
+352
+216
+385
+similar-over-neighborhood
+similar-over-neighborhood
+0
+1
+0.4
 0.1
 1
 NIL
