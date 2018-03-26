@@ -22,6 +22,7 @@ to setup-turtles
   ask turtles [
     setxy random-xcor random-ycor
     set shape "dot"
+    ;set color black
     ; iterate index in neighborhood until reach number of neighborhood - then take next neighborhood and reset index in neighborhood
     ifelse i < neighbours-to-choose-from
     [set i i + 1]
@@ -29,14 +30,19 @@ to setup-turtles
       set i  0
     ]
     set neighborhood-id neighborhood-id-i
+    ;create-links-to n-of neighbours-to-choose-from other turtles
 
-    create-links-to n-of neighbours-to-choose-from other turtles
 
-    set creator-gene (random-float 1 < prob-creator-gene)
-    ifelse creator-gene
-      [set color red]
-      [set color black]
   ]
+
+  ; we generate links (undirected) between turtles. Based on erdos-renyi
+  repeat (floor (neighbours-to-choose-from * num-agents / 2)) [
+     ask one-of turtles [
+       ask one-of other turtles with [not link-neighbor? myself] [
+         create-link-with myself
+       ]
+     ]
+   ]
   ask links [hide-link]
 end
 
@@ -55,26 +61,30 @@ to neighbours-interaction
     let d max-distance-in-world
     ;set color blue
     set turtle-A self
-    ifelse  (random-float 1) < similar-over-neighborhood    [
-    set turtle-B one-of min-n-of similar-to-choose-from other turtles [distance turtle-A]]
+    ifelse  (random-float 1) < similar-over-neighborhood
+    [set turtle-B one-of min-n-of similar-to-choose-from other turtles [distance turtle-A]]
     ; selecting one of neighbours-to-choose-from closest turtles to him without himself
       [set turtle-B one-of link-neighbors]
 
-    ask  turtle-B
+    if turtle-B != Nobody
     [
-      set d distance turtle-A
+      ask  turtle-B
+      [
+        set d distance turtle-A
     ]
-
-
-    set P rev-prob-linear-from-max d max-distance-in-world
+          set P rev-prob-linear-from-max d max-distance-in-world
     ;output-print2 "similarity between cultures" P
     if (P > 0 and P < 1) and random-float 1 < P[
       ;if distance more that 0 move to it by some percent of current distance
       if d > 0 [
         face turtle-B
-        fd d * move-percent
+        fd d * move-fraction
       ]
 ]
+    ]
+
+
+
   ]
 end
 
@@ -87,14 +97,15 @@ to-report rev-prob-linear-from-max [val max-val]
 end
 ; calculare max posiible ditance in this world
 to-report max-distance-in-world
-  report sqrt (  world-width  ^ 2 +  world-height  ^ 2 )
+
+  report sqrt ( ( world-width / max-world-distance-index)  ^ 2 +  (world-height / max-world-distance-index)  ^ 2 )
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-277
-12
-714
-450
+248
+14
+685
+452
 -1
 -1
 13.0
@@ -104,8 +115,8 @@ GRAPHICS-WINDOW
 1
 1
 0
-0
-0
+1
+1
 1
 -16
 16
@@ -143,32 +154,17 @@ num-agents
 num-agents
 0
 1000
-76.0
+752.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-13
-102
-185
-135
-prob-creator-gene
-prob-creator-gene
-0
-1
-0.08
-0.01
-1
-NIL
-HORIZONTAL
-
-SLIDER
-16
-225
-236
-258
+15
+265
+235
+298
 interaction-turtles-per-tick
 interaction-turtles-per-tick
 0
@@ -180,15 +176,15 @@ NIL
 HORIZONTAL
 
 SLIDER
-14
-142
-215
-175
+12
+104
+213
+137
 neighbours-to-choose-from
 neighbours-to-choose-from
 0
 100
-4.0
+10.0
 1
 1
 NIL
@@ -216,7 +212,7 @@ BUTTON
 17
 216
 50
-NIL
+step
 go
 NIL
 1
@@ -233,8 +229,8 @@ SLIDER
 309
 192
 342
-move-percent
-move-percent
+move-fraction
+move-fraction
 0
 1
 0.2
@@ -244,15 +240,15 @@ NIL
 HORIZONTAL
 
 SLIDER
-17
-182
-190
-215
+18
+223
+191
+256
 similar-to-choose-from
 similar-to-choose-from
 0
 100
-8.0
+5.0
 1
 1
 NIL
@@ -267,8 +263,8 @@ similar-over-neighborhood
 similar-over-neighborhood
 0
 1
-0.1
-0.1
+0.95
+0.05
 1
 NIL
 HORIZONTAL
@@ -290,6 +286,16 @@ NIL
 NIL
 1
 
+CHOOSER
+890
+43
+1057
+88
+max-world-distance-index
+max-world-distance-index
+1 2
+1
+
 @#$#@#$#@
 ## WHAT IS IT?
 
@@ -297,11 +303,25 @@ NIL
 
 ## HOW IT WORKS
 
-(what rules the agents use to create the overall behavior of the model)
+Initially agents are randomly distributed is culture space. They try to converge (move), become more similar to other agents they are interacting. 
+They interacting either with other similar ones or either with initally set neigbours.
+Similarity is determined by distance between agents.
 
 ## HOW TO USE IT
 
-(how to use the model, including a description of each of the items in the Interface tab)
+First set values - num-agents, neighbours-to-choose-from. Then press "setup", to setup model. 
+Press Go to run constantly (model doesn't stop automatically - need un press again to stop)
+Press Step for single step run
+
+Parameters:
+* num-agents - number of agents that will be created
+* neighbours-to-choose-from - number of neighbours (on average) for each agent will be given at setup time. Each agent will pertain relation to it's neighbors and interact with each one based on probability (1 - similar-over-neighborhood)
+* similar-to-choose-from - number of most similar (closest) candidate agents, from which the one will be chosen for interaction
+interaction-turtles-per-tick - how many interactions are in each step.
+* move-fraction - fraction of distance the agent will move towards another selected agent (so becoming more similar)
+* similar-over-neighborhood - set whether agents prefer interacting with similar (closest) agents or initially setup neighbors. Bigger value, the higher probability it will interact based on similarity. 1 similarity will be ingonered. 0 - neighborhood ignored.
+* show-links - just shows links (which are hidden - to avoid polluting model)
+* max-world-size-index - 2 when world is wrapped, 1 when box (don't change unless you know how to change wrapping around border in model)
 
 ## THINGS TO NOTICE
 
@@ -309,7 +329,7 @@ NIL
 
 ## THINGS TO TRY
 
-(suggested things for the user to try to do (move sliders, switches, etc.) with the model)
+Change speed if model runs to fast or to slow
 
 ## EXTENDING THE MODEL
 
