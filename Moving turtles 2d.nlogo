@@ -30,12 +30,14 @@ to setup-turtles
     ]
     set neighborhood-id neighborhood-id-i
 
+    create-links-to n-of neighbours-to-choose-from other turtles
 
     set creator-gene (random-float 1 < prob-creator-gene)
     ifelse creator-gene
       [set color red]
       [set color black]
   ]
+  ask links [hide-link]
 end
 
 to go
@@ -56,7 +58,7 @@ to neighbours-interaction
     ifelse  (random-float 1) < similar-over-neighborhood    [
     set turtle-B one-of min-n-of similar-to-choose-from other turtles [distance turtle-A]]
     ; selecting one of neighbours-to-choose-from closest turtles to him without himself
-      [set turtle-B one-of other turtles with [neighborhood-id = n-id]]
+      [set turtle-B one-of link-neighbors]
 
     ask  turtle-B
     [
@@ -141,7 +143,7 @@ num-agents
 num-agents
 0
 1000
-1000.0
+76.0
 1
 1
 NIL
@@ -171,7 +173,7 @@ interaction-turtles-per-tick
 interaction-turtles-per-tick
 0
 100
-24.0
+3.0
 1
 1
 NIL
@@ -186,7 +188,7 @@ neighbours-to-choose-from
 neighbours-to-choose-from
 0
 100
-30.0
+4.0
 1
 1
 NIL
@@ -235,7 +237,7 @@ move-percent
 move-percent
 0
 1
-0.5
+0.2
 0.1
 1
 NIL
@@ -250,7 +252,7 @@ similar-to-choose-from
 similar-to-choose-from
 0
 100
-30.0
+8.0
 1
 1
 NIL
@@ -265,11 +267,28 @@ similar-over-neighborhood
 similar-over-neighborhood
 0
 1
-0.4
+0.1
 0.1
 1
 NIL
 HORIZONTAL
+
+BUTTON
+792
+44
+880
+77
+show links
+ask links [show-link]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
