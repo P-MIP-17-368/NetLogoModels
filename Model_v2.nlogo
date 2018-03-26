@@ -1,4 +1,4 @@
-turtles-own [culture creator-gene cluster ll]
+turtles-own [culture creator-gene inactivity-gene cluster ll]
 globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-x color-list]
 
 to setup
@@ -29,6 +29,7 @@ to setup-turtles
     setxy random-xcor random-ycor
     set shape "dot"
     set creator-gene (random-float 1 < prob-creator-gene)
+    set inactivity-gene (random-float 1 < prob-inactivity-gene)
     set ll false
     ifelse creator-gene
       [set color black]
@@ -88,7 +89,7 @@ to make-event
       let turtle-B 0
       let d []
       set culture-Event culture
-      ask other turtles
+      ask other turtles with [not inactivity-gene]
       [
         let P-similar 0
         let p-final 0
@@ -163,9 +164,13 @@ end
 
 to-report updated-item-value [obs-val source-val]
   ifelse gradual-trait-update = "Centered"
-  [report  round (obs-val + (( source-val - obs-val ) / 2) )] ; "Centered" option
+  [ let nv ( obs-val + (( source-val - obs-val ) / 2) )
+    ifelse obs-val > source-val
+    [report floor nv]
+    [report round nv]
+  ] ; "Centered" option
   [ifelse gradual-trait-update = "Wrapped"
-    [report add-around obs-val source-val  num-features]  ; "Continous" option
+    [report add-around obs-val source-val  num-traits]  ; "Continous" option
     [report source-val] ; else "None" also
   ]
 end
@@ -195,7 +200,7 @@ to-report rev-prob-linear-from-max [val max-val]
 end
 ; calculare max posiible ditance in this world
 to-report max-distance-in-world
-  report sqrt ( ( world-width / 2) ^ 2 + ( world-height / 2 ) ^ 2 )
+  report sqrt ( world-width ^ 2 + world-height ^ 2 )
 end
 ; just helper to have less lines if we want check some value in output print
 to output-print4 [par1 par2 par3 par4]
@@ -478,7 +483,8 @@ to-report check-end?
       set culture-A culture
       ask min-n-of neighbours-to-choose-from other turtles [distance turtle-A] [set ll true]
       let stopped false
-      ask other turtles with [ (creator-gene or ll) and (cluster != [cluster] of turtle-A) ] [
+      ifelse inactivity-gene = false
+      [ask other turtles with [ (creator-gene or ll) and (cluster != [cluster] of turtle-A) ] [
        let P -1
        let d -1
        let culture-B []
@@ -495,7 +501,20 @@ to-report check-end?
         stop
        ]
       ]
-     ask min-n-of neighbours-to-choose-from other turtles [distance turtle-A] [set ll false]
+     ]
+     [ask other turtles with [ ll and (cluster != [cluster] of turtle-A) ] [
+       let P -1
+       let culture-B []
+       set culture-B culture
+       set P similarity culture-A culture-B
+       if P != 0 [
+        set end? false
+        set stopped true
+        stop
+       ]
+      ]
+     ]
+     ask other turtles with [ll] [set ll false]
      if stopped [stop]
     ]
    ]
@@ -516,8 +535,8 @@ GRAPHICS-WINDOW
 1
 1
 0
-1
-1
+0
+0
 1
 -16
 16
@@ -622,10 +641,10 @@ NIL
 HORIZONTAL
 
 CHOOSER
-8
-360
-146
-405
+11
+389
+149
+434
 gradual-trait-update
 gradual-trait-update
 "None" "Centered" "Wrapped"
@@ -688,10 +707,10 @@ NIL
 1
 
 SLIDER
-9
-257
-181
-290
+8
+295
+180
+328
 prob-event
 prob-event
 0
@@ -764,10 +783,10 @@ NIL
 HORIZONTAL
 
 SWITCH
-8
-412
-171
-445
+11
+441
+174
+474
 use-event-distance
 use-event-distance
 0
@@ -862,15 +881,15 @@ NIL
 1
 
 SLIDER
-11
-293
-183
-326
+9
+332
+181
+365
 event-impact
 event-impact
 0
 1
-0.34
+0.35
 0.01
 1
 NIL
@@ -887,6 +906,21 @@ neighbours-to-choose-from
 10
 5.0
 1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+10
+258
+182
+291
+prob-inactivity-gene
+prob-inactivity-gene
+0
+1
+0.2
+0.01
 1
 NIL
 HORIZONTAL
