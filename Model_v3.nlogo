@@ -240,6 +240,7 @@ to update-plot
   plotxy ticks max-cluster
   set-current-plot-pen ">xthr"
   plotxy ticks num-cluster-bigger-than-x
+
   ;set-color
 end
 
@@ -378,7 +379,7 @@ num-agents
 num-agents
 2
 1000
-82.0
+102.0
 10
 1
 NIL
@@ -407,7 +408,7 @@ CHOOSER
 gradual-trait-update
 gradual-trait-update
 "None" "Centered" "Wrapped"
-0
+1
 
 OUTPUT
 1269
@@ -474,7 +475,7 @@ prob-event
 prob-event
 0
 1
-0.95
+0.27
 0.01
 1
 NIL
@@ -489,17 +490,17 @@ sample-interval
 sample-interval
 10
 1000
-100.0
+20.0
 10
 1
 NIL
 HORIZONTAL
 
 PLOT
-660
-127
-1262
-580
+686
+121
+1090
+288
 Culture clustering
 Time
 Value
@@ -548,7 +549,7 @@ SWITCH
 641
 use-event-distance
 use-event-distance
-0
+1
 1
 -1000
 
@@ -616,7 +617,7 @@ mean1
 mean1
 0
 100
-0.0
+54.0
 1
 1
 NIL
@@ -630,9 +631,9 @@ SLIDER
 sd1
 sd1
 0
-100
-10.0
-1
+15
+2.5
+0.5
 1
 NIL
 HORIZONTAL
@@ -646,7 +647,7 @@ mean2
 mean2
 0
 100
-40.0
+73.0
 1
 1
 NIL
@@ -660,9 +661,9 @@ SLIDER
 sd2
 sd2
 0
-100
-20.0
-1
+15
+3.5
+0.5
 1
 NIL
 HORIZONTAL
@@ -676,7 +677,7 @@ mean3
 mean3
 0
 100
-80.0
+59.0
 1
 1
 NIL
@@ -690,9 +691,9 @@ SLIDER
 sd3
 sd3
 0
-100
-5.0
-1
+15
+7.0
+0.5
 1
 NIL
 HORIZONTAL
@@ -736,6 +737,26 @@ ticks-to-run
 1
 NIL
 HORIZONTAL
+
+PLOT
+690
+312
+1103
+559
+plot traits
+NIL
+NIL
+0.0
+100.0
+0.0
+102.0
+true
+false
+"" ""
+PENS
+"1" 1.0 0 -16777216 true "" "  plot-pen-reset\n  histogram [item 3 culture] of turtles"
+"2" 1.0 0 -7500403 true "" "  plot-pen-reset\n  histogram [item 4 culture] of turtles"
+"3" 1.0 0 -2674135 true "" "  plot-pen-reset\n  histogram [item 5 culture] of turtles"
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -1108,7 +1129,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.0.2
+NetLogo 6.0.3
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
