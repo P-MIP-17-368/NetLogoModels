@@ -57,8 +57,8 @@ to neighbours-interaction
         fd d * move-fraction
       ]
     ]
-      set turtle-C one-of other turtles with [ distance turtle-A < 10 ^ -1 ]
-      ifelse turtle-C != Nobody
+      set turtle-C one-of min-n-of 1 other turtles [distance turtle-A]
+      ifelse [distance turtle-C] of turtle-A < 10 ^ -1
         [ set cluster [cluster] of turtle-C
         ]
         [ set cluster self
@@ -66,8 +66,13 @@ to neighbours-interaction
       let new_cluster cluster
       if new_cluster != old_cluster
       [let n_number count turtles with [cluster = new_cluster]
-       ask turtles with [cluster = new_cluster] [set size n_number]
-       ask turtles with [cluster = old_cluster] [set size size - 1]
+       ;;let n_col one-of base-colors
+       ask turtles with [cluster = new_cluster] [
+        set size log (1 + n_number) 2
+        ;;set color n_col
+       ]
+       let o_number count turtles with [cluster = old_cluster]
+       ask turtles with [cluster = old_cluster] [set size log (1 + o_number) 2]
       ]
     ]
    ]
@@ -152,8 +157,8 @@ SLIDER
 num-agents
 num-agents
 2
-1009
-111.0
+1000
+244.0
 1
 1
 NIL
