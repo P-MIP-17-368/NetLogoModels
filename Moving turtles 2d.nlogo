@@ -313,6 +313,8 @@ First set values - num-agents, neighbours-to-choose-from. Then press "setup", to
 Press Go to run constantly (model doesn't stop automatically - need un press again to stop)
 Press Step for single step run
 
+Colors have no special meaning here, but since agent colors don't change it can easier to notice movements of agents
+
 Parameters:
 * num-agents - number of agents that will be created
 * neighbours-to-choose-from - number of neighbours (on average) for each agent will be given at setup time. Each agent will pertain relation to it's neighbors and interact with each one based on probability (1 - similar-over-neighborhood)
@@ -329,6 +331,7 @@ interaction-turtles-per-tick - how many interactions are in each step.
 
 ## THINGS TO TRY
 
+Try diferent configuration of similar-over-neighborhood, from small that lead to fast convergence and to higher (like 0,9) which convergence takes time.
 Change speed if model runs to fast or to slow
 
 ## EXTENDING THE MODEL
