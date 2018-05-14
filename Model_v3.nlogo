@@ -1,4 +1,4 @@
-turtles-own [culture creator-gene inactivity-gene cluster ll]
+turtles-own [culture creator-gene inactivity-gene cluster ll custom-location]
 globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-x color-list]
 
 to setup
@@ -10,7 +10,7 @@ end
 
 to go
   tick
-  neighbours-interaction
+  peers-interaction
   make-event
   if ticks mod sample-interval = 0 [
     update-plot
@@ -38,6 +38,7 @@ to setup-turtles
       [set color black]
       [set color black]
     set culture []
+    set custom-location list random custom-location-scale random custom-location-scale
     let i 6
     repeat 6
       [ ifelse i >= 4
@@ -61,11 +62,12 @@ to-report random-normal-in-bounds [mid dev mmin mmax]
   report result
 end
 
-to neighbours-interaction
+to peers-interaction
   ask n-of interaction-neighbours-per-tick turtles
   [
     let culture-A []
     let turtle-A 0
+    let location-A custom-location
     let culture-B []
     let turtle-B 0
     let P 0
@@ -74,11 +76,16 @@ to neighbours-interaction
     ;set color blue
     set turtle-A self
     ; selecting one of neighbours-to-choose-from closest turtles to him without himself
-    ask one-of min-n-of neighbours-to-choose-from other turtles [distance turtle-A]
+    ifelse random 1 < similar-over-neighbourhood
+    [
+      set turtle-B one-of max-n-of neighbours-to-choose-from other turtles [similarity culture-A culture]
+    ]
+    [
+      set turtle-B one-of n-of neighbours-to-choose-from other turtles with [custom-location = location-A ]
+    ]
+    ask turtle-B
     [
       set culture-B culture
-      set turtle-B self
-      ;set color green
     ]
     ;output-print4 "selected cultureA" culture-A "selected culture B" culture-B
     set P similarity culture-A culture-B
@@ -757,6 +764,36 @@ PENS
 "1" 1.0 0 -16777216 true "" "  plot-pen-reset\n  histogram [item 3 culture] of turtles"
 "2" 1.0 0 -7500403 true "" "  plot-pen-reset\n  histogram [item 4 culture] of turtles"
 "3" 1.0 0 -2674135 true "" "  plot-pen-reset\n  histogram [item 5 culture] of turtles"
+
+SLIDER
+268
+531
+473
+564
+similar-over-neighbourhood
+similar-over-neighbourhood
+0
+1
+0.9
+0.01
+1
+NIL
+HORIZONTAL
+
+SLIDER
+269
+571
+441
+604
+custom-location-scale
+custom-location-scale
+0
+100
+10.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
