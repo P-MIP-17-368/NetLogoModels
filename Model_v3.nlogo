@@ -29,7 +29,7 @@ end
 to setup-turtles
   create-turtles num-agents
   ask turtles [
-    setxy random-xcor random-ycor
+   ; setxy random-xcor random-ycor
     set shape "dot"
     set creator-gene (random-float 1 < prob-creator-gene)
     set inactivity-gene (random-float 1 < prob-inactivity-gene)
@@ -42,17 +42,24 @@ to setup-turtles
     let i 6
     repeat 6
       [ ifelse i >= 4
-        [ if i = 6 [set culture fput random-normal-in-bounds mean3 sd3 0 100 culture]
-          if i = 5 [set culture fput random-normal-in-bounds mean2 sd2 0 100 culture]
-          if i = 4 [set culture fput random-normal-in-bounds mean1 sd1 0 100 culture]
+        [ if i = 6 [set culture fput ( rnd-culture-item dist3 mean3 sd3 ) culture ]
+          if i = 5 [set culture fput ( rnd-culture-item dist2 mean2 sd2 ) culture ]
+          if i = 4 [set culture fput ( rnd-culture-item dist1 mean1 sd1 ) culture ]
         ]
         [ ifelse i != 2
-          [set culture fput random 3 culture]
-          [set culture fput random 2 culture]
+          [set culture  fput random 3 culture] ;3
+          [set culture fput random 2 culture] ;2
         ]
         set i i - 1
       ]
+    update-position-for-turtle
   ]
+end
+
+to-report rnd-culture-item [dist m sd ]
+  ifelse dist = "Uniform"
+  [report random 100]
+  [report random-normal-in-bounds m sd 0 100]
 end
 
 to-report random-normal-in-bounds [mid dev mmin mmax]
@@ -73,15 +80,20 @@ to peers-interaction
     let P 0
     let d []
     set culture-A culture
-    ;set color blue
+   ; set color blue
     set turtle-A self
     ; selecting one of neighbours-to-choose-from closest turtles to him without himself
     ifelse random 1 < similar-over-neighbourhood
     [
-      set turtle-B one-of max-n-of neighbours-to-choose-from other turtles [similarity culture-A culture]
+      let peers max-n-of neighbours-to-choose-from other turtles [similarity culture-A culture]
+      set turtle-B one-of peers
+     ; ask peers [set color green]
+
     ]
     [
-      set turtle-B one-of n-of neighbours-to-choose-from other turtles with [custom-location = location-A ]
+      let peers min-n-of neighbours-to-choose-from other turtles  [custom-distance custom-location location-A ]
+      set turtle-B one-of peers
+    ;  ask peers [set color yellow]
     ]
     ask turtle-B
     [
@@ -99,6 +111,7 @@ to peers-interaction
       [
         let i one-of d
         set culture replace-item i culture updated-item-value (item i culture-A) (item i culture-B)
+        update-position-for-turtle
        ; output-print2 "updating culture" culture
     ]]
   ]
@@ -332,6 +345,40 @@ to-report check-end?
    ]
   report end?
 end
+
+to update-position-all
+  ask turtles
+  [
+    update-position-for-turtle
+  ]
+end
+
+to update-position-for-turtle
+      let r calc-position-for-turtle self
+    setxy item 0 r  item 1 r
+end
+
+to-report calc-position-for-turtle [trtl]
+  let c [sublist culture 3 6] of trtl
+  report list calc-position-x c  calc-position-y c
+end
+
+
+to-report calc-position-x
+  [l]
+  report ( world-width * ( (item 0 l / 100 ) *  var1-x +  (item 1 l / 100) * var2-x + (item 2 l / 100 ) * var3-x ) / ( var1-x +  var2-x +  var3-x  ) )  - world-width / 2
+end
+
+to-report calc-position-y
+  [l]
+  report ( world-height * ( (item 0 l / 100) * var1-y +  (item 1 l / 100) * var2-y + (item 2 l / 100) * var3-y ) / ( var1-y +  var2-y +  var3-y  ) ) - world-height / 2
+end
+
+to-report custom-distance
+  ;custom euclidian distance
+  [l1 l2]
+  report (sqrt ( reduce + ( map [ i -> i ^ 2] ( map - l1 l2 ) ) ) )
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 213
@@ -378,15 +425,15 @@ NIL
 1
 
 SLIDER
-12
-63
-184
-96
+7
+53
+179
+86
 num-agents
 num-agents
 2
 1000
-102.0
+82.0
 10
 1
 NIL
@@ -394,9 +441,9 @@ HORIZONTAL
 
 SLIDER
 9
-387
+526
 181
-420
+559
 prob-creator-gene
 prob-creator-gene
 0
@@ -408,20 +455,20 @@ NIL
 HORIZONTAL
 
 CHOOSER
-10
-556
-148
-601
+21
+613
+159
+658
 gradual-trait-update
 gradual-trait-update
 "None" "Centered" "Wrapped"
 1
 
 OUTPUT
-1269
-45
-1644
-500
+1402
+47
+1777
+502
 11
 
 BUTTON
@@ -442,15 +489,15 @@ NIL
 1
 
 SLIDER
-266
-451
-493
-484
+390
+455
+617
+488
 interaction-neighbours-per-tick
 interaction-neighbours-per-tick
 0
 100
-20.0
+6.0
 1
 1
 NIL
@@ -474,15 +521,15 @@ NIL
 1
 
 SLIDER
-7
-462
-179
-495
+8
+562
+180
+595
 prob-event
 prob-event
 0
 1
-0.27
+0.0
 0.01
 1
 NIL
@@ -497,36 +544,16 @@ sample-interval
 sample-interval
 10
 1000
-20.0
+660.0
 10
 1
 NIL
 HORIZONTAL
 
-PLOT
-686
-121
-1090
-288
-Culture clustering
-Time
-Value
-0.0
-10.0
-0.0
-10.0
-true
-true
-"" ""
-PENS
-"Number" 1.0 0 -16777216 true "" ""
-"Largest" 1.0 0 -2674135 true "" ""
-">xthr" 1.0 0 -15040220 true "" ""
-
 SWITCH
-1326
+1397
 10
-1429
+1500
 43
 verbose
 verbose
@@ -550,10 +577,10 @@ NIL
 HORIZONTAL
 
 SWITCH
-10
-608
-173
-641
+169
+627
+332
+660
 use-event-distance
 use-event-distance
 1
@@ -571,10 +598,10 @@ NIL
 1
 
 SLIDER
-8
-499
-180
-532
+186
+563
+358
+596
 event-impact
 event-impact
 0
@@ -586,30 +613,30 @@ NIL
 HORIZONTAL
 
 SLIDER
-264
-488
-458
-521
+390
+494
+584
+527
 neighbours-to-choose-from
 neighbours-to-choose-from
 1
 10
-5.0
+8.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-9
-425
-181
-458
+186
+527
+358
+560
 prob-inactivity-gene
 prob-inactivity-gene
 0
 1
-0.2
+0.27
 0.01
 1
 NIL
@@ -617,44 +644,14 @@ HORIZONTAL
 
 SLIDER
 7
-116
+152
 179
-149
+185
 mean1
 mean1
 0
 100
-54.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-6
-157
-178
-190
-sd1
-sd1
-0
-15
-2.5
-0.5
-1
-NIL
-HORIZONTAL
-
-SLIDER
-6
-199
-178
-232
-mean2
-mean2
-0
-100
-73.0
+59.0
 1
 1
 NIL
@@ -662,24 +659,54 @@ HORIZONTAL
 
 SLIDER
 7
-238
+186
 179
-271
-sd2
-sd2
+219
+sd1
+sd1
 0
-15
-3.5
+100
+100.0
 0.5
 1
 NIL
 HORIZONTAL
 
 SLIDER
-6
-283
-178
-316
+10
+285
+182
+318
+mean2
+mean2
+0
+100
+82.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+10
+321
+182
+354
+sd2
+sd2
+0
+100
+100.0
+0.5
+1
+NIL
+HORIZONTAL
+
+SLIDER
+9
+418
+181
+451
 mean3
 mean3
 0
@@ -691,15 +718,15 @@ NIL
 HORIZONTAL
 
 SLIDER
-6
-325
-178
-358
+8
+454
+180
+487
 sd3
 sd3
 0
-15
-7.0
+100
+100.0
 0.5
 1
 NIL
@@ -746,10 +773,10 @@ NIL
 HORIZONTAL
 
 PLOT
-690
-312
-1103
-559
+657
+272
+1225
+655
 plot traits
 NIL
 NIL
@@ -758,33 +785,33 @@ NIL
 0.0
 102.0
 true
-false
+true
 "" ""
 PENS
-"1" 1.0 0 -16777216 true "" "  plot-pen-reset\n  histogram [item 3 culture] of turtles"
-"2" 1.0 0 -7500403 true "" "  plot-pen-reset\n  histogram [item 4 culture] of turtles"
-"3" 1.0 0 -2674135 true "" "  plot-pen-reset\n  histogram [item 5 culture] of turtles"
+"1st " 1.0 0 -16777216 true "" "  plot-pen-reset\n  histogram [item 3 culture] of turtles"
+"2nd" 1.0 0 -7500403 true "" "  plot-pen-reset\n  histogram [item 4 culture] of turtles"
+"3rd" 1.0 0 -2674135 true "" "  plot-pen-reset\n  histogram [item 5 culture] of turtles"
 
 SLIDER
-268
-531
-473
-564
+434
+581
+639
+614
 similar-over-neighbourhood
 similar-over-neighbourhood
 0
 1
-0.9
+1.0
 0.01
 1
 NIL
 HORIZONTAL
 
 SLIDER
-269
-571
-441
-604
+433
+543
+605
+576
 custom-location-scale
 custom-location-scale
 0
@@ -794,6 +821,163 @@ custom-location-scale
 1
 NIL
 HORIZONTAL
+
+SLIDER
+1234
+116
+1386
+149
+var1-x
+var1-x
+0
+1
+0.0
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+1235
+156
+1386
+189
+var2-x
+var2-x
+0
+1
+0.0
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+1235
+196
+1388
+229
+var3-x
+var3-x
+0
+1
+1.0
+0.5
+1
+NIL
+HORIZONTAL
+
+SLIDER
+1238
+250
+1389
+283
+var1-y
+var1-y
+0
+1
+0.0
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+1238
+290
+1390
+323
+var2-y
+var2-y
+0
+1
+1.0
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+1239
+330
+1390
+363
+var3-y
+var3-y
+0
+1
+0.0
+0.1
+1
+NIL
+HORIZONTAL
+
+BUTTON
+1240
+377
+1374
+410
+NIL
+update-position-all
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+CHOOSER
+7
+106
+180
+151
+dist1
+dist1
+"Uniform" "Normal"
+0
+
+CHOOSER
+10
+238
+182
+283
+dist2
+dist2
+"Uniform" "Normal"
+0
+
+CHOOSER
+10
+370
+183
+415
+dist3
+dist3
+"Uniform" "Normal"
+0
+
+PLOT
+677
+101
+1081
+268
+Culture clustering
+Time
+Value
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"Number" 1.0 0 -16777216 true "" ""
+"Largest" 1.0 0 -2674135 true "" ""
+">xthr" 1.0 0 -15040220 true "" ""
 
 @#$#@#$#@
 ## WHAT IS IT?
