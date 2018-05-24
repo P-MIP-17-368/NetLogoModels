@@ -1,10 +1,14 @@
 turtles-own [culture creator-gene inactivity-gene cluster ll custom-location]
-globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-x color-list]
+globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-x color-list g-fixed]
+
+;ask turtle 29 [ask max-n-of neighbours-to-choose-from other turtles [similarity [culture] of myself culture] [set color green ]]
 
 to setup
   clear-all
   setup-patches
   setup-turtles
+  set g-fixed 1
+
   reset-ticks
 end
 
@@ -12,14 +16,14 @@ to go
   tick
   peers-interaction
   make-event
-  if ticks mod sample-interval = 0 [
-    update-plot
-    if auto-stop != "None"
-      [ifelse auto-stop = "Ticks"
-        [if ticks >= ticks-to-run [stop]]
-        [if ticks mod ( sample-interval * multiplier-for-stopping ) = 0 [if check-end? [stop]]]
-      ]
-  ]
+ ; if ticks mod sample-interval = 0 [
+ ;   update-plot
+ ;   if auto-stop != "None"
+ ;     [ifelse auto-stop = "Ticks"
+ ;       [if ticks >= ticks-to-run [stop]]
+ ;       [if ticks mod ( sample-interval * multiplier-for-stopping ) = 0 [if check-end? [stop]]]
+ ;     ]
+ ; ]
 end
 
 to setup-patches
@@ -39,19 +43,22 @@ to setup-turtles
       [set color black]
     set culture []
     set custom-location list random custom-location-scale random custom-location-scale
-    let i 6
-    repeat 6
-      [ ifelse i >= 4
-        [ if i = 6 [set culture fput ( rnd-culture-item dist3 mean3 sd3 ) culture ]
-          if i = 5 [set culture fput ( rnd-culture-item dist2 mean2 sd2 ) culture ]
-          if i = 4 [set culture fput ( rnd-culture-item dist1 mean1 sd1 ) culture ]
-        ]
-        [ ifelse i != 2
-          [set culture  fput random 3 culture] ;3
-          [set culture fput random 2 culture] ;2
-        ]
-        set i i - 1
-      ]
+
+    set culture ( list ( rnd-culture-item distf meanf sdf )  ( rnd-culture-item dist1 mean1 sd1 ) ( rnd-culture-item dist2 mean2 sd2 ) ( rnd-culture-item dist3 mean3 sd3 ))
+
+   ; let i 6
+   ; repeat 6
+    ;  [ ifelse i >= 4
+    ;    [ if i = 6 [set culture fput ( rnd-culture-item dist3 mean3 sd3 ) culture ]
+    ;      if i = 5 [set culture fput ( rnd-culture-item dist2 mean2 sd2 ) culture ]
+     ;     if i = 4 [set culture fput ( rnd-culture-item dist1 mean1 sd1 ) culture ]
+     ;   ]
+     ;   [ ifelse i != 2
+    ;      [set culture  fput random 3 culture] ;3
+     ;     [set culture fput random 2 culture] ;2
+     ;   ]
+      ;  set i i - 1
+    ;  ]
     update-position-for-turtle
   ]
 end
@@ -69,6 +76,7 @@ to-report random-normal-in-bounds [mid dev mmin mmax]
   report result
 end
 
+
 to peers-interaction
   ask n-of interaction-neighbours-per-tick turtles
   [
@@ -83,17 +91,16 @@ to peers-interaction
    ; set color blue
     set turtle-A self
     ; selecting one of neighbours-to-choose-from closest turtles to him without himself
-    ifelse random 1 < similar-over-neighbourhood
+    ifelse random-float 1 < similar-over-neighbourhood
     [
       let peers max-n-of neighbours-to-choose-from other turtles [similarity culture-A culture]
       set turtle-B one-of peers
-     ; ask peers [set color green]
-
+      ;ask peers [set color green]
     ]
     [
       let peers min-n-of neighbours-to-choose-from other turtles  [custom-distance custom-location location-A ]
       set turtle-B one-of peers
-    ;  ask peers [set color yellow]
+     ; ask peers [set color yellow]
     ]
     ask turtle-B
     [
@@ -102,19 +109,21 @@ to peers-interaction
     ;output-print4 "selected cultureA" culture-A "selected culture B" culture-B
     set P similarity culture-A culture-B
     ;output-print2 "similarity between cultures" P
-    if (P > 0 and P < 1) and random-float 1 < P[
-
-      ; get list with differences - indexes of items that don't match
-      set d list-different-item-indexes culture-A culture-B
-     ; output-print2 "diferences between cultures culture" culture-A
-      if  length d > 0
-      [
-        let i one-of d
-        set culture replace-item i culture updated-item-value (item i culture-A) (item i culture-B)
-        update-position-for-turtle
-       ; output-print2 "updating culture" culture
-    ]]
+    if (P > 0 and P < 1) and random-float 1 < P [
+      set culture new-culture culture-A culture-B 1
+      update-position-for-turtle
+    ]
   ]
+end
+
+to-report new-culture [c-obj c-trgt fixed]
+  let l length c-obj
+  report sentence ( sublist c-obj  0  fixed ) (move (sublist c-obj  fixed l) (sublist c-trgt fixed l) move-fraction)
+end
+
+to-report move [c-obj c-trg fraction]
+  ;let dist custom-distance c-obj c-trg
+  report ( map + ( map [ v -> v * fraction ] ( map - c-trg c-obj )) c-obj)
 end
 
 to make-event
@@ -146,12 +155,12 @@ to make-event
         set p-final event-impact * p-final
         if (p-final > 0 and p-final < 1) and random-float 1 < p-final
         [
-          set d list-different-item-indexes culture-B culture-Event
+         ;set d list-different-item-indexes culture-B culture-Event
           if length d > 0
           [
             output-print2 "updating patch by event! old culture:" culture-B
             let i one-of d
-            set culture replace-item i culture updated-item-value (item i culture-B) (item i culture-Event)
+          ;  set culture replace-item i culture updated-item-value (item i culture-B) (item i culture-Event)
            ; output-print2 "updating patch by event! new culture:" culture
           ]
         ]
@@ -161,68 +170,20 @@ to make-event
  ]
 end
 
+
 to-report similarity-wo-fixed [list-A list-B]
-  let n 0
   let l (length list-A)
-  let similarities 0
-  repeat l
-    [
-    if (item n list-A = item n list-B) and (n >=  3)
-      [set similarities similarities + 1]
-    set n n + 1
-    ]
-  report similarities / (l - 3)
+  report similarity (sublist list-A 1 l) (sublist list-B 1 l)
 end
 
 to-report similarity [list-A list-B]
-  let n 0
   let l length list-A
-  let similarities 0
-  repeat l
-    [
-    if item n list-A = item n list-B [set similarities similarities + 1]
-    set n n + 1
-    ]
-  report similarities / l
+  report 1 - ( custom-distance list-A list-B )  / ( max-world-dist n-values l [100] )
 end
 
-to-report list-different-item-indexes [list-A list-B]
-  let n 0
-  let differences []
-  repeat length list-A
-    [
-    if (item n list-A != item n list-B) and (n >=  3)
-      [set differences lput n differences]
-    set n n + 1
-    ]
-  report differences
-end
 
-to-report updated-item-value [obs-val source-val]
-  ifelse gradual-trait-update = "Centered"
-  [ report ( obs-val + ( source-val - obs-val ) / 2) ] ; "Centered" option
-  [ifelse gradual-trait-update = "Wrapped"
-    [report add-around obs-val source-val]  ; "Continous" option
-    [report source-val] ; else "None" also
-  ]
-end
 
-to-report add-around [o-v val-to]
-  let da ( 100 -  abs ( o-v - val-to ) )
-  let dn ( abs ( o-v - val-to ) )
-  ifelse dn <= da
-    [report ( o-v + val-to ) / 2 ]
-    [ifelse o-v < val-to
-      [ifelse (da / 2) < o-v
-        [report o-v - (da / 2)]
-        [report val-to + (da / 2)]
-      ]
-      [ifelse (da / 2) <= val-to
-        [report val-to - (da / 2) ]
-        [report o-v + (da / 2)]
-      ]
-    ]
-end
+
 
 to-report rev-prob-linear-from-max [val max-val]
   report 1 - val / max-val
@@ -354,12 +315,12 @@ to update-position-all
 end
 
 to update-position-for-turtle
-      let r calc-position-for-turtle self
-    setxy item 0 r  item 1 r
+    let r calc-position-for-turtle self
+    setxy item 0 r item 1 r
 end
 
 to-report calc-position-for-turtle [trtl]
-  let c [sublist culture 3 6] of trtl
+  let c [sublist culture g-fixed (length culture) ] of trtl
   report list calc-position-x c  calc-position-y c
 end
 
@@ -378,6 +339,11 @@ to-report custom-distance
   ;custom euclidian distance
   [l1 l2]
   report (sqrt ( reduce + ( map [ i -> i ^ 2] ( map - l1 l2 ) ) ) )
+end
+
+to-report max-world-dist [l]
+  ; param list with scale of each coordinate
+  report (sqrt ( reduce + ( map [ i -> i ^ 2] l ) ) )
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -433,36 +399,26 @@ num-agents
 num-agents
 2
 1000
-82.0
+432.0
 10
 1
 NIL
 HORIZONTAL
 
 SLIDER
-9
-526
-181
-559
+8
+585
+180
+618
 prob-creator-gene
 prob-creator-gene
 0
 1
-0.3
+0.0
 0.01
 1
 NIL
 HORIZONTAL
-
-CHOOSER
-21
-613
-159
-658
-gradual-trait-update
-gradual-trait-update
-"None" "Centered" "Wrapped"
-1
 
 OUTPUT
 1402
@@ -497,7 +453,7 @@ interaction-neighbours-per-tick
 interaction-neighbours-per-tick
 0
 100
-6.0
+4.0
 1
 1
 NIL
@@ -521,10 +477,10 @@ NIL
 1
 
 SLIDER
-8
-562
-180
-595
+7
+621
+179
+654
 prob-event
 prob-event
 0
@@ -577,9 +533,9 @@ NIL
 HORIZONTAL
 
 SWITCH
-169
+440
 627
-332
+603
 660
 use-event-distance
 use-event-distance
@@ -598,15 +554,15 @@ NIL
 1
 
 SLIDER
-186
-563
-358
-596
+199
+571
+371
+604
 event-impact
 event-impact
 0
 1
-0.25
+0.24
 0.01
 1
 NIL
@@ -621,112 +577,112 @@ neighbours-to-choose-from
 neighbours-to-choose-from
 1
 10
-8.0
+6.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-186
-527
-358
-560
+200
+526
+372
+559
 prob-inactivity-gene
 prob-inactivity-gene
 0
 1
-0.27
+0.01
 0.01
 1
 NIL
 HORIZONTAL
 
 SLIDER
-7
-152
-179
-185
+12
+261
+184
+294
 mean1
 mean1
+0
+100
+48.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+12
+295
+184
+328
+sd1
+sd1
+0
+100
+15.5
+0.5
+1
+NIL
+HORIZONTAL
+
+SLIDER
+11
+381
+183
+414
+mean2
+mean2
+0
+100
+81.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+11
+417
+183
+450
+sd2
+sd2
+0
+100
+17.0
+0.5
+1
+NIL
+HORIZONTAL
+
+SLIDER
+10
+506
+182
+539
+mean3
+mean3
 0
 100
 59.0
 1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-7
-186
-179
-219
-sd1
-sd1
-0
-100
-100.0
-0.5
-1
-NIL
-HORIZONTAL
-
-SLIDER
-10
-285
-182
-318
-mean2
-mean2
-0
-100
-82.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-10
-321
-182
-354
-sd2
-sd2
-0
-100
-100.0
-0.5
 1
 NIL
 HORIZONTAL
 
 SLIDER
 9
-418
+542
 181
-451
-mean3
-mean3
-0
-100
-59.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-8
-454
-180
-487
+575
 sd3
 sd3
 0
 100
-100.0
+16.0
 0.5
 1
 NIL
@@ -788,9 +744,9 @@ true
 true
 "" ""
 PENS
-"1st " 1.0 0 -16777216 true "" "  plot-pen-reset\n  histogram [item 3 culture] of turtles"
-"2nd" 1.0 0 -7500403 true "" "  plot-pen-reset\n  histogram [item 4 culture] of turtles"
-"3rd" 1.0 0 -2674135 true "" "  plot-pen-reset\n  histogram [item 5 culture] of turtles"
+"1st " 1.0 0 -16777216 true "" "  plot-pen-reset\n  histogram [item 1 culture] of turtles"
+"2nd" 1.0 0 -7500403 true "" "  plot-pen-reset\n  histogram [item 2 culture] of turtles"
+"3rd" 1.0 0 -2674135 true "" "  plot-pen-reset\n  histogram [item 3 culture] of turtles\n  "
 
 SLIDER
 434
@@ -801,7 +757,7 @@ similar-over-neighbourhood
 similar-over-neighbourhood
 0
 1
-1.0
+0.14
 0.01
 1
 NIL
@@ -846,7 +802,7 @@ var2-x
 var2-x
 0
 1
-0.0
+1.0
 0.1
 1
 NIL
@@ -861,7 +817,7 @@ var3-x
 var3-x
 0
 1
-1.0
+0.0
 0.5
 1
 NIL
@@ -891,7 +847,7 @@ var2-y
 var2-y
 0
 1
-1.0
+0.0
 0.1
 1
 NIL
@@ -906,7 +862,7 @@ var3-y
 var3-y
 0
 1
-0.0
+1.0
 0.1
 1
 NIL
@@ -930,30 +886,30 @@ NIL
 1
 
 CHOOSER
-7
-106
-180
-151
+11
+213
+184
+258
 dist1
 dist1
 "Uniform" "Normal"
 0
 
 CHOOSER
-10
-238
-182
-283
-dist2
-dist2
-"Uniform" "Normal"
-0
-
-CHOOSER
-10
-370
+11
+334
 183
-415
+379
+dist2
+dist2
+"Uniform" "Normal"
+0
+
+CHOOSER
+11
+458
+184
+503
 dist3
 dist3
 "Uniform" "Normal"
@@ -978,6 +934,61 @@ PENS
 "Number" 1.0 0 -16777216 true "" ""
 "Largest" 1.0 0 -2674135 true "" ""
 ">xthr" 1.0 0 -15040220 true "" ""
+
+CHOOSER
+10
+90
+148
+135
+distf
+distf
+"Uniform" "Normal"
+0
+
+SLIDER
+10
+136
+182
+169
+meanf
+meanf
+0
+100
+50.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+10
+173
+182
+206
+sdf
+sdf
+0
+100
+50.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+196
+613
+368
+646
+move-fraction
+move-fraction
+0
+1
+0.2
+0.1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -1350,7 +1361,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.0.3
+NetLogo 6.0.2
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
