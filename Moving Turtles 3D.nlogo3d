@@ -1,18 +1,25 @@
-turtles-own [ cluster ]
+turtles-own [ cluster AA BB CC DD xx yy ]
 
 to setup
   clear-all
   setup-turtles
+  setup-plot
   reset-ticks
 end
 
 to setup-turtles
   create-turtles num-agents
   ask turtles [
-    setxyz random-xcor random-ycor random-zcor
+    set AA random 33
+    set BB random 33
+    set CC random 33
+    set DD random 33
+    set xx random-float 100
+    set yy random-float 100
+    setxyz AA + BB CC DD
     set cluster self
     set shape "dot"
-    set color white
+    set color who
     set size 1
   ]
   ; we generate links (undirected) between turtles. Based on erdos-renyi
@@ -29,6 +36,7 @@ end
 to go
   tick
   neighbours-interaction
+  update-plot
 end
 
 to neighbours-interaction
@@ -41,6 +49,7 @@ to neighbours-interaction
     let d max-distance-in-world
     set turtle-A self
     let old_cluster cluster
+    let Ch 0
     ifelse  (random-float 1) < similar-over-neighborhood
       [set turtle-B one-of min-n-of similar-to-choose-from other turtles [distance turtle-A]]
       [set turtle-B one-of link-neighbors]
@@ -53,23 +62,34 @@ to neighbours-interaction
       set P rev-prob-linear-from-max d max-distance-in-world
     if (P > 0 and P < 1) and random-float 1 < P [
       if d > 0 [
-        face turtle-B
-        fd d * move-fraction
+        let n random 4
+        ifelse n = 0 AND AA != [AA] of turtle-B
+          [set AA updated-item-value AA [AA] of turtle-B]
+          [ifelse n = 1 AND BB != [BB] of turtle-B
+            [set BB updated-item-value BB [BB] of turtle-B]
+            [ifelse n = 2 AND CC != [CC] of turtle-B
+              [set CC updated-item-value CC [CC] of turtle-B]
+              [if n = 3 AND DD != [DD] of turtle-B
+                [set DD updated-item-value DD [DD] of turtle-B]
+              ]
+            ]
+          ]
+        setxyz AA + BB CC DD
       ]
     ]
       set turtle-C one-of min-n-of 1 other turtles [distance turtle-A]
       ifelse [distance turtle-C] of turtle-A < 10 ^ -1
         [ set cluster [cluster] of turtle-C
+          set color [color] of turtle-C
         ]
         [ set cluster self
+          set color who
         ]
       let new_cluster cluster
       if new_cluster != old_cluster
       [let n_number count turtles with [cluster = new_cluster]
-       ;;let n_col one-of base-colors
        ask turtles with [cluster = new_cluster] [
         set size log (1 + n_number) 2
-        ;;set color n_col
        ]
        let o_number count turtles with [cluster = old_cluster]
        ask turtles with [cluster = old_cluster] [set size log (1 + o_number) 2]
@@ -85,12 +105,61 @@ end
 to-report max-distance-in-world
   report sqrt ( ( sqrt ( ( world-width / 2 )  ^ 2 + ( world-height / 2 ) ^ 2 ) ) ^ 2 + ( world-depth / 2 ) ^ 2 )
 end
+
+to-report updated-item-value [obs-val source-val]
+  ifelse obs-val < source-val
+  [report round ( ( obs-val + source-val ) / 2 )]
+  [report floor ( ( obs-val + source-val ) / 2 )]
+end
+
+to setup-plot
+  let i 0
+  set-current-plot "Location"
+  set-plot-x-range 0 100
+  set-plot-y-range 0 100
+  repeat num-agents [
+    set-plot-pen-color i
+    plotxy [xx] of turtle i [yy] of turtle i
+    set i i + 1
+  ]
+  set i 0
+  set-current-plot "1st AND 2nd Variable Traits"
+  set-plot-x-range 0 32
+  set-plot-y-range 0 32
+  repeat num-agents [
+    set-plot-pen-color i
+    plotxy [AA] of turtle i [BB] of turtle i
+    set i i + 1
+  ]
+end
+
+to update-plot
+  let i 0
+  set-current-plot "Location"
+  set-plot-x-range 0 100
+  set-plot-y-range 0 100
+  repeat num-agents [
+    set-plot-pen-color [color] of turtle i
+    plotxy [xx] of turtle i [yy] of turtle i
+    set i i + 1
+  ]
+  set i 0
+  set-current-plot "1st AND 2nd Variable Traits"
+  clear-plot
+  set-plot-x-range 0 32
+  set-plot-y-range 0 32
+  repeat num-agents [
+    set-plot-pen-color [color] of turtle i
+    plotxy [AA] of turtle i [BB] of turtle i
+    set i i + 1
+  ]
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 0
 0
-439
-460
+853
+438
 -1
 -1
 13.0
@@ -103,12 +172,12 @@ GRAPHICS-WINDOW
 1
 1
 1
--16
-16
--16
-16
--16
-16
+0
+64
+0
+32
+0
+32
 1
 1
 1
@@ -158,7 +227,7 @@ num-agents
 num-agents
 2
 1000
-244.0
+441.0
 1
 1
 NIL
@@ -173,7 +242,7 @@ neighbours-to-choose-from
 neighbours-to-choose-from
 1
 num-agents - 1
-10.0
+36.0
 1
 1
 NIL
@@ -210,34 +279,55 @@ NIL
 HORIZONTAL
 
 SLIDER
-29
-286
-201
-319
-move-fraction
-move-fraction
-0
-1
-0.2
-0.1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-27
-326
-221
-359
+25
+284
+219
+317
 similar-over-neighborhood
 similar-over-neighborhood
 0
 1
-1.0
+0.7
 0.05
 1
 NIL
 HORIZONTAL
+
+PLOT
+310
+17
+740
+329
+Location
+x
+y
+0.0
+100.0
+0.0
+100.0
+true
+false
+"" ""
+PENS
+"default" 1.0 2 -16777216 true "" ""
+
+PLOT
+306
+341
+742
+629
+1st AND 2nd Variable Traits
+a
+b
+0.0
+32.0
+0.0
+32.0
+true
+false
+"" ""
+PENS
+"default" 1.0 2 -16777216 true "" ""
 
 @#$#@#$#@
 ## WHAT IS IT?
