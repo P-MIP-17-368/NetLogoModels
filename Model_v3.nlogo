@@ -39,26 +39,14 @@ to setup-turtles
     set inactivity-gene (random-float 1 < prob-inactivity-gene)
     set ll false
     ifelse creator-gene
+      [set color green]
       [set color black]
-      [set color black]
+    if inactivity-gene
+    [set color red]
     set culture []
     set custom-location list random custom-location-scale random custom-location-scale
 
     set culture ( list ( rnd-culture-item distf meanf sdf )  ( rnd-culture-item dist1 mean1 sd1 ) ( rnd-culture-item dist2 mean2 sd2 ) ( rnd-culture-item dist3 mean3 sd3 ))
-
-   ; let i 6
-   ; repeat 6
-    ;  [ ifelse i >= 4
-    ;    [ if i = 6 [set culture fput ( rnd-culture-item dist3 mean3 sd3 ) culture ]
-    ;      if i = 5 [set culture fput ( rnd-culture-item dist2 mean2 sd2 ) culture ]
-     ;     if i = 4 [set culture fput ( rnd-culture-item dist1 mean1 sd1 ) culture ]
-     ;   ]
-     ;   [ ifelse i != 2
-    ;      [set culture  fput random 3 culture] ;3
-     ;     [set culture fput random 2 culture] ;2
-     ;   ]
-      ;  set i i - 1
-    ;  ]
     update-position-for-turtle
   ]
 end
@@ -133,41 +121,25 @@ to make-event
     ask one-of turtles with [creator-gene]
     [
       let ev self
-      let culture-Event []
-      let culture-B []
-      let turtle-B 0
-      let d []
-      set culture-Event culture
+      let ev-location custom-location
+      let culture-Event culture
+
       ask other turtles with [not inactivity-gene]
       [
         let P-similar 0
         let p-final 0
-        set culture-B culture
-        set turtle-B self
-        set P-similar similarity culture-Event culture-B
-        ifelse use-event-distance [
-          output-print2 "distance" distance ev
-          set p-final P-similar * ( rev-prob-linear-from-max (distance ev) max-distance-in-world )
-          output-print4 "p-final" p-final "P-similar:" P-similar
-        ][
-          set p-final P-similar
-        ]
+
+        set P-similar similarity culture-Event culture
+
+        set p-final P-similar * ( distance-degrade-event custom-location ev-location )
+        output-print4 "p-final" p-final "P-similar:" P-similar
+
         set p-final event-impact * p-final
         if (p-final > 0 and p-final < 1) and random-float 1 < p-final
         [
-         ;set d list-different-item-indexes culture-B culture-Event
-          if length d > 0
-          [
-            output-print2 "updating patch by event! old culture:" culture-B
-            let i one-of d
-          ;  set culture replace-item i culture updated-item-value (item i culture-B) (item i culture-Event)
-           ; output-print2 "updating patch by event! new culture:" culture
-          ]
-        ]
-    ]
-    ]
-
- ]
+          set culture new-culture culture culture-Event 1
+          update-position-for-turtle
+        ]]]]
 end
 
 
@@ -176,22 +148,31 @@ to-report similarity-wo-fixed [list-A list-B]
   report similarity (sublist list-A 1 l) (sublist list-B 1 l)
 end
 
+to-report distance-degrade-event [p-location event-location]
+  let r 0
+  if ( event-distance-impact = "None" )
+  [
+    set r 1
+  ]
+  if ( event-distance-impact = "Linear World Distance" )
+  [
+    set r  ( 1 -  ( ( custom-distance p-location event-location ) / (max-world-dist (list custom-location-scale custom-location-scale) ) ) )
+  ]
+  if ( event-distance-impact = "Darius based" )
+  [
+    set r ( 1 / ( ( 1 +  ( custom-distance p-location event-location )  ) ^ 2 ) )
+  ]
+  output-print1 (list "dg" p-location event-location r)
+  report r
+end
+
+
 to-report similarity [list-A list-B]
   let l length list-A
   report 1 - ( custom-distance list-A list-B )  / ( max-world-dist n-values l [100] )
 end
 
 
-
-
-
-to-report rev-prob-linear-from-max [val max-val]
-  report 1 - val / max-val
-end
-; calculare max posiible ditance in this world
-to-report max-distance-in-world
-  report sqrt ( world-width ^ 2 + world-height ^ 2 )
-end
 ; just helper to have less lines if we want check some value in output print
 to output-print4 [par1 par2 par3 par4]
   if verbose
@@ -204,7 +185,11 @@ to output-print2 [par1 par2]
   output-print par1
     output-print par2]
 end
-
+to output-print1 [par1]
+  if verbose [
+  output-print par1
+  ]
+end
 to-report calc-cluster
   find-clusters
   report num-cluster
@@ -276,11 +261,11 @@ to-report check-end?
        let culture-B []
        set culture-B culture
        set P similarity culture-A culture-B
-       ifelse use-event-distance [
-        set d P * ( rev-prob-linear-from-max (distance turtle-A) max-distance-in-world )
-       ] [
-        set d P
-       ]
+       ;ifelse use-event-distance [
+       ; set d P * ( rev-prob-linear-from-max (distance turtle-A) max-distance-in-world )
+       ;] [
+      ;  set d P
+       ;]
        if ( P != 0 and creator-gene = false ) or ( d * event-impact != 0 and ll = false ) or ( ( P != 0 or d * event-impact != 0 ) and ( creator-gene = true and ll = true ) ) [
         set end? false
         set stopped true
@@ -406,15 +391,15 @@ NIL
 HORIZONTAL
 
 SLIDER
-8
-585
-180
-618
+201
+462
+373
+495
 prob-creator-gene
 prob-creator-gene
 0
 1
-0.0
+0.15
 0.01
 1
 NIL
@@ -453,7 +438,7 @@ interaction-neighbours-per-tick
 interaction-neighbours-per-tick
 0
 100
-4.0
+0.0
 1
 1
 NIL
@@ -477,15 +462,15 @@ NIL
 1
 
 SLIDER
-7
-621
-179
-654
+200
+534
+372
+567
 prob-event
 prob-event
 0
 1
-0.0
+1.0
 0.01
 1
 NIL
@@ -513,7 +498,7 @@ SWITCH
 43
 verbose
 verbose
-1
+0
 1
 -1000
 
@@ -532,17 +517,6 @@ xthr
 NIL
 HORIZONTAL
 
-SWITCH
-440
-627
-603
-660
-use-event-distance
-use-event-distance
-1
-1
--1000
-
 TEXTBOX
 791
 619
@@ -554,15 +528,15 @@ NIL
 1
 
 SLIDER
-199
+198
 571
-371
+370
 604
 event-impact
 event-impact
 0
 1
-0.24
+0.09
 0.01
 1
 NIL
@@ -585,14 +559,14 @@ HORIZONTAL
 
 SLIDER
 200
-526
+498
 372
-559
+531
 prob-inactivity-gene
 prob-inactivity-gene
 0
 1
-0.01
+0.15
 0.01
 1
 NIL
@@ -667,7 +641,7 @@ mean3
 mean3
 0
 100
-59.0
+54.0
 1
 1
 NIL
@@ -757,7 +731,7 @@ similar-over-neighbourhood
 similar-over-neighbourhood
 0
 1
-0.14
+0.94
 0.01
 1
 NIL
@@ -772,7 +746,7 @@ custom-location-scale
 custom-location-scale
 0
 100
-10.0
+12.0
 1
 1
 NIL
@@ -954,7 +928,7 @@ meanf
 meanf
 0
 100
-50.0
+53.0
 1
 1
 NIL
@@ -976,10 +950,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-196
-613
-368
-646
+9
+616
+181
+649
 move-fraction
 move-fraction
 0
@@ -989,6 +963,16 @@ move-fraction
 1
 NIL
 HORIZONTAL
+
+CHOOSER
+199
+608
+368
+653
+event-distance-impact
+event-distance-impact
+"None" "Linear World Distance" "Darius based"
+2
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -1361,7 +1345,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.0.2
+NetLogo 6.0.3
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
