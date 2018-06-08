@@ -1,3 +1,5 @@
+;extensions [r csv]
+extensions [csv]
 turtles-own [culture creator-gene inactivity-gene cluster ll custom-location]
 globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-x color-list g-fixed]
 
@@ -330,6 +332,11 @@ to-report max-world-dist [l]
   ; param list with scale of each coordinate
   report (sqrt ( reduce + ( map [ i -> i ^ 2] l ) ) )
 end
+
+to export-csv
+  let l (length [culture] of one-of turtles)
+  csv:to-file "myfile.csv" [sublist culture 1 l] of turtles
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 213
@@ -498,7 +505,7 @@ SWITCH
 43
 verbose
 verbose
-0
+1
 1
 -1000
 
@@ -551,7 +558,7 @@ neighbours-to-choose-from
 neighbours-to-choose-from
 1
 10
-6.0
+2.0
 1
 1
 NIL
@@ -581,7 +588,7 @@ mean1
 mean1
 0
 100
-48.0
+32.0
 1
 1
 NIL
@@ -761,8 +768,8 @@ var1-x
 var1-x
 0
 1
-0.0
-0.1
+0.68
+0.01
 1
 NIL
 HORIZONTAL
@@ -777,7 +784,7 @@ var2-x
 0
 1
 1.0
-0.1
+0.01
 1
 NIL
 HORIZONTAL
@@ -792,7 +799,7 @@ var3-x
 0
 1
 0.0
-0.5
+0.01
 1
 NIL
 HORIZONTAL
@@ -807,7 +814,7 @@ var1-y
 0
 1
 0.0
-0.1
+0.01
 1
 NIL
 HORIZONTAL
@@ -822,7 +829,7 @@ var2-y
 0
 1
 0.0
-0.1
+0.01
 1
 NIL
 HORIZONTAL
@@ -837,7 +844,7 @@ var3-y
 0
 1
 1.0
-0.1
+0.01
 1
 NIL
 HORIZONTAL
@@ -867,7 +874,7 @@ CHOOSER
 dist1
 dist1
 "Uniform" "Normal"
-0
+1
 
 CHOOSER
 11
@@ -917,7 +924,7 @@ CHOOSER
 distf
 distf
 "Uniform" "Normal"
-0
+1
 
 SLIDER
 10
@@ -928,7 +935,7 @@ meanf
 meanf
 0
 100
-53.0
+54.0
 1
 1
 NIL
@@ -943,7 +950,7 @@ sdf
 sdf
 0
 100
-50.0
+20.0
 1
 1
 NIL
@@ -972,7 +979,24 @@ CHOOSER
 event-distance-impact
 event-distance-impact
 "None" "Linear World Distance" "Darius based"
-2
+1
+
+BUTTON
+1311
+524
+1403
+557
+NIL
+export-csv
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
