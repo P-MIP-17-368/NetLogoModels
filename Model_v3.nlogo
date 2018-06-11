@@ -160,9 +160,13 @@ to-report distance-degrade-event [p-location event-location]
   [
     set r  ( 1 -  ( ( custom-distance p-location event-location ) / (max-world-dist (list custom-location-scale custom-location-scale) ) ) )
   ]
-  if ( event-distance-impact = "Darius based" )
+  if ( event-distance-impact = "Distance squared" )
   [
     set r ( 1 / ( ( 1 +  ( custom-distance p-location event-location )  ) ^ 2 ) )
+  ]
+  if ( event-distance-impact = "Distance exponential" )
+  [
+    set r ( 1 / (  exp  ( custom-distance p-location event-location ) ) )
   ]
   output-print1 (list "dg" p-location event-location r)
   report r
@@ -299,6 +303,39 @@ to update-position-all
   [
     update-position-for-turtle
   ]
+end
+
+to update-possition-all2
+  if (display-dimensions = "1-2")
+  [
+    set-x-vars [1 0 0]
+    set-y-vars [0 1 0]
+  ]
+  if (display-dimensions = "1-3")
+  [
+    set-x-vars [1 0 0]
+    set-y-vars [0 0 1]
+  ]
+  if (display-dimensions = "2-3")
+  [
+    set-x-vars [0 1 0]
+    set-y-vars [0 0 1]
+  ]
+
+  update-position-all
+end
+
+to set-x-vars [l]
+  set var1-x item 0 l
+  set var2-x item 1 l
+  set var3-x item 2 l
+end
+
+
+to set-y-vars [l]
+  set var1-y item 0 l
+  set var2-y item 1 l
+  set var3-y item 2 l
 end
 
 to update-position-for-turtle
@@ -477,7 +514,7 @@ prob-event
 prob-event
 0
 1
-1.0
+0.98
 0.01
 1
 NIL
@@ -543,7 +580,7 @@ event-impact
 event-impact
 0
 1
-0.09
+0.99
 0.01
 1
 NIL
@@ -573,7 +610,7 @@ prob-inactivity-gene
 prob-inactivity-gene
 0
 1
-0.15
+0.11
 0.01
 1
 NIL
@@ -618,7 +655,7 @@ mean2
 mean2
 0
 100
-81.0
+80.0
 1
 1
 NIL
@@ -768,7 +805,7 @@ var1-x
 var1-x
 0
 1
-0.68
+1.0
 0.01
 1
 NIL
@@ -783,7 +820,7 @@ var2-x
 var2-x
 0
 1
-1.0
+0.0
 0.01
 1
 NIL
@@ -828,7 +865,7 @@ var2-y
 var2-y
 0
 1
-0.0
+1.0
 0.01
 1
 NIL
@@ -843,7 +880,7 @@ var3-y
 var3-y
 0
 1
-1.0
+0.0
 0.01
 1
 NIL
@@ -874,7 +911,7 @@ CHOOSER
 dist1
 dist1
 "Uniform" "Normal"
-1
+0
 
 CHOOSER
 11
@@ -924,7 +961,7 @@ CHOOSER
 distf
 distf
 "Uniform" "Normal"
-1
+0
 
 SLIDER
 10
@@ -978,16 +1015,43 @@ CHOOSER
 653
 event-distance-impact
 event-distance-impact
-"None" "Linear World Distance" "Darius based"
-1
+"None" "Linear World Distance" "Distance squared" "Distance exponential"
+3
 
 BUTTON
-1311
-524
-1403
-557
+1264
+568
+1356
+601
 NIL
 export-csv
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+CHOOSER
+1242
+421
+1380
+466
+display-dimensions
+display-dimensions
+"1-2" "1-3" "2-3"
+0
+
+BUTTON
+1244
+477
+1391
+510
+NIL
+update-possition-all2
 NIL
 1
 T
