@@ -10,9 +10,9 @@ to setup-turtles
   create-turtles num-agents
   ask turtles [
     setxyz random-xcor random-ycor random-zcor
-    set A1 xcor + random-float (60 - xcor)
-    set A2 ycor + random-float (60 - ycor)
-    set A3 zcor + random-float (60 - zcor)
+    set A1 55
+    set A2 55
+    set A3 55
     set D1 xcor / (A1 - xcor)
     set D2 ycor / (A2 - ycor)
     set D3 zcor / (A3 - zcor)
@@ -74,6 +74,19 @@ to make-event
     set xcor (A1 * D1) / (1 + D1)
     set ycor (A2 * D2) / (1 + D2)
     set zcor (A3 * D3) / (1 + D3)
+    let turtle-A self
+    let old_cluster cluster
+    let turtle-C one-of min-n-of 1 other turtles [distance turtle-A]
+    ifelse [distance turtle-C] of turtle-A < 10 ^ -1
+      [set cluster [cluster] of turtle-C]
+      [set cluster self]
+    let new_cluster cluster
+    if new_cluster != old_cluster
+    [let n_number count turtles with [cluster = new_cluster]
+    ask turtles with [cluster = new_cluster] [set size log (1 + n_number) 2]
+    let o_number count turtles with [cluster = old_cluster]
+    ask turtles with [cluster = old_cluster] [set size log (1 + o_number) 2]
+    ]
   ]
 end
 
@@ -212,7 +225,7 @@ similar-to-choose-from
 similar-to-choose-from
 0
 100
-11.0
+10.0
 1
 1
 NIL
@@ -227,37 +240,22 @@ interaction-turtles-per-tick
 interaction-turtles-per-tick
 0
 100
-12.0
+40.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-29
-286
-201
-319
-move-fraction
-move-fraction
-0
-1
-0.2
-0.1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-27
-326
-221
-359
+26
+281
+220
+314
 similar-over-neighborhood
 similar-over-neighborhood
 0
 1
-0.9
+1.0
 0.05
 1
 NIL
