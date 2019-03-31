@@ -262,41 +262,23 @@ NIL
 HORIZONTAL
 
 @#$#@#$#@
-## WHAT IS IT?
+EINAMOJO MODELIO LOGIKA
 
-(a general understanding of what the model is trying to show or explain)
+Kiekvieną iteraciją
 
-## HOW IT WORKS
+1) Įvyksta vienas iš 3 skirtingų įvykių (pagal apsibrėžtas tikimybes) ir kiekvienas agentas jame sudalyvauja arba nesudalyvauja (pagal savo dalyvavimo tikimybes p_high, p_pop, p_sport). Agentų kintamų požymių reikšmės atitinkamai atnaujinamos remiantis Str#2 (D1, D2 ir D3 yra atitinkamų indeksų Str#2 naudoti social capital development ratio (SCDR), o A1, A2, A3 yra agento maksimalios galimos kintamų požymių (SK) reikšmės; agento kintamų požymių (SK) reikšmės yra jo koordinatės erdvėje (x,y,z)).
 
-(what rules the agents use to create the overall behavior of the model)
+2) Agentai sąveikauja tarpusavyje ir keičiasi dalyvavimo įvykiuose tikimybėmis p_high, p_pop, p_sport. Sąveika vyksta pagal panašumą kintamų požymių (SK) erdvėje (artimi agentai sąveikauja su artimais) arba pagal kaimynystę (kiekvienas agentas turi tam tikrą fiksuotą kiekį ryšių su kitais agentais). Įvykus sąveikai tarp agento A ir agento B, atsitiktiniu būdu vienas iš jų perima kitam priklausančią vieną iš dalyvavimo tikimybių.
 
-## HOW TO USE IT
+-----------------------------
 
-(how to use the model, including a description of each of the items in the Interface tab)
+PASTABOS
 
-## THINGS TO NOTICE
-
-(suggested things for the user to notice while running the model)
-
-## THINGS TO TRY
-
-(suggested things for the user to try to do (move sliders, switches, etc.) with the model)
-
-## EXTENDING THE MODEL
-
-(suggested things to add or change in the Code tab to make the model more complicated, detailed, accurate, etc.)
-
-## NETLOGO FEATURES
-
-(interesting or unusual features of NetLogo that the model uses, particularly in the Code tab; or where workarounds were needed for missing features)
-
-## RELATED MODELS
-
-(models in the NetLogo Models Library and elsewhere which are of related interest)
-
-## CREDITS AND REFERENCES
-
-(a reference to the model's URL on the web if it has one, as well as any other necessary credits, citations, and links)
+- Šiuo metu kol kas dar nesame įsivedę 4 indeksų, todėl erdvė yra kubas;
+- A1, A2 ir A3 reikės, greičiausiai, modeliuoti kaip Str#2, t.y. pagal betą dėsnį (skirtingi agentai gali įgyti skirtingas maksimalias kintamų požymių (SK) reikšmes), bet iš tikro visai įdomu yra leisti visiems agentams įgyti vienodas A reikšmes ir pažiūrėti, sueis jie į vieną tašką ar ne.
+- Interfeise matomi kintamieji nėra vieninteliai - jų apstu pačiame kode (skaičiukai). Užduotis susigalvoti input'o logiką ir parašyti kodą jo nuskaitymui.
+- Klasteriavimas kol kas tik vizualus kaip anksčiau (šiaip klasteriavimą planuojama daryti išsieksportuotus duomenis apdorojant su R programa, tačiau yra įvairių Netlogo extensionų, su kuriais galbūt būtų galima pačiame Netloge visai patogiai klasteriuoti)
+- Reikėtų užvardinti 3D erdvės ašis.
 @#$#@#$#@
 default
 true
