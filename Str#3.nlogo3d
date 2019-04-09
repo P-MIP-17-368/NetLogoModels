@@ -1,4 +1,4 @@
-turtles-own [ cluster D1 D2 D3 A1 A2 A3 p_high p_pop p_sport ]
+turtles-own [ cluster D1 D2 D3 A1 A2 A3 p_high p_pop p_sport TP]
 extensions [Csv]
 globals [configlines]
 
@@ -9,21 +9,30 @@ to setup
   reset-ticks
 end
 
-to-report get-config [row elem]
-  report item elem item row configlines
+;;to-report get-config [row elem]
+;;  report item elem item row configlines
+;;end
+
+to-report get-config-named [row-name elem]
+  report item elem first filter [i ->  first i = row-name] configlines
 end
 
-to-report get-config-percent [row elem]
-  report ( item elem item row configlines ) / 100
+;;to-report get-config-percent [row elem]
+;;  report ( item elem item row configlines ) / 100
+;;end
+
+to-report get-config-percent-named [row-name elem]
+  report ( get-config-named row-name elem ) / 100
 end
+
 
 to setup-turtles
   create-turtles num-agents
   ask turtles [
     setxyz random-xcor random-ycor random-zcor
-    set A1 get-config 0 1
-    set A2 get-config 0 2
-    set A3 get-config 0 3
+    set A1 get-config-named "AMax" 1
+    set A2 get-config-named "AMax" 2
+    set A3 get-config-named "AMax" 3
     set D1 xcor / (A1 - xcor)
     set D2 ycor / (A2 - ycor)
     set D3 zcor / (A3 - zcor)
@@ -32,25 +41,28 @@ to setup-turtles
  ;   set color
     set size 1
     let w random-float 1
-    ifelse w < get-config-percent 1 1
+    ifelse w < get-config-percent-named "AgentTypes" 1
     [
-      set color get-config 2 1
-      set p_high  get-config-percent 4 1
-     set p_pop get-config-percent 4 2
-     set p_sport get-config-percent 4 3
+      set TP get-config-named "AgentTypeNames" 1
+      set color get-config-named "AgentColors" 1
+      set p_high  get-config-percent-named "HigherAgentPreferences" 1
+     set p_pop get-config-percent-named "HigherAgentPreferences" 2
+     set p_sport get-config-percent-named "HigherAgentPreferences" 3
     ]
-    [ifelse w >= get-config-percent 1 1 AND w < get-config-percent 1 2
+    [ifelse w >= get-config-percent-named "AgentTypes" 1 AND w < get-config-percent-named "AgentTypes" 2
       [
-        set color get-config 2 2
-        set p_high get-config-percent 5 1
-        set p_pop get-config-percent 5 2
-        set p_sport get-config-percent 5 3
+        set TP get-config-named "AgentTypeNames" 2
+        set color get-config-named "AgentColors" 2
+        set p_high get-config-percent-named "PopsAgentPreferences" 1
+        set p_pop get-config-percent-named "PopsAgentPreferences" 2
+        set p_sport get-config-percent-named "PopsAgentPreferences" 3
       ]
       [
-        set color get-config 2 3
-        set p_high get-config-percent 6 1
-        set p_high get-config-percent 6 2
-        set p_high get-config-percent 6 3]]
+        set TP get-config-named "AgentTypeNames" 3
+        set color get-config-named "AgentColors" 3
+        set p_high get-config-percent-named "PassiveAgentPreferences" 1
+        set p_high get-config-percent-named "PassiveAgentPreferences" 2
+        set p_high get-config-percent-named "PassiveAgentPreferences" 3]]
   ]
   ; we generate links (undirected) between turtles. Based on erdos-renyi
   repeat (floor (neighbours-to-choose-from * num-agents / 2)) [
@@ -74,9 +86,9 @@ to make-event
   let x2 0
   let x3 0
   let w random-float 1
-  ifelse w < get-config-percent 3 1
+  ifelse w < get-config-percent-named "EventTypeP" 1
     [set x1 1]
-    [ifelse w >= get-config-percent 3 2 AND w < get-config-percent 3 3
+    [ifelse w >= get-config-percent-named "EventTypeP" 2 AND w < get-config-percent-named "EventTypeP" 3
       [set x2 1]
       [set x3 1]]
   ask turtles [
@@ -87,9 +99,9 @@ to make-event
     if w < p_high [set y1 x1]
     if w < p_pop [set y2 x2]
     if w < p_sport [set y3 x3]
-    set D1 D1 * (1 + (get-config 7 1 + y1 * get-config 7 2 + y2 * get-config 7 3 + y3 * get-config 7 4 + random-normal 0 0.01) * 1)
-    set D2 D2 * (1 + (get-config 8 1 + y1 * get-config 8 2 + y2 * get-config 8 3 + y3 * get-config 8 4 + random-normal 0 0.01) * 1)
-    set D3 D3 * (1 + (get-config 9 1 + y1 * get-config 9 2 + y2 * get-config 9 3 + y3 * get-config 9 4 + random-normal 0 0.01) * 1)
+    set D1 D1 * (1 + (get-config-named "PR_w_D1" 1 + y1 * get-config-named "PR_w_D1" 2 + y2 * get-config-named "PR_w_D1" 3 + y3 * get-config-named "PR_w_D1" 4 + random-normal 0 0.01) * 1)
+    set D2 D2 * (1 + (get-config-named "SNS_w_D2" 1 + y1 * get-config-named "SNS_w_D2" 2 + y2 * get-config-named "SNS_w_D2" 3 + y3 * get-config-named "SNS_w_D2" 4 + random-normal 0 0.01) * 1)
+    set D3 D3 * (1 + (get-config-named "CE_w_D3" 1 + y1 * get-config-named "CE_w_D3" 2 + y2 * get-config-named "CE_w_D3" 3 + y3 * get-config-named "CE_w_D3" 4 + random-normal 0 0.01) * 1)
     set xcor (A1 * D1) / (1 + D1)
     set ycor (A2 * D2) / (1 + D2)
     set zcor (A3 * D3) / (1 + D3)
@@ -259,7 +271,7 @@ interaction-turtles-per-tick
 interaction-turtles-per-tick
 0
 100
-40.0
+26.0
 1
 1
 NIL
@@ -286,10 +298,127 @@ INPUTBOX
 606
 358
 config
-AMax,55,55,55\nAgentTypes,35,39,26\nAgentColors,105,9.9,15\nEvents,34,33,33\nHigherAgentPreferences,67,57,42\nPopularAgentPreferences,57,73,44\nPassiveAgentPreferences,12,12,8\nPR w D1,-0.032,0.2,0.26,0.18\nSNS w D2,-0.009,0.039,0.11,0.047\nCE w D3,-0.003,0.014,0.012,0.039\nTCP w not used,-0.024,0.15,0.18,0.14
+AMax,55,55,55\nAgentTypes,35,39,26\nAgentTypeNames,high,pop,passive\nAgentColors,105,65,15\nEventTypeP,34,33,33\nHigherAgentPreferences,67,57,42\nPopsAgentPreferences,57,73,44\nPassiveAgentPreferences,12,12,8\nPR_w_D1,-0.012,0.05,0.04,0.03\nSNS_w_D2,-0.009,0.039,0.11,0.047\nCE_w_D3,-0.003,0.014,0.012,0.039\nTCP_w_NotUsed,-0.024,0.15,0.18,0.14
 1
 1
 String
+
+PLOT
+937
+111
+1137
+261
+PE distribution
+NIL
+NIL
+0.0
+100.0
+0.0
+100.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "histogram [xcor] of turtles"
+
+PLOT
+936
+281
+1136
+431
+SNS distribution
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "histogram [ycor] of turtles"
+
+PLOT
+936
+490
+1136
+640
+CE distribution
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "histogram [zcor] of turtles"
+
+PLOT
+1192
+114
+1392
+264
+PE
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"all" 1.0 0 -16777216 true "" "plot mean [xcor] of turtles"
+"high" 1.0 0 -13345367 true "" "plot mean [xcor] of turtles with [TP = \"high\"]"
+"pop" 1.0 0 -2674135 true "" "plot mean [xcor] of turtles with [TP = \"pop\"]"
+"passive" 1.0 0 -13840069 true "" "plot mean [xcor] of turtles with [TP = \"passive\"]"
+
+PLOT
+1192
+293
+1392
+443
+SNS
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"all" 1.0 0 -16777216 true "" "plot mean [ycor] of turtles"
+"high" 1.0 0 -13345367 true "" "plot mean [ycor] of turtles with [TP = \"high\"]"
+"pop" 1.0 0 -2674135 true "" "plot mean [ycor] of turtles with [TP = \"pop\"]"
+"passive" 1.0 0 -13840069 true "" "plot mean [ycor] of turtles with [TP = \"passive\"]"
+
+PLOT
+1214
+497
+1414
+647
+CE
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"all" 1.0 0 -16777216 true "" "plot mean [zcor] of turtles"
+"high" 1.0 0 -13345367 true "" "plot mean [zcor] of turtles with [TP = \"high\"]"
+"pop" 1.0 0 -2674135 true "" "plot mean [zcor] of turtles with [TP = \"pop\"]"
+"passive" 1.0 0 -13840069 true "" "plot mean [zcor] of turtles with [TP = \"passive\"]"
 
 @#$#@#$#@
 EINAMOJO MODELIO LOGIKA
