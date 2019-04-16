@@ -78,7 +78,7 @@ end
 to go
   tick
   make-event
-  neighbours-interaction
+  if peer-interaction [  neighbours-interaction ]
 end
 
 to make-event
@@ -99,9 +99,9 @@ to make-event
     if w < p_high [set y1 x1]
     if w < p_pop [set y2 x2]
     if w < p_sport [set y3 x3]
-    set D1 D1 * (1 + (get-config-named "PR_w_D1" 1 + y1 * get-config-named "PR_w_D1" 2 + y2 * get-config-named "PR_w_D1" 3 + y3 * get-config-named "PR_w_D1" 4 + random-normal 0 0.01) * 1)
-    set D2 D2 * (1 + (get-config-named "SNS_w_D2" 1 + y1 * get-config-named "SNS_w_D2" 2 + y2 * get-config-named "SNS_w_D2" 3 + y3 * get-config-named "SNS_w_D2" 4 + random-normal 0 0.01) * 1)
-    set D3 D3 * (1 + (get-config-named "CE_w_D3" 1 + y1 * get-config-named "CE_w_D3" 2 + y2 * get-config-named "CE_w_D3" 3 + y3 * get-config-named "CE_w_D3" 4 + random-normal 0 0.01) * 1)
+    set D1 D1 * (1 + (get-config-named "PR_w_D1" 1 + y1 * get-config-named "PR_w_D1" 2 + y2 * get-config-named "PR_w_D1" 3 + y3 * get-config-named "PR_w_D1" 4 + get-noise) * 1)
+    set D2 D2 * (1 + (get-config-named "SNS_w_D2" 1 + y1 * get-config-named "SNS_w_D2" 2 + y2 * get-config-named "SNS_w_D2" 3 + y3 * get-config-named "SNS_w_D2" 4 + get-noise) * 1)
+    set D3 D3 * (1 + (get-config-named "CE_w_D3" 1 + y1 * get-config-named "CE_w_D3" 2 + y2 * get-config-named "CE_w_D3" 3 + y3 * get-config-named "CE_w_D3" 4 + get-noise) * 1)
     set xcor (A1 * D1) / (1 + D1)
     set ycor (A2 * D2) / (1 + D2)
     set zcor (A3 * D3) / (1 + D3)
@@ -119,6 +119,12 @@ to make-event
     ask turtles with [cluster = old_cluster] [set size log (1 + o_number) 2]
     ]
   ]
+end
+
+to-report get-noise
+  let res  0
+  if noise-deviation > 0 [set res random-normal 0 noise-deviation]
+  report res
 end
 
 to neighbours-interaction
@@ -264,7 +270,7 @@ neighbours-to-choose-from
 neighbours-to-choose-from
 1
 num-agents - 1
-79.0
+19.0
 1
 1
 NIL
@@ -294,7 +300,7 @@ interaction-turtles-per-tick
 interaction-turtles-per-tick
 0
 100
-21.0
+11.0
 1
 1
 NIL
@@ -309,7 +315,7 @@ similar-over-neighborhood
 similar-over-neighborhood
 0
 1
-0.7
+0.25
 0.05
 1
 NIL
@@ -321,21 +327,21 @@ INPUTBOX
 606
 358
 config
-AMax,55,55,55\nAgentTypes,35,39,26\nAgentTypeNames,high,pop,passive\nAgentColors,105,65,15\nEventTypeP,34,33,33\nHigherAgentPreferences,67,57,42\nPopsAgentPreferences,57,73,44\nPassiveAgentPreferences,12,12,8\nPR_w_D1,-0.012,0.05,0.04,0.03\nSNS_w_D2,-0.009,0.039,0.11,0.047\nCE_w_D3,-0.003,0.014,0.012,0.039\nTCP_w_NotUsed,-0.024,0.15,0.18,0.14
+AMax,55,55,55\nAgentTypes,35,74,100\nAgentTypeNames,high,pop,passive\nAgentColors,105,15,65\nEventTypeP,34,33,33\nHigherAgentPreferences,67,57,42\nPopsAgentPreferences,57,73,44\nPassiveAgentPreferences,12,12,8\nPR_w_D1,-0.012,0.05,0.04,0.03\nSNS_w_D2,-0.009,0.039,0.11,0.047\nCE_w_D3,-0.003,0.014,0.012,0.039\nTCP_w_NotUsed,-0.024,0.15,0.18,0.14
 1
 1
 String
 
 PLOT
-937
-111
-1137
-261
+653
+34
+1008
+254
 PE distribution
 NIL
 NIL
 0.0
-100.0
+70.0
 0.0
 100.0
 true
@@ -343,48 +349,57 @@ false
 "" ""
 PENS
 "default" 1.0 0 -16777216 true "" "histogram [xcor] of turtles"
+"high" 1.0 0 -13345367 true "" "histogram [xcor] of turtles with [TP = \"high\"]"
+"pop" 1.0 0 -2674135 true "" "histogram [xcor] of turtles with [TP = \"pop\"]"
+"pen-3" 1.0 0 -13840069 true "" "histogram [xcor] of turtles with [TP = \"passive\"]"
 
 PLOT
-936
-281
-1136
-431
+652
+267
+1008
+481
 SNS distribution
 NIL
 NIL
 0.0
-10.0
+70.0
 0.0
-10.0
+100.0
 true
 false
 "" ""
 PENS
 "default" 1.0 0 -16777216 true "" "histogram [ycor] of turtles"
+"pen-1" 1.0 0 -13345367 true "" "histogram [ycor] of turtles with [TP = \"high\"]"
+"pen-2" 1.0 0 -2674135 true "" "histogram [ycor] of turtles with [TP = \"pop\"]"
+"pen-3" 1.0 0 -13840069 true "" "histogram [ycor] of turtles with [TP = \"passive\"]"
 
 PLOT
-936
-490
-1136
-640
+653
+489
+1010
+712
 CE distribution
 NIL
 NIL
 0.0
-10.0
+70.0
 0.0
-10.0
+100.0
 true
 false
 "" ""
 PENS
 "default" 1.0 0 -16777216 true "" "histogram [zcor] of turtles"
+"pen-1" 1.0 0 -13345367 true "" "histogram [zcor] of turtles with [TP = \"high\"]"
+"pen-2" 1.0 0 -2674135 true "" "histogram [zcor] of turtles with [TP = \"pop\"]"
+"pen-3" 1.0 0 -13840069 true "" "histogram [zcor] of turtles with [TP = \"passive\"]"
 
 PLOT
-1192
-114
-1392
-264
+1043
+82
+1243
+232
 PE
 NIL
 NIL
@@ -402,10 +417,10 @@ PENS
 "passive" 1.0 0 -13840069 true "" "plot mean [xcor] of turtles with [TP = \"passive\"]"
 
 PLOT
-1192
-293
-1392
-443
+1037
+292
+1237
+442
 SNS
 NIL
 NIL
@@ -423,10 +438,10 @@ PENS
 "passive" 1.0 0 -13840069 true "" "plot mean [ycor] of turtles with [TP = \"passive\"]"
 
 PLOT
-1214
-497
-1414
-647
+1049
+519
+1249
+669
 CE
 NIL
 NIL
@@ -457,6 +472,92 @@ move-fraction
 1
 NIL
 HORIZONTAL
+
+SWITCH
+50
+478
+194
+511
+peer-interaction
+peer-interaction
+0
+1
+-1000
+
+SLIDER
+134
+584
+306
+617
+noise-deviation
+noise-deviation
+0
+0.5
+0.0
+0.01
+1
+NIL
+HORIZONTAL
+
+PLOT
+1299
+84
+1499
+234
+high preferences
+NIL
+NIL
+0.0
+1.0
+0.0
+1.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -13345367 true "" "plot mean [p_high] of turtles with [TP = \"high\"]"
+"pen-1" 1.0 0 -1184463 true "" "plot mean [p_sport] of turtles with [TP = \"high\"]"
+"pen-2" 1.0 0 -2674135 true "" "plot mean [p_pop] of turtles with [TP = \"high\"]"
+
+PLOT
+1300
+292
+1500
+442
+pop preferences
+NIL
+NIL
+0.0
+10.0
+0.0
+1.0
+true
+false
+"" ""
+PENS
+"pen-0" 1.0 0 -13345367 true "" "plot mean [p_high] of turtles with [TP = \"pop\"]"
+"pen-1" 1.0 0 -2674135 true "" "plot mean [p_sport] of turtles with [TP = \"pop\"]"
+"pen-2" 1.0 0 -1184463 true "" "plot mean [p_pop] of turtles with [TP = \"pop\"]"
+
+PLOT
+1353
+523
+1553
+673
+passive preferences
+NIL
+NIL
+0.0
+10.0
+0.0
+1.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -13345367 true "" "plot mean [p_high] of turtles with [TP = \"passive\"]"
+"pen-1" 1.0 0 -2674135 true "" "plot mean [p_sport] of turtles with [TP = \"passive\"]"
+"pen-2" 1.0 0 -1184463 true "" "plot mean [p_pop] of turtles with [TP = \"passive\"]"
 
 @#$#@#$#@
 EINAMOJO MODELIO LOGIKA
