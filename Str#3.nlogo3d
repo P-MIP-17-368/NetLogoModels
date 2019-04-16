@@ -249,7 +249,7 @@ num-agents
 num-agents
 2
 1000
-110.0
+288.0
 1
 1
 NIL
@@ -264,7 +264,7 @@ neighbours-to-choose-from
 neighbours-to-choose-from
 1
 num-agents - 1
-10.0
+79.0
 1
 1
 NIL
@@ -279,7 +279,7 @@ similar-to-choose-from
 similar-to-choose-from
 0
 100
-10.0
+14.0
 1
 1
 NIL
@@ -294,7 +294,7 @@ interaction-turtles-per-tick
 interaction-turtles-per-tick
 0
 100
-26.0
+21.0
 1
 1
 NIL
@@ -309,7 +309,7 @@ similar-over-neighborhood
 similar-over-neighborhood
 0
 1
-1.0
+0.7
 0.05
 1
 NIL
@@ -442,6 +442,21 @@ PENS
 "high" 1.0 0 -13345367 true "" "plot mean [zcor] of turtles with [TP = \"high\"]"
 "pop" 1.0 0 -2674135 true "" "plot mean [zcor] of turtles with [TP = \"pop\"]"
 "passive" 1.0 0 -13840069 true "" "plot mean [zcor] of turtles with [TP = \"passive\"]"
+
+SLIDER
+52
+365
+224
+398
+move-fraction
+move-fraction
+0
+1
+0.2
+0.1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 EINAMOJO MODELIO LOGIKA
@@ -781,7 +796,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 3D 6.0.2
+NetLogo 3D 6.0.4
 @#$#@#$#@
 need-to-manually-make-preview-for-this-model
 @#$#@#$#@
