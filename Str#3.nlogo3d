@@ -38,7 +38,7 @@ to setup-turtles
     set D3 zcor / (A3 - zcor)
     set cluster self
     set shape "dot"
- ;   set color
+    ;set color white
     set size 1
     let w random-float 1
     ifelse w < get-config-percent-named "AgentTypes" 1
@@ -134,13 +134,36 @@ to neighbours-interaction
     [
       ask  turtle-B
       [
-        let w random 2
-        ifelse w = 0
+        ifelse random 2 = 0
+        [
+          let w random 3
+          ifelse w = 0
           [set p_high [p_high] of turtle-A]
           [ifelse w = 1
             [set p_pop [p_pop] of turtle-A]
             [set p_sport [p_sport] of turtle-A]
           ]
+        ]
+        [
+          let d distance turtle-A
+          if (xcor + ycor + zcor) < ([xcor] of turtle-A + [ycor] of turtle-A + [zcor] of turtle-A) [
+            face turtle-A
+            fd d * move-fraction
+            let old_cluster cluster
+            let turtle-C one-of min-n-of 1 other turtles [distance turtle-B]
+            ifelse [distance turtle-C] of turtle-B < 10 ^ -1
+            [set cluster [cluster] of turtle-C]
+            [set cluster self]
+            let new_cluster cluster
+            if new_cluster != old_cluster
+            [
+              let n_number count turtles with [cluster = new_cluster]
+              ask turtles with [cluster = new_cluster] [set size log (1 + n_number) 2]
+              let o_number count turtles with [cluster = old_cluster]
+              ask turtles with [cluster = old_cluster] [set size log (1 + o_number) 2]
+            ]
+          ]
+        ]
       ]
     ]
   ]
@@ -427,7 +450,23 @@ Kiekvieną iteraciją
 
 1) Įvyksta vienas iš 3 skirtingų įvykių (pagal apsibrėžtas tikimybes) ir kiekvienas agentas jame sudalyvauja arba nesudalyvauja (pagal savo dalyvavimo tikimybes p_high, p_pop, p_sport). Agentų kintamų požymių reikšmės atitinkamai atnaujinamos remiantis Str#2 (D1, D2 ir D3 yra atitinkamų indeksų Str#2 naudoti social capital development ratio (SCDR), o A1, A2, A3 yra agento maksimalios galimos kintamų požymių (SK) reikšmės; agento kintamų požymių (SK) reikšmės yra jo koordinatės erdvėje (x,y,z)).
 
-2) Agentai sąveikauja tarpusavyje ir keičiasi dalyvavimo įvykiuose tikimybėmis p_high, p_pop, p_sport. Sąveika vyksta pagal panašumą kintamų požymių (SK) erdvėje (artimi agentai sąveikauja su artimais) arba pagal kaimynystę (kiekvienas agentas turi tam tikrą fiksuotą kiekį ryšių su kitais agentais). Įvykus sąveikai tarp agento A ir agento B, atsitiktiniu būdu vienas iš jų perima kitam priklausančią vieną iš dalyvavimo tikimybių.
+2) Agentai sąveikauja tarpusavyje ir atsitiktiniu būdu keičiasi dalyvavimo įvykiuose tikimybėmis arba kintamų (SK) požymių reikšmėmis. Sąveika vyksta pagal panašumą kintamų požymių (SK) erdvėje (agentas sąveikauja su vienu atsitiktiniu agentu iš nustatyto skaičiaus jam artimiausių agentų) arba pagal kaimynystę (kiekvienas agentas turi tam tikrą fiksuotą kiekį ryšių su kitais agentais). Jeigu tarp dviejų agentų įvykus sąveikai keičiamasi dalyvavimo tikimybėmis, tai atsitiktiniu būdu vienas iš jų perima kitam priklausančią vieną iš dalyvavimo tikimybių; jeigu keičiamasi kintamų (SK) požymių reikšmėmis, tai mažesnę suminę reikšmę turintis agentas priartėja prie turinčio didesnę suminę reikšmę.
+
+PARAMETRAI
+
+num-agents - agentų skaičius
+neighbors-to-choose-from - parametras, nuo kurio priklauso, kiek bus sukurta fikstuotų sąryšių tarp agentų
+similar-to-choose-from - besirenkančiam agentui artimiausių agentų skaičius, iš kurių besirenkantis agentas renkasi vieną, jeigu sąveikaujama pagal panašumą
+interaction-turtles-per-tick - skaičius agentų, kurie per vieną iteraciją renkasi sau agentą sąveikai
+similar-over-neighborhoud - tikimybė, kad sąveika tarp agentų vyks pagal panašumą kintamų (SK) požymių erdvėje
+move-fraction - atstumo tarp agentų dalis, per kurią vienas agentas priartėja prie kito, jeigu keičiamasi kintamų (SK) požymių reikšmėmis
+
+AMax - agento trijų kintamų (SK) požymių maksimalios galimos reikšmės
+AgentTypes - skirtingo tipo agentų sugeneravimo tikimybės
+AgentsColors - skirtingo tipo agentų spalvos
+Events - skirtingų įvykių pasirodymo tikimybės
+Higher/Popular/PassiveAgentsPreferences - atitinkamų tipų agentų dalyvavimo įvykiuose tikimybės
+PR w D1, SNS w D2, CE w D3 - lygčių, pagal kurias apskaičiuojami rodikliai D, koeficientai
 
 -----------------------------
 
@@ -435,8 +474,6 @@ PASTABOS
 
 - Šiuo metu kol kas dar nesame įsivedę 4 indeksų, todėl erdvė yra kubas;
 - A1, A2 ir A3 reikės, greičiausiai, modeliuoti kaip Str#2, t.y. pagal betą dėsnį (skirtingi agentai gali įgyti skirtingas maksimalias kintamų požymių (SK) reikšmes), bet iš tikro visai įdomu yra leisti visiems agentams įgyti vienodas A reikšmes ir pažiūrėti, sueis jie į vieną tašką ar ne.
-- Interfeise matomi kintamieji nėra vieninteliai - jų apstu pačiame kode (skaičiukai). Užduotis susigalvoti input'o logiką ir parašyti kodą jo nuskaitymui.
-- Klasteriavimas kol kas tik vizualus kaip anksčiau (šiaip klasteriavimą planuojama daryti išsieksportuotus duomenis apdorojant su R programa, tačiau yra įvairių Netlogo extensionų, su kuriais galbūt būtų galima pačiame Netloge visai patogiai klasteriuoti)
 - Reikėtų užvardinti 3D erdvės ašis.
 @#$#@#$#@
 default
@@ -744,7 +781,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 3D 6.0.4
+NetLogo 3D 6.0.2
 @#$#@#$#@
 need-to-manually-make-preview-for-this-model
 @#$#@#$#@
