@@ -88,7 +88,7 @@ to make-event
   let w random-float 1
   ifelse w < get-config-percent-named "EventTypeP" 1
     [set x1 1]
-    [ifelse w >= get-config-percent-named "EventTypeP" 2 AND w < get-config-percent-named "EventTypeP" 3
+    [ifelse w >= ( get-config-percent-named "EventTypeP" 1 + get-config-percent-named "EventTypeP" 2 ) AND w < 1
       [set x2 1]
       [set x3 1]]
   ask turtles [
@@ -327,7 +327,7 @@ INPUTBOX
 606
 358
 config
-AMax,55,55,55\nAgentTypes,35,74,100\nAgentTypeNames,high,pop,passive\nAgentColors,105,15,65\nEventTypeP,34,33,33\nHigherAgentPreferences,67,57,42\nPopsAgentPreferences,57,73,44\nPassiveAgentPreferences,12,12,8\nPR_w_D1,-0.012,0.05,0.04,0.03\nSNS_w_D2,-0.009,0.039,0.11,0.047\nCE_w_D3,-0.003,0.014,0.012,0.039\nTCP_w_NotUsed,-0.024,0.15,0.18,0.14
+AMax,55,55,55\nAgentTypes,35,74,100\nAgentTypeNames,high,pop,passive\nAgentColors,105,15,65\nEventTypeP,15,45\nHigherAgentPreferences,67,57,42\nPopsAgentPreferences,57,73,44\nPassiveAgentPreferences,12,12,8\nPR_w_D1,-0.012,0.05,0.04,0.03\nSNS_w_D2,-0.009,0.039,0.11,0.047\nCE_w_D3,-0.003,0.014,0.012,0.039\nTCP_w_NotUsed,-0.024,0.15,0.18,0.14
 1
 1
 String
@@ -493,7 +493,7 @@ noise-deviation
 noise-deviation
 0
 0.5
-0.0
+0.01
 0.01
 1
 NIL

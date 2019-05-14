@@ -1,6 +1,6 @@
 ;extensions [r csv]
 extensions [csv]
-turtles-own [culture creator-gene inactivity-gene cluster ll custom-location]
+turtles-own [culture creator-gene inactivity-gene cluster ll custom-location soc-capital-inner ]
 globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-x color-list g-fixed]
 
 ;ask turtle 29 [ask max-n-of neighbours-to-choose-from other turtles [similarity [culture] of myself culture] [set color green ]]
@@ -26,6 +26,7 @@ to go
  ;       [if ticks mod ( sample-interval * multiplier-for-stopping ) = 0 [if check-end? [stop]]]
  ;     ]
  ; ]
+  if color-cap [set-color-on-cap]
 end
 
 to setup-patches
@@ -34,23 +35,43 @@ end
 
 to setup-turtles
   create-turtles num-agents
+
   ask turtles [
    ; setxy random-xcor random-ycor
     set shape "dot"
     set creator-gene (random-float 1 < prob-creator-gene)
     set inactivity-gene (random-float 1 < prob-inactivity-gene)
     set ll false
-    ifelse creator-gene
-      [set color green]
-      [set color black]
-    if inactivity-gene
-    [set color red]
+
+  ;  set soc-capital-inner soc-capital-inner-init
+    set soc-capital-inner (random-float 2) - 1
     set culture []
     set custom-location list random custom-location-scale random custom-location-scale
 
     set culture ( list ( rnd-culture-item distf meanf sdf )  ( rnd-culture-item dist1 mean1 sd1 ) ( rnd-culture-item dist2 mean2 sd2 ) ( rnd-culture-item dist3 mean3 sd3 ))
     update-position-for-turtle
   ]
+  reset-colors
+end
+
+to reset-colors
+  ask turtles [
+        ifelse creator-gene
+      [set color green]
+      [set color black]
+    if inactivity-gene
+    [set color red]
+  ]
+end
+to set-color-on-cap
+ask turtles
+  [
+    let s sigmoid soc-capital-inner
+    set color p-to-color5 s
+  ]
+end
+to-report p-to-color5 [p]
+  report ( ( round ( p * 10 ) * 10)  + 5 )
 end
 
 to-report rnd-culture-item [dist m sd ]
@@ -82,13 +103,13 @@ to peers-interaction
     set turtle-A self
     ; selecting one of neighbours-to-choose-from closest turtles to him without himself
     ifelse random-float 1 < similar-over-neighbourhood
-    [
-      let peers max-n-of neighbours-to-choose-from other turtles [similarity culture-A culture]
+    [ ;similar
+      let peers max-n-of ceiling ( neighbours-to-choose-from * sigmoid soc-capital-inner ) other turtles [similarity culture-A culture]
       set turtle-B one-of peers
       ;ask peers [set color green]
     ]
-    [
-      let peers min-n-of neighbours-to-choose-from other turtles  [custom-distance custom-location location-A ]
+    [;neighbours
+      let peers min-n-of ceiling ( neighbours-to-choose-from * sigmoid soc-capital-inner ) other turtles  [custom-distance custom-location location-A ]
       set turtle-B one-of peers
      ; ask peers [set color yellow]
     ]
@@ -97,12 +118,18 @@ to peers-interaction
       set culture-B culture
     ]
     ;output-print4 "selected cultureA" culture-A "selected culture B" culture-B
-    set P similarity culture-A culture-B
+    set P ( similarity culture-A culture-B ) * sigmoid soc-capital-inner
     ;output-print2 "similarity between cultures" P
-    if (P > 0 and P < 1) and random-float 1 < P [
+    ifelse (P > 0 and P < 1) and random-float 1 < P [
       set culture new-culture culture-A culture-B 1
       update-position-for-turtle
+      set soc-capital-inner  soc-capital-inner + soc-cap-increment
+      ask turtle-B [set soc-capital-inner  soc-capital-inner + soc-cap-increment]
+    ] [
+      set soc-capital-inner  soc-capital-inner - soc-cap-increment
+      ask turtle-B [set soc-capital-inner  soc-capital-inner - soc-cap-increment]
     ]
+
   ]
 end
 
@@ -133,7 +160,7 @@ to make-event
 
         set P-similar similarity culture-Event culture
 
-        set p-final P-similar * ( distance-degrade-event custom-location ev-location )
+        set p-final P-similar * ( distance-degrade-event custom-location ev-location ) * ( sigmoid soc-capital-inner )
         output-print4 "p-final" p-final "P-similar:" P-similar
 
         set p-final event-impact * p-final
@@ -374,6 +401,10 @@ to export-csv
   let l (length [culture] of one-of turtles)
   csv:to-file "myfile.csv" [sublist culture 1 l] of turtles
 end
+
+to-report sigmoid [x]
+  report 1 / (1 + exp ( - x) )
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 213
@@ -443,7 +474,7 @@ prob-creator-gene
 prob-creator-gene
 0
 1
-0.15
+0.18
 0.01
 1
 NIL
@@ -482,7 +513,7 @@ interaction-neighbours-per-tick
 interaction-neighbours-per-tick
 0
 100
-0.0
+8.0
 1
 1
 NIL
@@ -514,7 +545,7 @@ prob-event
 prob-event
 0
 1
-0.98
+0.0
 0.01
 1
 NIL
@@ -580,7 +611,7 @@ event-impact
 event-impact
 0
 1
-0.99
+0.22
 0.01
 1
 NIL
@@ -594,8 +625,8 @@ SLIDER
 neighbours-to-choose-from
 neighbours-to-choose-from
 1
-10
-2.0
+100
+21.0
 1
 1
 NIL
@@ -610,7 +641,7 @@ prob-inactivity-gene
 prob-inactivity-gene
 0
 1
-0.11
+0.0
 0.01
 1
 NIL
@@ -625,7 +656,7 @@ mean1
 mean1
 0
 100
-32.0
+35.0
 1
 1
 NIL
@@ -749,8 +780,8 @@ HORIZONTAL
 PLOT
 657
 272
-1225
-655
+1129
+537
 plot traits
 NIL
 NIL
@@ -775,7 +806,7 @@ similar-over-neighbourhood
 similar-over-neighbourhood
 0
 1
-0.94
+1.0
 0.01
 1
 NIL
@@ -805,7 +836,7 @@ var1-x
 var1-x
 0
 1
-1.0
+0.0
 0.01
 1
 NIL
@@ -820,7 +851,7 @@ var2-x
 var2-x
 0
 1
-0.0
+1.0
 0.01
 1
 NIL
@@ -865,7 +896,7 @@ var2-y
 var2-y
 0
 1
-1.0
+0.0
 0.01
 1
 NIL
@@ -880,7 +911,7 @@ var3-y
 var3-y
 0
 1
-0.0
+1.0
 0.01
 1
 NIL
@@ -1043,7 +1074,7 @@ CHOOSER
 display-dimensions
 display-dimensions
 "1-2" "1-3" "2-3"
-0
+2
 
 BUTTON
 1244
@@ -1061,6 +1092,117 @@ NIL
 NIL
 NIL
 1
+
+SLIDER
+57
+683
+229
+716
+soc-cap-increment
+soc-cap-increment
+0
+1
+0.1
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+90
+736
+262
+769
+soc-capital-inner-init
+soc-capital-inner-init
+-5
+5
+0.5
+0.5
+1
+NIL
+HORIZONTAL
+
+PLOT
+1287
+631
+1733
+836
+plot 1
+NIL
+NIL
+-20.0
+20.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "histogram [soc-capital-inner] of turtles"
+
+BUTTON
+396
+707
+493
+740
+NIL
+reset-colors\n
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+530
+715
+653
+748
+NIL
+set-color-on-cap
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+PLOT
+693
+583
+893
+733
+plot 2
+NIL
+NIL
+0.0
+10.0
+0.0
+1.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot mean [sigmoid soc-capital-inner] of turtles"
+
+SWITCH
+396
+765
+502
+798
+color-cap
+color-cap
+0
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -1433,7 +1575,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.0.3
+NetLogo 6.0.4
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
