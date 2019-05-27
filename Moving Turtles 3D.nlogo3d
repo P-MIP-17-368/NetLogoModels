@@ -35,6 +35,9 @@ end
 
 to go
   tick
+
+  if ( ticks mod 100 ) = 1 and export-2-png
+  [export-view (word ticks ".png")]
   neighbours-interaction
   update-plot
 end
@@ -287,7 +290,7 @@ similar-over-neighborhood
 similar-over-neighborhood
 0
 1
-0.7
+1.0
 0.05
 1
 NIL
@@ -328,6 +331,17 @@ false
 "" ""
 PENS
 "default" 1.0 2 -16777216 true "" ""
+
+SWITCH
+817
+110
+946
+143
+export-2-png
+export-2-png
+0
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -671,7 +685,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 3D 6.0.2
+NetLogo 3D 6.0.4
 @#$#@#$#@
 need-to-manually-make-preview-for-this-model
 @#$#@#$#@
