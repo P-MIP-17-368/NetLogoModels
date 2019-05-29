@@ -4,7 +4,7 @@ turtles-own [culture creator-gene inactivity-gene cluster ll custom-location soc
 ;custom-location - each agent has location, that doesn't change
 
 
-globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-x color-list g-fixed]
+globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-x color-list g-fixed ]
 
 ;ask turtle 29 [ask max-n-of neighbours-to-choose-from other turtles [similarity [culture] of myself culture] [set color green ]]
 
@@ -134,7 +134,6 @@ to peers-interaction
       set soc-capital-inner  soc-capital-inner - soc-cap-increment
       ask turtle-B [set soc-capital-inner  soc-capital-inner - soc-cap-increment]
     ]
-
   ]
 end
 
@@ -154,26 +153,33 @@ to make-event
     ;output-print "event today!"
     ask one-of turtles with [creator-gene]
     [
-      let ev self
-      let ev-location custom-location
-      let culture-Event culture
-
+      set shape "star"
       ask other turtles with [not inactivity-gene]
       [
         let P-similar 0
         let p-final 0
 
-        set P-similar similarity culture-Event culture
-
-        set p-final P-similar * ( distance-degrade-event custom-location ev-location ) * ( sigmoid soc-capital-inner )
+        set P-similar similarity  ( [culture] of myself) culture
+        let distance-effect  1
+        ifelse cultural-distance
+            [set distance-effect distance-degrade-event culture [culture] of myself]
+            [set distance-effect distance-degrade-event custom-location [custom-location] of myself]
+        set p-final P-similar * distance-effect * ( sigmoid soc-capital-inner )
         output-print4 "p-final" p-final "P-similar:" P-similar
 
         set p-final event-impact * p-final
         if (p-final > 0 and p-final < 1) and random-float 1 < p-final
         [
-          set culture new-culture culture culture-Event 1
+          set shape "triangle"
+          set culture new-culture culture ( [culture] of myself) 1
           update-position-for-turtle
         ]]]]
+end
+
+to-report report-distance-effect [agent1 agent2]
+  ifelse cultural-distance
+    [report distance-degrade-event [culture] of agent1 [culture] of agent2]
+  [report distance-degrade-event [custom-location] of agent1 [custom-location] of agent2]
 end
 
 
@@ -181,6 +187,23 @@ to-report similarity-wo-fixed [list-A list-B]
   let l (length list-A)
   report similarity (sublist list-A 1 l) (sublist list-B 1 l)
 end
+
+to-report linear-world-distance-impact [loc-1 loc-2]
+  let p-max-world-dist max-world-dist (list custom-location-scale custom-location-scale)
+  if cultural-distance
+    [set p-max-world-dist max-world-dist (list 100 100 100)]
+  report  1 -  ( ( custom-distance loc-1 loc-2 ) / p-max-world-dist )
+end
+
+to-report distance-squared-impact [loc-1 loc-2]
+  report  1 / ( ( 1 +  ( custom-distance loc-1 loc-2 )  ) ^ 2 )
+end
+
+to-report distance-exponential-impact[loc-1 loc-2]
+  report 1 / (  exp  ( custom-distance loc-1 loc-2 ) )
+end
+
+
 
 to-report distance-degrade-event [p-location event-location]
   let r 0
@@ -190,7 +213,7 @@ to-report distance-degrade-event [p-location event-location]
   ]
   if ( event-distance-impact = "Linear World Distance" )
   [
-    set r  ( 1 -  ( ( custom-distance p-location event-location ) / (max-world-dist (list custom-location-scale custom-location-scale) ) ) )
+    set r linear-world-distance-impact p-location event-location
   ]
   if ( event-distance-impact = "Distance squared" )
   [
@@ -279,55 +302,6 @@ end
 
 to-report similar-cultures? [list-A list-B]
   report (similarity-wo-fixed list-A list-B) = 1
-end
-
-to-report check-end?
-  let end? true
-  ifelse num-cluster = 1
-   [ set end? true ]
-   [ ask turtles [
-      let turtle-A 0
-      let culture-A []
-      set turtle-A self
-      set culture-A culture
-      ask min-n-of neighbours-to-choose-from other turtles [distance turtle-A] [set ll true]
-      let stopped false
-      ifelse inactivity-gene = false
-      [ask other turtles with [ (creator-gene or ll) and (cluster != [cluster] of turtle-A) ] [
-       let P -1
-       let d -1
-       let culture-B []
-       set culture-B culture
-       set P similarity culture-A culture-B
-       ;ifelse use-event-distance [
-       ; set d P * ( rev-prob-linear-from-max (distance turtle-A) max-distance-in-world )
-       ;] [
-      ;  set d P
-       ;]
-       if ( P != 0 and creator-gene = false ) or ( d * event-impact != 0 and ll = false ) or ( ( P != 0 or d * event-impact != 0 ) and ( creator-gene = true and ll = true ) ) [
-        set end? false
-        set stopped true
-        stop
-       ]
-      ]
-     ]
-     [ask other turtles with [ ll and (cluster != [cluster] of turtle-A) ] [
-       let P -1
-       let culture-B []
-       set culture-B culture
-       set P similarity culture-A culture-B
-       if P != 0 [
-        set end? false
-        set stopped true
-        stop
-       ]
-      ]
-     ]
-     ask other turtles with [ll] [set ll false]
-     if stopped [stop]
-    ]
-   ]
-  report end?
 end
 
 to update-position-all
@@ -550,7 +524,7 @@ prob-event
 prob-event
 0
 1
-0.0
+0.8
 0.01
 1
 NIL
@@ -616,7 +590,7 @@ event-impact
 event-impact
 0
 1
-0.22
+1.0
 0.01
 1
 NIL
@@ -783,10 +757,10 @@ NIL
 HORIZONTAL
 
 PLOT
-657
-272
-1129
-537
+669
+119
+1141
+384
 plot traits
 NIL
 NIL
@@ -811,7 +785,7 @@ similar-over-neighbourhood
 similar-over-neighbourhood
 0
 1
-1.0
+0.71
 0.01
 1
 NIL
@@ -826,7 +800,7 @@ custom-location-scale
 custom-location-scale
 0
 100
-12.0
+10.0
 1
 1
 NIL
@@ -841,7 +815,7 @@ var1-x
 var1-x
 0
 1
-0.0
+1.0
 0.01
 1
 NIL
@@ -856,7 +830,7 @@ var2-x
 var2-x
 0
 1
-1.0
+0.0
 0.01
 1
 NIL
@@ -901,7 +875,7 @@ var2-y
 var2-y
 0
 1
-0.0
+1.0
 0.01
 1
 NIL
@@ -916,7 +890,7 @@ var3-y
 var3-y
 0
 1
-1.0
+0.0
 0.01
 1
 NIL
@@ -968,26 +942,6 @@ dist3
 dist3
 "Uniform" "Normal"
 0
-
-PLOT
-677
-101
-1081
-268
-Culture clustering
-Time
-Value
-0.0
-10.0
-0.0
-10.0
-true
-true
-"" ""
-PENS
-"Number" 1.0 0 -16777216 true "" ""
-"Largest" 1.0 0 -2674135 true "" ""
-">xthr" 1.0 0 -15040220 true "" ""
 
 CHOOSER
 10
@@ -1052,7 +1006,7 @@ CHOOSER
 event-distance-impact
 event-distance-impact
 "None" "Linear World Distance" "Distance squared" "Distance exponential"
-2
+3
 
 BUTTON
 1264
@@ -1079,7 +1033,7 @@ CHOOSER
 display-dimensions
 display-dimensions
 "1-2" "1-3" "2-3"
-2
+0
 
 BUTTON
 1244
@@ -1099,10 +1053,10 @@ NIL
 1
 
 SLIDER
-57
-683
-229
-716
+7
+706
+179
+739
 soc-cap-increment
 soc-cap-increment
 0
@@ -1114,10 +1068,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-90
-736
-262
-769
+6
+744
+178
+777
 soc-capital-inner-init
 soc-capital-inner-init
 -5
@@ -1181,11 +1135,11 @@ NIL
 1
 
 PLOT
-693
-583
-893
-733
-plot 2
+673
+392
+873
+542
+soc capital inner
 NIL
 NIL
 0.0
@@ -1208,6 +1162,34 @@ color-cap
 0
 1
 -1000
+
+SWITCH
+200
+657
+347
+690
+cultural-distance
+cultural-distance
+0
+1
+-1000
+
+BUTTON
+641
+636
+747
+669
+Reset shapes
+ask turtles [set shape \"dot\"] 
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
