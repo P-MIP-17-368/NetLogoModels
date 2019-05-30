@@ -1,21 +1,18 @@
 ;extensions [r csv]
 extensions [csv]
-turtles-own [culture creator-gene inactivity-gene cluster ll custom-location soc-capital-inner ]
+turtles-own [culture creator-gene inactivity-gene cluster ll custom-location soc-capital-inner soc-capital-inner-p last-random-event last-p-final]
 ;custom-location - each agent has location, that doesn't change
+; last-random-event - just for testing purposes - stores last random generated number which is used to determine participation in event
 
-
-globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-x color-list g-fixed ]
+globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-x color-list g-fixed last-event-participants-count]
 
 ;ask turtle 29 [ask max-n-of neighbours-to-choose-from other turtles [similarity [culture] of myself culture] [set color green ]]
 
-
-
 to setup
   clear-all
+  set g-fixed 1
   setup-patches
   setup-turtles
-  set g-fixed 1
-
   reset-ticks
 end
 
@@ -50,6 +47,7 @@ to setup-turtles
 
   ;  set soc-capital-inner soc-capital-inner-init
     set soc-capital-inner (random-float 2) - 1
+    set soc-capital-inner-p sigmoid soc-capital-inner
     set culture []
     set custom-location list random custom-location-scale random custom-location-scale
 
@@ -109,12 +107,12 @@ to peers-interaction
     ; selecting one of neighbours-to-choose-from closest turtles to him without himself
     ifelse random-float 1 < similar-over-neighbourhood
     [ ;similar
-      let peers max-n-of ceiling ( neighbours-to-choose-from * sigmoid soc-capital-inner ) other turtles [similarity culture-A culture]
+      let peers max-n-of ceiling ( neighbours-to-choose-from * soc-capital-inner-p ) other turtles [similarity culture-A culture]
       set turtle-B one-of peers
       ;ask peers [set color green]
     ]
     [;neighbours
-      let peers min-n-of ceiling ( neighbours-to-choose-from * sigmoid soc-capital-inner ) other turtles  [custom-distance custom-location location-A ]
+      let peers min-n-of ceiling ( neighbours-to-choose-from * soc-capital-inner-p ) other turtles  [custom-distance custom-location location-A ]
       set turtle-B one-of peers
      ; ask peers [set color yellow]
     ]
@@ -123,16 +121,26 @@ to peers-interaction
       set culture-B culture
     ]
     ;output-print4 "selected cultureA" culture-A "selected culture B" culture-B
-    set P ( similarity culture-A culture-B ) * sigmoid soc-capital-inner
+    set P ( similarity culture-A culture-B ) * (  sigmoid soc-capital-inner-p + ( [soc-capital-inner-p] of turtle-B ) ) / 2
     ;output-print2 "similarity between cultures" P
     ifelse (P > 0 and P < 1) and random-float 1 < P [
       set culture new-culture culture-A culture-B 1
       update-position-for-turtle
       set soc-capital-inner  soc-capital-inner + soc-cap-increment
-      ask turtle-B [set soc-capital-inner  soc-capital-inner + soc-cap-increment]
+      set soc-capital-inner-p sigmoid soc-capital-inner
+    ;  output-print ( list "+soc-self:" soc-capital-inner [who] of self )
+      ask turtle-B [
+        set soc-capital-inner  soc-capital-inner + soc-cap-increment
+        set soc-capital-inner-p sigmoid soc-capital-inner
+       ; output-print ( list "+soc-peer:" soc-capital-inner  [who] of self )
+        ]
     ] [
       set soc-capital-inner  soc-capital-inner - soc-cap-increment
-      ask turtle-B [set soc-capital-inner  soc-capital-inner - soc-cap-increment]
+      set soc-capital-inner-p sigmoid soc-capital-inner
+      ask turtle-B [
+        set soc-capital-inner  soc-capital-inner - soc-cap-increment
+        set soc-capital-inner-p sigmoid soc-capital-inner
+        ]
     ]
   ]
 end
@@ -149,31 +157,34 @@ end
 
 to make-event
   let p-event prob-event
+  let participants-count 0
   if (p-event > 0 and p-event <= 1) and random-float 1 < p-event  and prob-creator-gene > 0 [
     ;output-print "event today!"
     ask one-of turtles with [creator-gene]
     [
-      set shape "star"
+      if change-shape [ set shape "star" ]
       ask other turtles with [not inactivity-gene]
       [
         let P-similar 0
-        let p-final 0
-
+        set last-p-final 0
         set P-similar similarity  ( [culture] of myself) culture
         let distance-effect  1
         ifelse cultural-distance
             [set distance-effect distance-degrade-event culture [culture] of myself]
             [set distance-effect distance-degrade-event custom-location [custom-location] of myself]
-        set p-final P-similar * distance-effect * ( sigmoid soc-capital-inner )
-        output-print4 "p-final" p-final "P-similar:" P-similar
+        set last-p-final event-impact * P-similar * distance-effect * soc-capital-inner-p
+        output-print4 "p-final" last-p-final "P-similar:" P-similar
 
-        set p-final event-impact * p-final
-        if (p-final > 0 and p-final < 1) and random-float 1 < p-final
+        set last-random-event random-float 1
+        if (last-p-final > 0 and last-p-final < 1) and last-random-event < last-p-final
         [
-          set shape "triangle"
+          if change-shape [ set shape "triangle" ]
           set culture new-culture culture ( [culture] of myself) 1
           update-position-for-turtle
+          set participants-count participants-count + 1
         ]]]]
+
+  set last-event-participants-count participants-count
 end
 
 to-report report-distance-effect [agent1 agent2]
@@ -196,14 +207,16 @@ to-report linear-world-distance-impact [loc-1 loc-2]
 end
 
 to-report distance-squared-impact [loc-1 loc-2]
-  report  1 / ( ( 1 +  ( custom-distance loc-1 loc-2 )  ) ^ 2 )
+  report  (linear-world-distance-impact loc-1 loc-2 )  ^ 2
 end
 
 to-report distance-exponential-impact[loc-1 loc-2]
-  report 1 / (  exp  ( custom-distance loc-1 loc-2 ) )
+  report  exponential-impact ( linear-world-distance-impact loc-1 loc-2 )
 end
 
-
+to-report exponential-impact[v]
+  report  1 / (  exp  ( ( 1 -  v ) * event-exp-impact-scale ) )
+end
 
 to-report distance-degrade-event [p-location event-location]
   let r 0
@@ -217,11 +230,11 @@ to-report distance-degrade-event [p-location event-location]
   ]
   if ( event-distance-impact = "Distance squared" )
   [
-    set r ( 1 / ( ( 1 +  ( custom-distance p-location event-location )  ) ^ 2 ) )
+    set r distance-squared-impact p-location event-location
   ]
   if ( event-distance-impact = "Distance exponential" )
   [
-    set r ( 1 / (  exp  ( custom-distance p-location event-location ) ) )
+    set r distance-exponential-impact p-location event-location
   ]
   output-print1 (list "dg" p-location event-location r)
   report r
@@ -251,13 +264,9 @@ to output-print1 [par1]
   output-print par1
   ]
 end
-to-report calc-cluster
-  find-clusters
-  report num-cluster
-end
 
 to update-plot
-  find-clusters
+  ;find-clusters
   set-current-plot "Culture clustering"
   set-plot-x-range 0 ticks
   set-plot-y-range 0 num-agents
@@ -271,38 +280,6 @@ to update-plot
   ;set-color
 end
 
-to find-clusters
-  set max-cluster 0
-  set num-cluster 0
-  set num-cluster-bigger-than-x 0
-  let seed one-of turtles
-  ask turtles [set cluster nobody]
-  while [seed != nobody]
-    [
-    ask seed
-      [
-      set cluster self
-      set this-cluster 1
-      set num-cluster num-cluster + 1
-      grow-cluster
-      ]
-    if this-cluster > max-cluster [set max-cluster this-cluster]
-    if this-cluster > xthr [set num-cluster-bigger-than-x num-cluster-bigger-than-x + 1]
-    set seed one-of turtles with [cluster = nobody]
-    ]
-end
-
-to grow-cluster
-  ask other turtles with [(cluster = nobody) and (similar-cultures? culture [culture] of myself)]
-    [
-    set this-cluster this-cluster + 1
-    set cluster [cluster] of myself
-    ]
-end
-
-to-report similar-cultures? [list-A list-B]
-  report (similarity-wo-fixed list-A list-B) = 1
-end
 
 to update-position-all
   ask turtles
@@ -437,8 +414,8 @@ SLIDER
 num-agents
 num-agents
 2
-1000
-432.0
+2000
+372.0
 10
 1
 NIL
@@ -492,7 +469,7 @@ interaction-neighbours-per-tick
 interaction-neighbours-per-tick
 0
 100
-8.0
+73.0
 1
 1
 NIL
@@ -524,7 +501,7 @@ prob-event
 prob-event
 0
 1
-0.8
+1.0
 0.01
 1
 NIL
@@ -539,7 +516,7 @@ sample-interval
 sample-interval
 10
 1000
-660.0
+640.0
 10
 1
 NIL
@@ -605,7 +582,7 @@ neighbours-to-choose-from
 neighbours-to-choose-from
 1
 100
-21.0
+17.0
 1
 1
 NIL
@@ -635,7 +612,7 @@ mean1
 mean1
 0
 100
-35.0
+33.0
 1
 1
 NIL
@@ -650,7 +627,7 @@ sd1
 sd1
 0
 100
-15.5
+17.0
 0.5
 1
 NIL
@@ -695,7 +672,7 @@ mean3
 mean3
 0
 100
-54.0
+55.0
 1
 1
 NIL
@@ -785,7 +762,7 @@ similar-over-neighbourhood
 similar-over-neighbourhood
 0
 1
-0.71
+1.0
 0.01
 1
 NIL
@@ -875,7 +852,7 @@ var2-y
 var2-y
 0
 1
-1.0
+0.0
 0.01
 1
 NIL
@@ -890,7 +867,7 @@ var3-y
 var3-y
 0
 1
-0.0
+1.0
 0.01
 1
 NIL
@@ -951,7 +928,7 @@ CHOOSER
 distf
 distf
 "Uniform" "Normal"
-0
+1
 
 SLIDER
 10
@@ -962,7 +939,7 @@ meanf
 meanf
 0
 100
-54.0
+50.0
 1
 1
 NIL
@@ -977,7 +954,7 @@ sdf
 sdf
 0
 100
-23.0
+0.0
 1
 1
 NIL
@@ -1033,7 +1010,7 @@ CHOOSER
 display-dimensions
 display-dimensions
 "1-2" "1-3" "2-3"
-0
+1
 
 BUTTON
 1244
@@ -1060,9 +1037,9 @@ SLIDER
 soc-cap-increment
 soc-cap-increment
 0
-1
-0.1
-0.1
+0.5
+0.05
+0.01
 1
 NIL
 HORIZONTAL
@@ -1076,18 +1053,18 @@ soc-capital-inner-init
 soc-capital-inner-init
 -5
 5
-0.5
+1.5
 0.5
 1
 NIL
 HORIZONTAL
 
 PLOT
-1287
-631
-1733
-836
-plot 1
+507
+632
+804
+831
+soc capital raw inner distribution
 NIL
 NIL
 -20.0
@@ -1101,10 +1078,10 @@ PENS
 "default" 1.0 0 -16777216 true "" "histogram [soc-capital-inner] of turtles"
 
 BUTTON
-396
-707
-493
-740
+85
+803
+182
+836
 NIL
 reset-colors\n
 NIL
@@ -1118,10 +1095,10 @@ NIL
 1
 
 BUTTON
-530
-715
-653
-748
+194
+802
+317
+835
 NIL
 set-color-on-cap
 NIL
@@ -1139,7 +1116,7 @@ PLOT
 392
 873
 542
-soc capital inner
+soc capital average
 NIL
 NIL
 0.0
@@ -1153,10 +1130,10 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot mean [sigmoid soc-capital-inner] of turtles"
 
 SWITCH
-396
-765
-502
-798
+198
+761
+304
+794
 color-cap
 color-cap
 0
@@ -1175,10 +1152,10 @@ cultural-distance
 -1000
 
 BUTTON
-641
-636
-747
-669
+349
+800
+455
+833
 Reset shapes
 ask turtles [set shape \"dot\"] 
 NIL
@@ -1190,6 +1167,68 @@ NIL
 NIL
 NIL
 1
+
+SWITCH
+341
+760
+475
+793
+change-shape
+change-shape
+1
+1
+-1000
+
+SLIDER
+200
+706
+380
+739
+event-exp-impact-scale
+event-exp-impact-scale
+1
+100
+9.0
+1
+1
+NIL
+HORIZONTAL
+
+PLOT
+894
+391
+1094
+541
+plot event participants count
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot last-event-participants-count"
+
+PLOT
+833
+630
+1152
+825
+soc capital p distribution
+NIL
+NIL
+0.0
+1.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 0.1 0 -16777216 true "" "  plot-pen-reset\nhistogram [soc-capital-inner-p] of turtles"
 
 @#$#@#$#@
 ## WHAT IS IT?
