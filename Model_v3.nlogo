@@ -45,8 +45,8 @@ to setup-turtles
     set inactivity-gene (random-float 1 < prob-inactivity-gene)
     set ll false
 
-  ;  set soc-capital-inner soc-capital-inner-init
-    set soc-capital-inner (random-float 2) - 1
+    set soc-capital-inner soc-capital-inner-init
+  ;  set soc-capital-inner (random-float 2) - 1
     set soc-capital-inner-p sigmoid soc-capital-inner
     set culture []
     set custom-location list random custom-location-scale random custom-location-scale
@@ -129,7 +129,7 @@ to peers-interaction
     set last-peer-interacted turtle-B
     set last-peer-interaction-step ticks
     ;output-print4 "selected cultureA" culture-A "selected culture B" culture-B
-    set last-p-final ( similarity culture-A culture-B ) * (  sigmoid soc-capital-inner-p + ( [soc-capital-inner-p] of turtle-B ) ) / 2
+    set last-p-final ( ( similarity culture-A culture-B ) * ( 1 - social-capital-weight)) +  social-capital-weight * ( sigmoid soc-capital-inner-p + ( [soc-capital-inner-p] of turtle-B ) ) / 2
     set last-random-event random-float 1
     set var-avg-last-p-final-peer var-avg-last-p-final-peer + last-p-final
     ;output-print2 "similarity between cultures" P
@@ -192,7 +192,7 @@ to make-event
         ifelse cultural-distance
             [set distance-effect distance-degrade-event culture [culture] of myself]
             [set distance-effect distance-degrade-event custom-location [custom-location] of myself]
-        set last-p-final event-impact * P-similar * distance-effect * soc-capital-inner-p
+        set last-p-final  ( event-impact * P-similar * distance-effect * (1 - social-capital-weight)  ) +  ( social-capital-weight * soc-capital-inner-p )
         output-print4 "p-final" last-p-final "P-similar:" P-similar
 
         set last-random-event random-float 1
@@ -437,7 +437,7 @@ num-agents
 num-agents
 2
 2000
-332.0
+342.0
 10
 1
 NIL
@@ -491,7 +491,7 @@ interaction-neighbours-per-tick
 interaction-neighbours-per-tick
 0
 100
-6.0
+13.0
 1
 1
 NIL
@@ -523,7 +523,7 @@ prob-event
 prob-event
 0
 1
-1.0
+0.0
 0.01
 1
 NIL
@@ -784,7 +784,7 @@ similar-over-neighbourhood
 similar-over-neighbourhood
 0
 1
-0.52
+1.0
 0.01
 1
 NIL
@@ -814,7 +814,7 @@ var1-x
 var1-x
 0
 1
-0.0
+1.0
 0.01
 1
 NIL
@@ -829,7 +829,7 @@ var2-x
 var2-x
 0
 1
-1.0
+0.0
 0.01
 1
 NIL
@@ -874,7 +874,7 @@ var2-y
 var2-y
 0
 1
-0.0
+1.0
 0.01
 1
 NIL
@@ -889,7 +889,7 @@ var3-y
 var3-y
 0
 1
-1.0
+0.0
 0.01
 1
 NIL
@@ -1032,7 +1032,7 @@ CHOOSER
 display-dimensions
 display-dimensions
 "1-2" "1-3" "2-3"
-2
+0
 
 BUTTON
 1081
@@ -1075,7 +1075,7 @@ soc-capital-inner-init
 soc-capital-inner-init
 -5
 5
-0.0
+-1.5
 0.5
 1
 NIL
@@ -1197,7 +1197,7 @@ SWITCH
 793
 change-shape
 change-shape
-0
+1
 1
 -1000
 
@@ -1259,7 +1259,7 @@ SWITCH
 558
 adjust-n-neighbours-choose-on-capital?
 adjust-n-neighbours-choose-on-capital?
-0
+1
 1
 -1000
 
@@ -1298,6 +1298,21 @@ false
 "" ""
 PENS
 "default" 1.0 0 -16777216 true "" "plot avg-last-p-final-event"
+
+SLIDER
+620
+579
+792
+612
+social-capital-weight
+social-capital-weight
+0
+1
+0.2
+0.1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
