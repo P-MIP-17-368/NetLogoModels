@@ -1,10 +1,10 @@
 ;extensions [r csv]
 extensions [csv]
-turtles-own [culture creator-gene inactivity-gene cluster ll custom-location soc-capital-inner soc-capital-inner-p last-random-event last-p-final]
+turtles-own [culture creator-gene inactivity-gene cluster ll custom-location soc-capital-inner soc-capital-inner-p last-random-event last-p-final last-peer-interacted last-peer-interaction-step last-peer-ineraction-result]
 ;custom-location - each agent has location, that doesn't change
 ; last-random-event - just for testing purposes - stores last random generated number which is used to determine participation in event
 
-globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-x color-list g-fixed last-event-participants-count]
+globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-x color-list g-fixed last-event-participants-count avg-last-p-final-peer avg-last-p-final-event]
 
 ;ask turtle 29 [ask max-n-of neighbours-to-choose-from other turtles [similarity [culture] of myself culture] [set color green ]]
 
@@ -92,14 +92,18 @@ end
 
 
 to peers-interaction
+  let var-avg-last-p-final-peer 0
   ask n-of interaction-neighbours-per-tick turtles
   [
     let culture-A []
+    let neighbours-to-choose-from-adjusted neighbours-to-choose-from
+    if adjust-n-neighbours-choose-on-capital? [set neighbours-to-choose-from-adjusted ceiling ( neighbours-to-choose-from * soc-capital-inner-p ) ]
+
     let turtle-A 0
     let location-A custom-location
     let culture-B []
     let turtle-B 0
-    let P 0
+    set last-p-final 0
     let d []
     set culture-A culture
    ; set color blue
@@ -107,42 +111,57 @@ to peers-interaction
     ; selecting one of neighbours-to-choose-from closest turtles to him without himself
     ifelse random-float 1 < similar-over-neighbourhood
     [ ;similar
-      let peers max-n-of ceiling ( neighbours-to-choose-from * soc-capital-inner-p ) other turtles [similarity culture-A culture]
+      let peers max-n-of neighbours-to-choose-from-adjusted other turtles [similarity culture-A culture]
       set turtle-B one-of peers
       ;ask peers [set color green]
     ]
     [;neighbours
-      let peers min-n-of ceiling ( neighbours-to-choose-from * soc-capital-inner-p ) other turtles  [custom-distance custom-location location-A ]
+      let peers min-n-of neighbours-to-choose-from-adjusted other turtles  [custom-distance custom-location location-A ]
       set turtle-B one-of peers
      ; ask peers [set color yellow]
     ]
     ask turtle-B
     [
       set culture-B culture
+      set last-peer-interacted turtle-A
+      set last-peer-interaction-step ticks
     ]
+    set last-peer-interacted turtle-B
+    set last-peer-interaction-step ticks
     ;output-print4 "selected cultureA" culture-A "selected culture B" culture-B
-    set P ( similarity culture-A culture-B ) * (  sigmoid soc-capital-inner-p + ( [soc-capital-inner-p] of turtle-B ) ) / 2
+    set last-p-final ( similarity culture-A culture-B ) * (  sigmoid soc-capital-inner-p + ( [soc-capital-inner-p] of turtle-B ) ) / 2
+    set last-random-event random-float 1
+    set var-avg-last-p-final-peer var-avg-last-p-final-peer + last-p-final
     ;output-print2 "similarity between cultures" P
-    ifelse (P > 0 and P < 1) and random-float 1 < P [
+    ifelse (last-p-final > 0 and last-p-final < 1) and last-random-event  < last-p-final [
       set culture new-culture culture-A culture-B 1
       update-position-for-turtle
       set soc-capital-inner  soc-capital-inner + soc-cap-increment
       set soc-capital-inner-p sigmoid soc-capital-inner
+      if change-shape [ set shape "face happy"]
+      set last-peer-ineraction-result true
     ;  output-print ( list "+soc-self:" soc-capital-inner [who] of self )
       ask turtle-B [
+        set last-peer-ineraction-result true
         set soc-capital-inner  soc-capital-inner + soc-cap-increment
         set soc-capital-inner-p sigmoid soc-capital-inner
        ; output-print ( list "+soc-peer:" soc-capital-inner  [who] of self )
+        if change-shape [ set shape "face happy"]
         ]
     ] [
+      set last-peer-ineraction-result false
       set soc-capital-inner  soc-capital-inner - soc-cap-increment
       set soc-capital-inner-p sigmoid soc-capital-inner
+      if change-shape [ set shape "face sad"]
       ask turtle-B [
+        set last-peer-ineraction-result false
         set soc-capital-inner  soc-capital-inner - soc-cap-increment
         set soc-capital-inner-p sigmoid soc-capital-inner
+        if change-shape [ set shape "face sad"]
         ]
     ]
   ]
+  set avg-last-p-final-peer var-avg-last-p-final-peer / interaction-neighbours-per-tick
 end
 
 to-report new-culture [c-obj c-trgt fixed]
@@ -157,6 +176,7 @@ end
 
 to make-event
   let p-event prob-event
+  let var-avg-last-p-final-event  0
   let participants-count 0
   if (p-event > 0 and p-event <= 1) and random-float 1 < p-event  and prob-creator-gene > 0 [
     ;output-print "event today!"
@@ -176,6 +196,7 @@ to make-event
         output-print4 "p-final" last-p-final "P-similar:" P-similar
 
         set last-random-event random-float 1
+        set var-avg-last-p-final-event var-avg-last-p-final-event + last-p-final
         if (last-p-final > 0 and last-p-final < 1) and last-random-event < last-p-final
         [
           if change-shape [ set shape "triangle" ]
@@ -185,6 +206,7 @@ to make-event
         ]]]]
 
   set last-event-participants-count participants-count
+  set avg-last-p-final-event var-avg-last-p-final-event / ( num-agents - 1)
 end
 
 to-report report-distance-effect [agent1 agent2]
@@ -415,7 +437,7 @@ num-agents
 num-agents
 2
 2000
-372.0
+332.0
 10
 1
 NIL
@@ -469,7 +491,7 @@ interaction-neighbours-per-tick
 interaction-neighbours-per-tick
 0
 100
-73.0
+6.0
 1
 1
 NIL
@@ -574,15 +596,15 @@ NIL
 HORIZONTAL
 
 SLIDER
-390
-494
-584
-527
+389
+489
+583
+522
 neighbours-to-choose-from
 neighbours-to-choose-from
 1
 100
-17.0
+16.0
 1
 1
 NIL
@@ -734,10 +756,10 @@ NIL
 HORIZONTAL
 
 PLOT
-669
-119
-1141
-384
+653
+112
+1072
+372
 plot traits
 NIL
 NIL
@@ -754,25 +776,25 @@ PENS
 "3rd" 1.0 0 -2674135 true "" "  plot-pen-reset\n  histogram [item 3 culture] of turtles\n  "
 
 SLIDER
-434
-581
-639
-614
+390
+598
+595
+631
 similar-over-neighbourhood
 similar-over-neighbourhood
 0
 1
-1.0
+0.52
 0.01
 1
 NIL
 HORIZONTAL
 
 SLIDER
-433
-543
-605
-576
+389
+560
+561
+593
 custom-location-scale
 custom-location-scale
 0
@@ -792,7 +814,7 @@ var1-x
 var1-x
 0
 1
-1.0
+0.0
 0.01
 1
 NIL
@@ -807,7 +829,7 @@ var2-x
 var2-x
 0
 1
-0.0
+1.0
 0.01
 1
 NIL
@@ -874,10 +896,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-1240
-377
-1374
-410
+1083
+280
+1217
+313
 NIL
 update-position-all
 NIL
@@ -969,8 +991,8 @@ move-fraction
 move-fraction
 0
 1
-0.2
-0.1
+0.05
+0.05
 1
 NIL
 HORIZONTAL
@@ -1003,20 +1025,20 @@ NIL
 1
 
 CHOOSER
-1242
-421
-1380
-466
+1089
+226
+1227
+271
 display-dimensions
 display-dimensions
 "1-2" "1-3" "2-3"
-1
+2
 
 BUTTON
-1244
-477
-1391
-510
+1081
+323
+1228
+356
 NIL
 update-possition-all2
 NIL
@@ -1053,17 +1075,17 @@ soc-capital-inner-init
 soc-capital-inner-init
 -5
 5
-1.5
+0.0
 0.5
 1
 NIL
 HORIZONTAL
 
 PLOT
-507
-632
-804
-831
+506
+639
+694
+830
 soc capital raw inner distribution
 NIL
 NIL
@@ -1112,10 +1134,10 @@ NIL
 1
 
 PLOT
-673
-392
-873
-542
+670
+390
+870
+540
 soc capital average
 NIL
 NIL
@@ -1147,7 +1169,7 @@ SWITCH
 690
 cultural-distance
 cultural-distance
-0
+1
 1
 -1000
 
@@ -1175,15 +1197,15 @@ SWITCH
 793
 change-shape
 change-shape
-1
+0
 1
 -1000
 
 SLIDER
 200
-706
+692
 380
-739
+725
 event-exp-impact-scale
 event-exp-impact-scale
 1
@@ -1195,10 +1217,10 @@ NIL
 HORIZONTAL
 
 PLOT
-894
-391
-1094
-541
+874
+390
+1074
+540
 plot event participants count
 NIL
 NIL
@@ -1213,10 +1235,10 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot last-event-participants-count"
 
 PLOT
+704
+638
+1023
 833
-630
-1152
-825
 soc capital p distribution
 NIL
 NIL
@@ -1229,6 +1251,53 @@ false
 "" ""
 PENS
 "default" 0.1 0 -16777216 true "" "  plot-pen-reset\nhistogram [soc-capital-inner-p] of turtles"
+
+SWITCH
+391
+525
+667
+558
+adjust-n-neighbours-choose-on-capital?
+adjust-n-neighbours-choose-on-capital?
+0
+1
+-1000
+
+PLOT
+1028
+636
+1307
+830
+avg-last-p-final-peer
+NIL
+NIL
+0.0
+10.0
+0.0
+1.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot avg-last-p-final-peer"
+
+PLOT
+1079
+388
+1279
+538
+avg-last-p-final-event
+NIL
+NIL
+0.0
+10.0
+0.0
+1.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot avg-last-p-final-event"
 
 @#$#@#$#@
 ## WHAT IS IT?
