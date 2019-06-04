@@ -46,8 +46,11 @@ to setup-turtles
     set ll false
 
     set soc-capital-inner soc-capital-inner-init
+
+    ifelse soc-capital-inner-dist > 0 [ set soc-capital-inner  random-normal soc-capital-inner-init soc-capital-inner-dist  ] [ set soc-capital-inner soc-capital-inner-init ]
+
   ;  set soc-capital-inner (random-float 2) - 1
-    set soc-capital-inner-p sigmoid soc-capital-inner
+     set soc-capital-inner-p sigmoid soc-capital-inner
     set culture []
     set custom-location list random custom-location-scale random custom-location-scale
 
@@ -108,17 +111,23 @@ to peers-interaction
     set culture-A culture
    ; set color blue
     set turtle-A self
-    ; selecting one of neighbours-to-choose-from closest turtles to him without himself
-    ifelse random-float 1 < similar-over-neighbourhood
-    [ ;similar
-      let peers max-n-of neighbours-to-choose-from-adjusted other turtles [similarity culture-A culture]
-      set turtle-B one-of peers
-      ;ask peers [set color green]
+    ifelse random-float 1 < random-peer-interaction-prob
+    [
+      set turtle-B one-of other turtles
     ]
-    [;neighbours
-      let peers min-n-of neighbours-to-choose-from-adjusted other turtles  [custom-distance custom-location location-A ]
-      set turtle-B one-of peers
-     ; ask peers [set color yellow]
+    [
+      ; selecting one of neighbours-to-choose-from closest turtles to him without himself
+      ifelse random-float 1 < similar-over-neighbourhood
+      [ ;similar
+        let peers max-n-of neighbours-to-choose-from-adjusted other turtles [similarity culture-A culture]
+        set turtle-B one-of peers
+        ;ask peers [set color green]
+      ]
+      [;neighbours
+        let peers min-n-of neighbours-to-choose-from-adjusted other turtles  [custom-distance custom-location location-A ]
+        set turtle-B one-of peers
+        ; ask peers [set color yellow]
+      ]
     ]
     ask turtle-B
     [
@@ -437,7 +446,7 @@ num-agents
 num-agents
 2
 2000
-342.0
+42.0
 10
 1
 NIL
@@ -491,7 +500,7 @@ interaction-neighbours-per-tick
 interaction-neighbours-per-tick
 0
 100
-13.0
+1.0
 1
 1
 NIL
@@ -589,7 +598,7 @@ event-impact
 event-impact
 0
 1
-1.0
+0.98
 0.01
 1
 NIL
@@ -604,7 +613,7 @@ neighbours-to-choose-from
 neighbours-to-choose-from
 1
 100
-16.0
+5.0
 1
 1
 NIL
@@ -976,7 +985,7 @@ sdf
 sdf
 0
 100
-0.0
+8.0
 1
 1
 NIL
@@ -1052,10 +1061,10 @@ NIL
 1
 
 SLIDER
-7
-706
-179
-739
+9
+665
+181
+698
 soc-cap-increment
 soc-cap-increment
 0
@@ -1067,15 +1076,15 @@ NIL
 HORIZONTAL
 
 SLIDER
-6
-744
-178
-777
+10
+703
+182
+736
 soc-capital-inner-init
 soc-capital-inner-init
 -5
 5
--1.5
+0.0
 0.5
 1
 NIL
@@ -1250,7 +1259,7 @@ true
 false
 "" ""
 PENS
-"default" 0.1 0 -16777216 true "" "  plot-pen-reset\nhistogram [soc-capital-inner-p] of turtles"
+"default" 0.05 0 -16777216 true "" "  plot-pen-reset\nhistogram [soc-capital-inner-p] of turtles"
 
 SWITCH
 391
@@ -1300,12 +1309,42 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot avg-last-p-final-event"
 
 SLIDER
-620
-579
-792
-612
+616
+600
+788
+633
 social-capital-weight
 social-capital-weight
+0
+1
+0.1
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+11
+740
+183
+773
+soc-capital-inner-dist
+soc-capital-inner-dist
+0
+10
+0.0
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+697
+555
+912
+588
+random-peer-interaction-prob
+random-peer-interaction-prob
 0
 1
 0.2
