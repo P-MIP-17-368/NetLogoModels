@@ -4,12 +4,16 @@ turtles-own [culture creator-gene inactivity-gene cluster ll custom-location soc
 ;custom-location - each agent has location, that doesn't change
 ; last-random-event - just for testing purposes - stores last random generated number which is used to determine participation in event
 
-globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-x color-list g-fixed last-event-participants-count avg-last-p-final-peer avg-last-p-final-event]
+globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-x color-list g-fixed last-event-participants-count avg-last-p-final-peer avg-last-p-final-event o-file]
 
 ;ask turtle 29 [ask max-n-of neighbours-to-choose-from other turtles [similarity [culture] of myself culture] [set color green ]]
 
 to setup
   clear-all
+  if length(export-file) > 4
+  [
+    file-open(export-file)
+  ]
   set g-fixed 1
   setup-patches
   setup-turtles
@@ -20,6 +24,10 @@ to go
   tick
   peers-interaction
   make-event
+  if ticks mod sample-interval = 0 and length(export-file) > 3
+  [
+    file-write csv:to-string ( fput ticks [sublist culture 1 4] of turtles  )
+  ]
  ; if ticks mod sample-interval = 0 [
  ;   update-plot
  ;   if auto-stop != "None"
@@ -393,9 +401,18 @@ to-report max-world-dist [l]
   report (sqrt ( reduce + ( map [ i -> i ^ 2] l ) ) )
 end
 
-to export-csv
-  let l (length [culture] of one-of turtles)
-  csv:to-file "myfile.csv" [sublist culture 1 l] of turtles
+to export-csv [file-name]
+  file-open file-name
+  ask turtles [ file-print reduce [ [ x y ] -> ( word  x ","  y )   ] ( fput ticks ( sublist culture 1 4 ) ) ]
+  ;let l (length [culture] of one-of turtles)
+  ;csv:to-file export-file [sublist culture 1 l] of turtles
+  ;file-write csv:to-string (  map [ x -> fput ticks x ]  [sublist culture 1 4] of turtles  )
+
+end
+
+to close-file
+  file-flush
+  file-close-all
 end
 
 to-report sigmoid [x]
@@ -470,7 +487,7 @@ prob-creator-gene
 prob-creator-gene
 0
 1
-0.21
+0.2
 0.01
 1
 NIL
@@ -509,7 +526,7 @@ interaction-neighbours-per-tick
 interaction-neighbours-per-tick
 0
 100
-0.0
+8.0
 1
 1
 NIL
@@ -556,7 +573,7 @@ sample-interval
 sample-interval
 10
 1000
-640.0
+100.0
 10
 1
 NIL
@@ -802,7 +819,7 @@ similar-over-neighbourhood
 similar-over-neighbourhood
 0
 1
-1.0
+0.69
 0.01
 1
 NIL
@@ -979,7 +996,7 @@ meanf
 meanf
 0
 100
-50.0
+53.0
 1
 1
 NIL
@@ -1030,8 +1047,8 @@ BUTTON
 568
 1356
 601
-NIL
 export-csv
+export-csv \"mydata.csv\"
 NIL
 1
 T
@@ -1187,7 +1204,7 @@ SWITCH
 690
 cultural-distance
 cultural-distance
-0
+1
 1
 -1000
 
@@ -1371,11 +1388,39 @@ event-impact-radius
 event-impact-radius
 0
 1
-0.06
+0.2
 0.01
 1
 NIL
 HORIZONTAL
+
+INPUTBOX
+660
+48
+834
+108
+export-file
+result.csv
+1
+0
+String
+
+BUTTON
+1378
+554
+1458
+587
+NIL
+close-file\n
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
