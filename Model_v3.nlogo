@@ -96,6 +96,9 @@ end
 
 to peers-interaction
   let var-avg-last-p-final-peer 0
+  if interaction-neighbours-per-tick > 0
+  [
+
   ask n-of interaction-neighbours-per-tick turtles
   [
     let culture-A []
@@ -171,6 +174,7 @@ to peers-interaction
     ]
   ]
   set avg-last-p-final-peer var-avg-last-p-final-peer / interaction-neighbours-per-tick
+  ]
 end
 
 to-report new-culture [c-obj c-trgt fixed]
@@ -201,7 +205,9 @@ to make-event
         ifelse cultural-distance
             [set distance-effect distance-degrade-event culture [culture] of myself]
             [set distance-effect distance-degrade-event custom-location [custom-location] of myself]
-        set last-p-final  ( event-impact * P-similar * distance-effect * (1 - social-capital-weight)  ) +  ( social-capital-weight * soc-capital-inner-p )
+        ifelse distance-effect = 0
+           [set last-p-final 0]
+           [set last-p-final  ( event-impact * P-similar * distance-effect * (1 - social-capital-weight)  ) +  ( social-capital-weight * soc-capital-inner-p )]
         output-print4 "p-final" last-p-final "P-similar:" P-similar
 
         set last-random-event random-float 1
@@ -238,7 +244,10 @@ to-report linear-world-distance-impact [loc-1 loc-2]
 end
 
 to-report distance-squared-impact [loc-1 loc-2]
-  report  (linear-world-distance-impact loc-1 loc-2 )  ^ 2
+  let p linear-world-distance-impact loc-1 loc-2
+  ifelse ( 1 - p ) > event-impact-radius
+  [report 0]
+  [report  p  ^ 2]
 end
 
 to-report distance-exponential-impact[loc-1 loc-2]
@@ -446,7 +455,7 @@ num-agents
 num-agents
 2
 2000
-42.0
+402.0
 10
 1
 NIL
@@ -461,7 +470,7 @@ prob-creator-gene
 prob-creator-gene
 0
 1
-0.18
+0.21
 0.01
 1
 NIL
@@ -500,7 +509,7 @@ interaction-neighbours-per-tick
 interaction-neighbours-per-tick
 0
 100
-1.0
+0.0
 1
 1
 NIL
@@ -532,7 +541,7 @@ prob-event
 prob-event
 0
 1
-0.0
+1.0
 0.01
 1
 NIL
@@ -598,7 +607,7 @@ event-impact
 event-impact
 0
 1
-0.98
+1.0
 0.01
 1
 NIL
@@ -883,7 +892,7 @@ var2-y
 var2-y
 0
 1
-1.0
+0.0
 0.01
 1
 NIL
@@ -898,7 +907,7 @@ var3-y
 var3-y
 0
 1
-0.0
+1.0
 0.01
 1
 NIL
@@ -1014,7 +1023,7 @@ CHOOSER
 event-distance-impact
 event-distance-impact
 "None" "Linear World Distance" "Distance squared" "Distance exponential"
-3
+2
 
 BUTTON
 1264
@@ -1041,7 +1050,7 @@ CHOOSER
 display-dimensions
 display-dimensions
 "1-2" "1-3" "2-3"
-0
+1
 
 BUTTON
 1081
@@ -1161,10 +1170,10 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot mean [sigmoid soc-capital-inner] of turtles"
 
 SWITCH
-198
-761
-304
-794
+200
+763
+306
+796
 color-cap
 color-cap
 0
@@ -1178,7 +1187,7 @@ SWITCH
 690
 cultural-distance
 cultural-distance
-1
+0
 1
 -1000
 
@@ -1200,10 +1209,10 @@ NIL
 1
 
 SWITCH
-341
-760
-475
-793
+333
+762
+467
+795
 change-shape
 change-shape
 1
@@ -1349,6 +1358,21 @@ random-peer-interaction-prob
 1
 0.2
 0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+200
+727
+372
+760
+event-impact-radius
+event-impact-radius
+0
+1
+0.06
+0.01
 1
 NIL
 HORIZONTAL
