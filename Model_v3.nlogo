@@ -24,7 +24,7 @@ to go
   tick
   peers-interaction
   make-event
-  if ticks mod sample-interval = 0 and length(export-file) > 3
+  if sample-interval > 0 and ticks mod sample-interval = 0 and length(export-file) > 3
   [
     file-write csv:to-string ( fput ticks [sublist culture 1 4] of turtles  )
   ]
@@ -401,11 +401,11 @@ to-report max-world-dist [l]
   report (sqrt ( reduce + ( map [ i -> i ^ 2] l ) ) )
 end
 
-to export-csv [file-name]
-  file-open file-name
-  ask turtles [ file-print reduce [ [ x y ] -> ( word  x ","  y )   ] ( fput ticks ( sublist culture 1 4 ) ) ]
+to export-csv
+  ;file-open file-name
+  ;ask turtles [ file-print reduce [ [ x y ] -> ( word  x ","  y )   ] ( fput ticks ( sublist culture 1 4 ) ) ]
   ;let l (length [culture] of one-of turtles)
-  ;csv:to-file export-file [sublist culture 1 l] of turtles
+  csv:to-file export-file [sublist culture 1 3] of turtles
   ;file-write csv:to-string (  map [ x -> fput ticks x ]  [sublist culture 1 4] of turtles  )
 
 end
@@ -526,7 +526,7 @@ interaction-neighbours-per-tick
 interaction-neighbours-per-tick
 0
 100
-8.0
+10.0
 1
 1
 NIL
@@ -571,9 +571,9 @@ SLIDER
 47
 sample-interval
 sample-interval
-10
+0
 1000
-100.0
+0.0
 10
 1
 NIL
@@ -819,7 +819,7 @@ similar-over-neighbourhood
 similar-over-neighbourhood
 0
 1
-0.69
+1.0
 0.01
 1
 NIL
@@ -909,7 +909,7 @@ var2-y
 var2-y
 0
 1
-0.0
+1.0
 0.01
 1
 NIL
@@ -924,7 +924,7 @@ var3-y
 var3-y
 0
 1
-1.0
+0.0
 0.01
 1
 NIL
@@ -996,7 +996,7 @@ meanf
 meanf
 0
 100
-53.0
+34.0
 1
 1
 NIL
@@ -1048,7 +1048,7 @@ BUTTON
 1356
 601
 export-csv
-export-csv \"mydata.csv\"
+export-csv
 NIL
 1
 T
@@ -1067,7 +1067,7 @@ CHOOSER
 display-dimensions
 display-dimensions
 "1-2" "1-3" "2-3"
-1
+0
 
 BUTTON
 1081
@@ -1204,7 +1204,7 @@ SWITCH
 690
 cultural-distance
 cultural-distance
-1
+0
 1
 -1000
 
@@ -1388,7 +1388,7 @@ event-impact-radius
 event-impact-radius
 0
 1
-0.2
+0.16
 0.01
 1
 NIL
