@@ -1,4 +1,5 @@
 library("fpc")
+library("dplyr")
 
 
 calc_clusters <- function(df) {
@@ -25,8 +26,8 @@ calc_clusters <- function(df) {
 #                   header = FALSE,   # set {columns names true
 #                   sep = ",",    # define the separator between       columns
 #                   fill = TRUE )
-load_data <- function(lf){
-  setwd("C:/code/u/NetLogoModels")
+load_data <- function(lf,wd){
+  setwd(wd)
   for (file_name in lf){
     print(file_name)
     if (!exists("dres"))
@@ -49,7 +50,7 @@ experimentdata2clusterdata <- function(dfres){
     }
   }
   dtf <-  as.data.frame(dt,c("Experiment","Ticks","ClusterNo","NoicePoints","silwidth"))
-  return(dt)
+  return(dtf)
 }
 #ds = dfres[3:5]
 #db <- fpc::dbscan(ds, eps = 7, MinPts = 30)
@@ -59,27 +60,30 @@ experimentdata2clusterdata <- function(dfres){
 
 # experiment_data <- split(dfres,dfres$Experiment)
 r1 = NULL
-file_list = list.files(path = "C:/code/u/NetLogoModels",pattern = "res-..csv")
+dr = "C:/git/MII-NetlogoModels/NetLogoModels"
+file_list = list.files(path = dr, pattern = "res-..csv")
 experiments <- 1:8
 repetitions <- 4
 
-if (length(experiments) != lenght(file_list))
+if (length(experiments) != length(file_list))
   throw("Files don't match experiments")
 
 
-dfres <- load_data(file_list)
+dfres <- load_data(file_list,dr)
 dtf <- experimentdata2clusterdata(dfres)
 
 
 dtfs <- split(dtf,dtf$Experiment)
 dx =dtfs[[1]]$V3
 plot(x=dx, type="l")
-
+ 
 for (dn in dtfs[-1]) {
-  #print(dn)
-  lines(x = dn$V3 )
+   #print(dn)
+   lines(x = dn$V3 )
 }
   
+
+
 # ls_ds <- split(dfres,dfres$Ticks)
 # 
 # ls_ds_1 = ls_ds[[1]]
