@@ -1,10 +1,10 @@
 ;extensions [r csv]
 extensions [csv]
-turtles-own [culture creator-gene inactivity-gene cluster ll custom-location soc-capital-inner soc-capital-inner-p last-random-event last-p-final last-peer-interacted last-peer-interaction-step last-peer-ineraction-result]
+turtles-own [culture creator-gene inactivity-gene cluster ll custom-location soc-capital-inner soc-capital-inner-p last-random-event last-p-final last-peer-interacted last-peer-interaction-step last-peer-ineractokpijohtugn-result]
 ;custom-location - each agent has location, that doesn't change
 ; last-random-event - just for testing purposes - stores last random generated number which is used to determine participation in event
 
-globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-x color-list g-fixed last-event-participants-count avg-last-p-final-peer avg-last-p-final-event o-file]
+globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-x color-list g-fixed last-event-participants-count avg-last-p-final-peer avg-last-p-final-event o-file last-peer-ineraction-result]
 
 ;ask turtle 29 [ask max-n-of neighbours-to-choose-from other turtles [similarity [culture] of myself culture] [set color green ]]
 
@@ -26,7 +26,7 @@ to go
   make-event
   if sample-interval > 0 and ticks mod sample-interval = 0 and length(export-file) > 3
   [
-    file-write csv:to-string ( fput ticks [sublist culture 1 4] of turtles  )
+    world-to-file
   ]
  ; if ticks mod sample-interval = 0 [
  ;   update-plot
@@ -405,9 +405,15 @@ to export-csv
   ;file-open file-name
   ;ask turtles [ file-print reduce [ [ x y ] -> ( word  x ","  y )   ] ( fput ticks ( sublist culture 1 4 ) ) ]
   ;let l (length [culture] of one-of turtles)
-  csv:to-file export-file [sublist culture 1 3] of turtles
-  ;file-write csv:to-string (  map [ x -> fput ticks x ]  [sublist culture 1 4] of turtles  )
+  csv:to-file export-file [sublist culture 1 4] of turtles
+end
 
+
+to world-to-file
+  file-open ( word "res-" behaviorspace-run-number ".csv" )
+  ask turtles [file-print csv:to-row ( fput behaviorspace-run-number ( fput ticks ( sublist culture 1 4 ) ) ) ]
+  close-file
+  ;;csv:to-file ( word "res-" behaviorspace-run-number "-" ticks ".csv" )  [sublist culture 1 4] of turtles
 end
 
 to close-file
@@ -573,7 +579,7 @@ sample-interval
 sample-interval
 0
 1000
-0.0
+100.0
 10
 1
 NIL
@@ -639,7 +645,7 @@ neighbours-to-choose-from
 neighbours-to-choose-from
 1
 100
-5.0
+11.0
 1
 1
 NIL
@@ -819,7 +825,7 @@ similar-over-neighbourhood
 similar-over-neighbourhood
 0
 1
-1.0
+0.7
 0.01
 1
 NIL
@@ -985,7 +991,7 @@ CHOOSER
 distf
 distf
 "Uniform" "Normal"
-1
+0
 
 SLIDER
 10
@@ -1184,7 +1190,7 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot mean [sigmoid soc-capital-inner] of turtles"
+"default" 1.0 0 -16777216 true "" "plot mean [soc-capital-inner-p] of turtles"
 
 SWITCH
 200
@@ -1373,7 +1379,7 @@ random-peer-interaction-prob
 random-peer-interaction-prob
 0
 1
-0.2
+0.0
 0.1
 1
 NIL
@@ -1802,62 +1808,155 @@ NetLogo 6.0.4
 @#$#@#$#@
 @#$#@#$#@
 <experiments>
-  <experiment name="experiment" repetitions="10" sequentialRunOrder="false" runMetricsEveryStep="true">
+  <experiment name="experiment" repetitions="4" runMetricsEveryStep="true">
     <setup>setup</setup>
     <go>go</go>
-    <metric>max-cluster</metric>
-    <metric>num-cluster</metric>
-    <metric>num-cluster-bigger-than-x</metric>
-    <enumeratedValueSet variable="prob-event">
-      <value value="0.95"/>
+    <timeLimit steps="3000"/>
+    <metric>mean [soc-capital-inner-p] of turtles</metric>
+    <enumeratedValueSet variable="auto-stop">
+      <value value="&quot;Condition&quot;"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="num-features">
-      <value value="7"/>
+    <enumeratedValueSet variable="soc-capital-inner-init">
+      <value value="0"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="gradual-trait-update">
-      <value value="&quot;None&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="prob-creator-gene">
-      <value value="0.3"/>
+    <enumeratedValueSet variable="dist2">
+      <value value="&quot;Uniform&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="xthr">
-      <value value="10"/>
+      <value value="1"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="num-agents">
-      <value value="900"/>
+    <enumeratedValueSet variable="similar-over-neighbourhood">
+      <value value="0.7"/>
+      <value value="1"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="turtle-size">
-      <value value="0.6"/>
+    <enumeratedValueSet variable="display-dimensions">
+      <value value="&quot;1-2&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="prob-inactivity-gene">
-      <value value="0.2"/>
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="soc-cap-increment">
+      <value value="0.05"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="move-fraction">
+      <value value="0.05"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="sample-interval">
       <value value="100"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="use-event-distance">
+    <enumeratedValueSet variable="custom-location-scale">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="cultural-distance">
       <value value="true"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="neighbours-to-choose-from">
-      <value value="5"/>
+      <value value="11"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="num-traits">
-      <value value="7"/>
+    <enumeratedValueSet variable="event-impact-radius">
+      <value value="0.16"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="export-file">
+      <value value="&quot;result.csv&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="multiplier-for-stopping">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="change-shape">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="social-capital-weight">
+      <value value="0.1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prob-event">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prob-creator-gene">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="var2-y">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="ticks-to-run">
+      <value value="2000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="mean3">
+      <value value="55"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="meanf">
+      <value value="34"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="event-exp-impact-scale">
+      <value value="9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-agents">
+      <value value="402"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="color-cap">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="event-distance-impact">
+      <value value="&quot;Distance squared&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="soc-capital-inner-dist">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="dist3">
+      <value value="&quot;Uniform&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="var3-x">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="distf">
+      <value value="&quot;Uniform&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="var3-y">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="var1-x">
+      <value value="1"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="event-impact">
-      <value value="0.25"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="var1-y">
+      <value value="0"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="verbose">
       <value value="false"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="color-track">
-      <value value="false"/>
+    <enumeratedValueSet variable="sd1">
+      <value value="17"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="mean1">
+      <value value="33"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="var2-x">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sd2">
+      <value value="17"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="random-peer-interaction-prob">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="mean2">
+      <value value="80"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="interaction-neighbours-per-tick">
-      <value value="20"/>
+      <value value="10"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="fixed-features">
-      <value value="1"/>
+    <enumeratedValueSet variable="adjust-n-neighbours-choose-on-capital?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sdf">
+      <value value="8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="dist1">
+      <value value="&quot;Uniform&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sd3">
+      <value value="16"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
