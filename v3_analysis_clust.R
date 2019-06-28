@@ -52,6 +52,14 @@ experimentdata2clusterdata <- function(dfres){
   dtf <-  as.data.frame(dt,c("Experiment","Ticks","ClusterNo","NoicePoints","silwidth"))
   return(dtf)
 }
+
+aggregate_by_clusters <- function(dtf) {
+  df <- group_by(dtf,Ticks)
+  df <- summarize(df, V3A = mean(V3))
+  return(df)
+}
+
+
 #ds = dfres[3:5]
 #db <- fpc::dbscan(ds, eps = 7, MinPts = 30)
 #num_of_clusters = max(db$cluster)
@@ -60,10 +68,12 @@ experimentdata2clusterdata <- function(dfres){
 
 # experiment_data <- split(dfres,dfres$Experiment)
 r1 = NULL
-dr = "C:/git/MII-NetlogoModels/NetLogoModels"
+#dr = "C:/git/MII-NetlogoModels/NetLogoModels"
+dr = "C:/code/u/NetLogoModels"
 file_list = list.files(path = dr, pattern = "res-..csv")
 experiments <- 1:8
 repetitions <- 4
+scenarios_no <- length(experiments) / repetitions
 
 if (length(experiments) != length(file_list))
   throw("Files don't match experiments")
@@ -73,17 +83,42 @@ dfres <- load_data(file_list,dr)
 dtf <- experimentdata2clusterdata(dfres)
 
 
-dtfs <- split(dtf,dtf$Experiment)
-dx =dtfs[[1]]$V3
-plot(x=dx, type="l")
- 
-for (dn in dtfs[-1]) {
-   #print(dn)
-   lines(x = dn$V3 )
+# dtfs <- split(dtf,dtf$Experiment)
+# dx =dtfs[[1]]$V3
+# plot(x=dx, type="l")
+#  
+# for (dn in dtfs[-1]) {
+#    #print(dn)
+#    lines(x = dn$V3 )
+# }
+#   
+dtf <- mutate(dtf, Scenario = ceiling(Experiment / repetitions))
+
+
+t1 <- group_by(dtf,Scenario)
+ts <- lapply(split(t1,t1$Scenario),aggregate_by_clusters)
+
+
+
+xrange <- range(dtf$Ticks) 
+yrange <- range(dtf$V3)
+colors <- rainbow(scenarios_no)
+linetype <- c(1:scenarios_no)
+plotchar <- seq(18,18+scenarios_no,1)
+
+plot(xrange, yrange, type="n", xlab="Ticks",
+     ylab="Clusters (average)" ) 
+
+for (i in 1:scenarios_no) {
+  i_dt <- ts[[i]]
+  lines(x = i_dt$Ticks, y=i_dt$V3A, type="b", lty=linetype[i], col=colors[i], pch=plotchar[i]  )
 }
-  
 
+title("Clusters", "Avergage cluters in scenarios")
 
+legend(xrange[1], yrange[2], 1:scenarios_no, cex=0.8, col=colors,
+       pch=plotchar, lty=linetype, title="Scenario no")
+ 
 # ls_ds <- split(dfres,dfres$Ticks)
 # 
 # ls_ds_1 = ls_ds[[1]]

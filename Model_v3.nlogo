@@ -825,7 +825,7 @@ similar-over-neighbourhood
 similar-over-neighbourhood
 0
 1
-0.7
+1.0
 0.01
 1
 NIL
@@ -1811,7 +1811,7 @@ NetLogo 6.0.4
   <experiment name="experiment" repetitions="4" runMetricsEveryStep="true">
     <setup>setup</setup>
     <go>go</go>
-    <timeLimit steps="3000"/>
+    <timeLimit steps="4000"/>
     <metric>mean [soc-capital-inner-p] of turtles</metric>
     <enumeratedValueSet variable="auto-stop">
       <value value="&quot;Condition&quot;"/>
