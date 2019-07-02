@@ -152,7 +152,7 @@ to peers-interaction
     let similar ( similarity culture-A culture-B )
     set last-p-final ( similar * ( 1 - social-capital-weight)) +  social-capital-weight * ( sigmoid soc-capital-inner-p + ( [soc-capital-inner-p] of turtle-B ) ) / 2
    ;set last-random-event random-float 1
-    set last-random-event random-float pos-neg-c
+    set last-random-event random-float 1
     set var-avg-last-p-final-peer var-avg-last-p-final-peer + last-p-final
     ;output-print2 "similarity between cultures" P
     if (last-p-final < 0 or last-p-final > 1) [error ( word "last-p-final out of bounds" last-p-final ) ]
@@ -173,14 +173,21 @@ to peers-interaction
         ]
     ] [
       set last-peer-ineraction-result false
+      ; additionaly check when distancing needs to applied and apply
+
       set soc-capital-inner  soc-capital-inner - soc-cap-increment
       set soc-capital-inner-p sigmoid soc-capital-inner
-      if change-shape [ set shape "face sad"]
+      if change-shape [ set shape "face neutral"]
+      if ( negative-impact-prob > random-float 1 )  [
+          set culture new-culture-neg culture-A culture-B 1
+          update-position-for-turtle
+          if change-shape [ set shape "face sad"]
+        ]
       ask turtle-B [
         set last-peer-ineraction-result false
         set soc-capital-inner  soc-capital-inner - soc-cap-increment
         set soc-capital-inner-p sigmoid soc-capital-inner
-        if change-shape [ set shape "face sad"]
+        if change-shape [ set shape "face neutral"]
         ]
     ]
   ]
@@ -193,9 +200,18 @@ to-report new-culture [c-obj c-trgt fixed]
   report sentence ( sublist c-obj  0  fixed ) (move (sublist c-obj  fixed l) (sublist c-trgt fixed l) move-fraction)
 end
 
+to-report new-culture-neg [c-obj c-trgt fixed]
+  let l length c-obj
+  report sentence ( sublist c-obj  0  fixed ) (move (sublist c-obj  fixed l) (sublist c-trgt fixed l) ( - move-fraction) )
+end
+
 to-report move [c-obj c-trg fraction]
   ;let dist custom-distance c-obj c-trg
-  report ( map + ( map [ v -> v * fraction ] ( map - c-trg c-obj )) c-obj)
+  report ( map [ x ->  keep-in-bounds x 0 100 ]  ( map + ( map [ v ->  v * fraction  ] ( map - c-trg c-obj )) c-obj) )
+end
+
+to-report keep-in-bounds [val min-val max-val]
+  report  max (list min-val  ( min (list max-val val) ))
 end
 
 to make-event
@@ -385,12 +401,12 @@ end
 
 to-report calc-position-x
   [l]
-  report ( world-width * ( (item 0 l / 100 ) *  var1-x +  (item 1 l / 100) * var2-x + (item 2 l / 100 ) * var3-x ) / ( var1-x +  var2-x +  var3-x  ) )  - world-width / 2
+  report ( ( world-width - 1 ) * ( (item 0 l / 100 ) *  var1-x +  (item 1 l / 100) * var2-x + (item 2 l / 100 ) * var3-x ) / ( var1-x +  var2-x +  var3-x  ) )  - ( world-width - 1 ) / 2
 end
 
 to-report calc-position-y
   [l]
-  report ( world-height * ( (item 0 l / 100) * var1-y +  (item 1 l / 100) * var2-y + (item 2 l / 100) * var3-y ) / ( var1-y +  var2-y +  var3-y  ) ) - world-height / 2
+  report ( (world-height - 1 ) * ( (item 0 l / 100) * var1-y +  (item 1 l / 100) * var2-y + (item 2 l / 100) * var3-y ) / ( var1-y +  var2-y +  var3-y  ) ) - ( world-height - 1 ) / 2
 end
 
 to-report custom-distance
@@ -535,7 +551,7 @@ interaction-neighbours-per-tick
 interaction-neighbours-per-tick
 0
 100
-11.0
+34.0
 1
 1
 NIL
@@ -567,7 +583,7 @@ prob-event
 prob-event
 0
 1
-1.0
+0.0
 0.01
 1
 NIL
@@ -1005,7 +1021,7 @@ meanf
 meanf
 0
 100
-41.0
+29.0
 1
 1
 NIL
@@ -1049,7 +1065,7 @@ CHOOSER
 event-distance-impact
 event-distance-impact
 "None" "Linear World Distance" "Distance squared" "Distance exponential"
-2
+3
 
 BUTTON
 1264
@@ -1436,10 +1452,10 @@ SLIDER
 563
 1115
 596
-pos-neg-c
-pos-neg-c
+negative-impact-prob
+negative-impact-prob
+0
 1
-2
 1.0
 0.1
 1
