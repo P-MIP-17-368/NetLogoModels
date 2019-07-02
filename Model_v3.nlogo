@@ -149,11 +149,14 @@ to peers-interaction
     set last-peer-interacted turtle-B
     set last-peer-interaction-step ticks
     ;output-print4 "selected cultureA" culture-A "selected culture B" culture-B
-    set last-p-final ( ( similarity culture-A culture-B ) * ( 1 - social-capital-weight)) +  social-capital-weight * ( sigmoid soc-capital-inner-p + ( [soc-capital-inner-p] of turtle-B ) ) / 2
-    set last-random-event random-float 1
+    let similar ( similarity culture-A culture-B )
+    set last-p-final ( similar * ( 1 - social-capital-weight)) +  social-capital-weight * ( sigmoid soc-capital-inner-p + ( [soc-capital-inner-p] of turtle-B ) ) / 2
+   ;set last-random-event random-float 1
+    set last-random-event random-float pos-neg-c
     set var-avg-last-p-final-peer var-avg-last-p-final-peer + last-p-final
     ;output-print2 "similarity between cultures" P
-    ifelse (last-p-final > 0 and last-p-final < 1) and last-random-event  < last-p-final [
+    if (last-p-final < 0 or last-p-final > 1) [error ( word "last-p-final out of bounds" last-p-final ) ]
+    ifelse  last-random-event  < last-p-final [
       set culture new-culture culture-A culture-B 1
       update-position-for-turtle
       set soc-capital-inner  soc-capital-inner + soc-cap-increment
@@ -493,7 +496,7 @@ prob-creator-gene
 prob-creator-gene
 0
 1
-0.2
+0.13
 0.01
 1
 NIL
@@ -532,7 +535,7 @@ interaction-neighbours-per-tick
 interaction-neighbours-per-tick
 0
 100
-10.0
+11.0
 1
 1
 NIL
@@ -840,7 +843,7 @@ custom-location-scale
 custom-location-scale
 0
 100
-10.0
+12.0
 1
 1
 NIL
@@ -1002,7 +1005,7 @@ meanf
 meanf
 0
 100
-34.0
+41.0
 1
 1
 NIL
@@ -1251,7 +1254,7 @@ event-exp-impact-scale
 event-exp-impact-scale
 1
 100
-9.0
+10.0
 1
 1
 NIL
@@ -1427,6 +1430,21 @@ NIL
 NIL
 NIL
 1
+
+SLIDER
+943
+563
+1115
+596
+pos-neg-c
+pos-neg-c
+1
+2
+1.0
+0.1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
