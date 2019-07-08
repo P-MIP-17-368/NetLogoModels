@@ -7,8 +7,6 @@ calc_clusters <- function(df) {
   db_p <- fpc::dbscan(ds, eps = 7, MinPts = 30)
   num_of_noicepoints = length(db_p$cluster[db_p$cluster == 0])
   num_of_clusters = max(db_p$cluster)
-  #return(db_p)
-  #print(db_p$cluster)
   if ((length(db_p$cluster[db_p$cluster > 0]) > 0 ) && (num_of_noicepoints > 0)) {
     cs = cluster.stats(dist(ds), db_p$cluster)
     #num_of_clusters = cs$cluster.number
@@ -20,14 +18,19 @@ calc_clusters <- function(df) {
   #return(c (cs$cluster.number, cs$avg.silwidth ))
 }
 
-#
+load_data_single_file <- function(filename) {
+  return(setNames(load_data_file(filename),c("Experiment","Ticks","V1","V2","V3")))
+}
 
-# dfres<-read.table("res-1.csv",
-#                   header = FALSE,   # set {columns names true
-#                   sep = ",",    # define the separator between       columns
-#                   fill = TRUE )
-load_data <- function(lf,wd){
-  setwd(wd)
+load_data_file <- function(filename) {
+  dfres<-read.table(filename,
+                    header = FALSE,   # set {columns names true
+                    sep = ",",    # define the separator between       columns
+                    fill = TRUE )
+  return(dfres)
+}
+
+load_data <- function(lf){
   for (file_name in lf){
     print(file_name)
     if (!exists("dres"))
@@ -44,8 +47,6 @@ experimentdata2clusterdata <- function(dfres){
   for (ea in split(dfres,dfres$Experiment)) {
     for (s in split(ea,ea$Ticks)){
       r1 <- unlist(c( s[1,1:2], calc_clusters(s)))
-      #print(class(r1))
-      #print("eee")
       dt <- rbind(dt,r1)
     }
   }
@@ -59,75 +60,78 @@ aggregate_by_clusters <- function(dtf) {
   return(df)
 }
 
-
 #ds = dfres[3:5]
 #db <- fpc::dbscan(ds, eps = 7, MinPts = 30)
 #num_of_clusters = max(db$cluster)
 #num_of_noicepoints = length(db$cluster[db$cluster == 0])
 #cs = cluster.stats(dist(ds), db$cluster)
-
 # experiment_data <- split(dfres,dfres$Experiment)
-r1 = NULL
-#dr = "C:/git/MII-NetlogoModels/NetLogoModels"
-dr = "C:/code/u/NetLogoModels"
-file_list = list.files(path = dr, pattern = "res-..csv")
-experiments <- 1:8
-repetitions <- 4
-scenarios_no <- length(experiments) / repetitions
 
-if (length(experiments) != length(file_list))
-  throw("Files don't match experiments")
+loadAndPlotMany <- function(fileList,scenarios_no,repetitions) {
+  experimentsNo <- scenarios_no * repetitions
 
+  if (experimentsNo != length(fileList))
+    throw("Files don't match experiments")
+  
+  dfres <- load_data(fileList)
+  dtf <- experimentdata2clusterdata(dfres)
+  
+  dtf <- mutate(dtf, Scenario = ceiling(Experiment / repetitions))
+  
+  t1 <- group_by(dtf,Scenario)
+  ts <- lapply(split(t1,t1$Scenario),aggregate_by_clusters)
+  
+  xrange <- range(dtf$Ticks) 
+  yrange <- range(dtf$V3)
+  colors <- rainbow(scenarios_no)
+  linetype <- c(1:scenarios_no)
+  plotchar <- seq(18,18+scenarios_no,1)
+  
+  plot(xrange, yrange, type="n", xlab="Ticks",
+       ylab="Clusters (average)" ) 
+  
+  for (i in 1:scenarios_no) {
+    i_dt <- ts[[i]]
+    lines(x = i_dt$Ticks, y=i_dt$V3A, type="b", lty=linetype[i], col=colors[i], pch=plotchar[i]  )
+  }
+  
+  title("Clusters", "Avergage cluters in scenarios")
+  
+  legend(xrange[1], yrange[2], 1:scenarios_no, cex=0.8, col=colors,
+         pch=plotchar, lty=linetype, title="Scenario no")
+  return()
 
-dfres <- load_data(file_list,dr)
-dtf <- experimentdata2clusterdata(dfres)
-
-
-# dtfs <- split(dtf,dtf$Experiment)
-# dx =dtfs[[1]]$V3
-# plot(x=dx, type="l")
-#  
-# for (dn in dtfs[-1]) {
-#    #print(dn)
-#    lines(x = dn$V3 )
-# }
-#   
-dtf <- mutate(dtf, Scenario = ceiling(Experiment / repetitions))
-
-
-t1 <- group_by(dtf,Scenario)
-ts <- lapply(split(t1,t1$Scenario),aggregate_by_clusters)
-
-
-
-xrange <- range(dtf$Ticks) 
-yrange <- range(dtf$V3)
-colors <- rainbow(scenarios_no)
-linetype <- c(1:scenarios_no)
-plotchar <- seq(18,18+scenarios_no,1)
-
-plot(xrange, yrange, type="n", xlab="Ticks",
-     ylab="Clusters (average)" ) 
-
-for (i in 1:scenarios_no) {
-  i_dt <- ts[[i]]
-  lines(x = i_dt$Ticks, y=i_dt$V3A, type="b", lty=linetype[i], col=colors[i], pch=plotchar[i]  )
 }
 
-title("Clusters", "Avergage cluters in scenarios")
 
-legend(xrange[1], yrange[2], 1:scenarios_no, cex=0.8, col=colors,
-       pch=plotchar, lty=linetype, title="Scenario no")
- 
-# ls_ds <- split(dfres,dfres$Ticks)
-# 
-# ls_ds_1 = ls_ds[[1]]
+loadAndPlotSingle <- function(fileName) {
+  
+  dfres <- load_data_single_file(fileName)
+  dtf <- experimentdata2clusterdata(dfres)
+  
+  plot(dtf$Ticks, dtf$V3, type="b", xlab="Ticks",
+       ylab="Clusters" ) 
+  
+  title("Clusters", "Clusters")
+  
+  return()
+  
+}
 
-# #f1(ls_ds[[1]])
-# 
-# rf = NULL
-# 
-# for (d in ls_ds) {
-#   rf <- rbind(rf,calc_clusters(d))
-#   
-# }
+#dr = "C:/git/MII-NetlogoModels/NetLogoModels"
+dr = "C:/code/u/NetLogoModels"
+setwd(dr)
+#loadAndPlotMany(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"),scenarios_no = 3,repetitions = 4)
+
+loadAndPlotSingle("res-0.csv")
+
+
+#dt1 = load_data_single_file("res-0.csv")
+#d1 <- dt1[dt1$Ticks == 100,]
+#pairs(d1[,3:5],pch=19)
+dfls <- load_data(list.files(path = "C:/Users/milibaru/OneDrive/darbas/MII projektas/Experiments/0708-1", pattern = "res-[1-9]\\d*\\.csv$"))
+for (i in 1:16){
+  di <- dfls [dfls$Ticks == 15000 & dfls$Experiment == i,]
+  pairs(di[,3:5],pch=19, main = sprintf("Exp %s", i))
+}
+

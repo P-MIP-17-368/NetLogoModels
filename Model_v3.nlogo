@@ -1,19 +1,17 @@
 ;extensions [r csv]
 extensions [csv]
-turtles-own [culture creator-gene inactivity-gene cluster ll custom-location soc-capital-inner soc-capital-inner-p last-random-event last-p-final last-peer-interacted last-peer-interaction-step last-peer-ineractokpijohtugn-result]
+turtles-own [culture creator-gene inactivity-gene cluster ll custom-location soc-capital-inner soc-capital-inner-p last-random-event last-p-final last-peer-interacted last-peer-interaction-step last-peer-ineraction-result]
 ;custom-location - each agent has location, that doesn't change
 ; last-random-event - just for testing purposes - stores last random generated number which is used to determine participation in event
 
-globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-x color-list g-fixed last-event-participants-count avg-last-p-final-peer avg-last-p-final-event o-file last-peer-ineraction-result]
+globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-x color-list g-fixed last-event-participants-count avg-last-p-final-peer avg-last-p-final-event o-file export-file]
 
 ;ask turtle 29 [ask max-n-of neighbours-to-choose-from other turtles [similarity [culture] of myself culture] [set color green ]]
 
 to setup
   clear-all
-  if length(export-file) > 4
-  [
-    file-open(export-file)
-  ]
+  set export-file ( word "res-" behaviorspace-run-number ".csv" )
+  if file-exists? export-file [ file-delete export-file]
   set g-fixed 1
   setup-patches
   setup-turtles
@@ -22,6 +20,7 @@ end
 
 to go
   tick
+  if recalc-world-interval > 0 and ticks mod recalc-world-interval = 0   [recalc-world]
   peers-interaction
   make-event
   if sample-interval > 0 and ticks mod sample-interval = 0 and length(export-file) > 3
@@ -102,6 +101,25 @@ to-report random-normal-in-bounds [mid dev mmin mmax]
 end
 
 
+to recalc-world
+  let i 0
+   repeat 4
+  [recal-dimension i
+  set i i + 1]
+  update-possition-all2
+end
+
+to recal-dimension [i]
+  let min-v min [item i culture] of turtles
+  let max-v max [item i culture] of turtles
+  let world-d (max-v - min-v) + 2
+  ask turtles [
+    let new-v ( (item i culture) - min-v ) * 100 / world-d
+    set culture ( replace-item i culture new-v )
+  ]
+end
+
+
 to peers-interaction
   let var-avg-last-p-final-peer 0
   if interaction-neighbours-per-tick > 0
@@ -150,7 +168,7 @@ to peers-interaction
     set last-peer-interaction-step ticks
     ;output-print4 "selected cultureA" culture-A "selected culture B" culture-B
     let similar ( similarity culture-A culture-B )
-    set last-p-final ( similar * ( 1 - social-capital-weight)) +  social-capital-weight * ( sigmoid soc-capital-inner-p + ( [soc-capital-inner-p] of turtle-B ) ) / 2
+    set last-p-final peer-restric-filter * ( apply-soc-capital-effect similar (list soc-capital-inner-p [soc-capital-inner-p] of turtle-B ) )
    ;set last-random-event random-float 1
     set last-random-event random-float 1
     set var-avg-last-p-final-peer var-avg-last-p-final-peer + last-p-final
@@ -193,6 +211,10 @@ to peers-interaction
   ]
   set avg-last-p-final-peer var-avg-last-p-final-peer / interaction-neighbours-per-tick
   ]
+end
+
+to-report apply-soc-capital-effect [p lst-soc-cap]
+  report   p * ( 1 - social-capital-weight) +  social-capital-weight * ( mean lst-soc-cap )
 end
 
 to-report new-culture [c-obj c-trgt fixed]
@@ -424,12 +446,12 @@ to export-csv
   ;file-open file-name
   ;ask turtles [ file-print reduce [ [ x y ] -> ( word  x ","  y )   ] ( fput ticks ( sublist culture 1 4 ) ) ]
   ;let l (length [culture] of one-of turtles)
-  csv:to-file export-file [sublist culture 1 4] of turtles
+  csv:to-file "result.csv" [sublist culture 1 4] of turtles
 end
 
 
 to world-to-file
-  file-open ( word "res-" behaviorspace-run-number ".csv" )
+  file-open export-file
   ask turtles [file-print csv:to-row ( fput behaviorspace-run-number ( fput ticks ( sublist culture 1 4 ) ) ) ]
   close-file
   ;;csv:to-file ( word "res-" behaviorspace-run-number "-" ticks ".csv" )  [sublist culture 1 4] of turtles
@@ -512,7 +534,7 @@ prob-creator-gene
 prob-creator-gene
 0
 1
-0.13
+0.2
 0.01
 1
 NIL
@@ -551,7 +573,7 @@ interaction-neighbours-per-tick
 interaction-neighbours-per-tick
 0
 100
-34.0
+10.0
 1
 1
 NIL
@@ -583,7 +605,7 @@ prob-event
 prob-event
 0
 1
-0.0
+1.0
 0.01
 1
 NIL
@@ -597,8 +619,8 @@ SLIDER
 sample-interval
 sample-interval
 0
-1000
-100.0
+2000
+1000.0
 10
 1
 NIL
@@ -616,10 +638,10 @@ verbose
 -1000
 
 SLIDER
-1087
-12
-1259
-45
+1046
+15
+1218
+48
 xthr
 xthr
 0
@@ -664,7 +686,7 @@ neighbours-to-choose-from
 neighbours-to-choose-from
 1
 100
-11.0
+15.0
 1
 1
 NIL
@@ -816,10 +838,10 @@ NIL
 HORIZONTAL
 
 PLOT
-653
-112
-1072
-372
+659
+125
+1062
+251
 plot traits
 NIL
 NIL
@@ -844,7 +866,7 @@ similar-over-neighbourhood
 similar-over-neighbourhood
 0
 1
-1.0
+0.7
 0.01
 1
 NIL
@@ -866,25 +888,25 @@ NIL
 HORIZONTAL
 
 SLIDER
+1233
+10
+1385
+43
+var1-x
+var1-x
+0
+1
+1.0
+0.01
+1
+NIL
+HORIZONTAL
+
+SLIDER
 1234
-116
-1386
-149
-var1-x
-var1-x
-0
-1
-1.0
-0.01
-1
-NIL
-HORIZONTAL
-
-SLIDER
-1235
-156
-1386
-189
+46
+1385
+79
 var2-x
 var2-x
 0
@@ -896,12 +918,27 @@ NIL
 HORIZONTAL
 
 SLIDER
-1235
-196
+1234
+86
+1387
+119
+var3-x
+var3-x
+0
+1
+0.0
+0.01
+1
+NIL
+HORIZONTAL
+
+SLIDER
+1237
+140
 1388
-229
-var3-x
-var3-x
+173
+var1-y
+var1-y
 0
 1
 0.0
@@ -911,25 +948,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-1238
-250
+1237
+180
 1389
-283
-var1-y
-var1-y
-0
-1
-0.0
-0.01
-1
-NIL
-HORIZONTAL
-
-SLIDER
-1238
-290
-1390
-323
+213
 var2-y
 var2-y
 0
@@ -941,10 +963,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-1239
-330
-1390
-363
+1238
+220
+1389
+253
 var3-y
 var3-y
 0
@@ -956,10 +978,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-1083
-280
-1217
-313
+1089
+170
+1223
+203
 NIL
 update-position-all
 NIL
@@ -1065,7 +1087,7 @@ CHOOSER
 event-distance-impact
 event-distance-impact
 "None" "Linear World Distance" "Distance squared" "Distance exponential"
-3
+2
 
 BUTTON
 1264
@@ -1085,20 +1107,20 @@ NIL
 1
 
 CHOOSER
-1089
-226
-1227
-271
+1087
+121
+1225
+166
 display-dimensions
 display-dimensions
 "1-2" "1-3" "2-3"
 0
 
 BUTTON
-1081
-323
-1228
-356
+1078
+208
+1225
+241
 NIL
 update-possition-all2
 NIL
@@ -1194,10 +1216,10 @@ NIL
 1
 
 PLOT
-670
-390
-870
-540
+660
+253
+860
+403
 soc capital average
 NIL
 NIL
@@ -1229,7 +1251,7 @@ SWITCH
 690
 cultural-distance
 cultural-distance
-0
+1
 1
 -1000
 
@@ -1277,10 +1299,10 @@ NIL
 HORIZONTAL
 
 PLOT
-874
-390
-1074
-540
+870
+253
+1070
+403
 plot event participants count
 NIL
 NIL
@@ -1295,10 +1317,10 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot last-event-participants-count"
 
 PLOT
-704
-638
-1023
-833
+1090
+261
+1393
+423
 soc capital p distribution
 NIL
 NIL
@@ -1342,10 +1364,10 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot avg-last-p-final-peer"
 
 PLOT
-1079
-388
-1279
-538
+1312
+635
+1576
+831
 avg-last-p-final-event
 NIL
 NIL
@@ -1368,7 +1390,7 @@ social-capital-weight
 social-capital-weight
 0
 1
-0.1
+0.0
 0.1
 1
 NIL
@@ -1419,17 +1441,6 @@ event-impact-radius
 NIL
 HORIZONTAL
 
-INPUTBOX
-660
-48
-834
-108
-export-file
-result.csv
-1
-0
-String
-
 BUTTON
 1378
 554
@@ -1456,11 +1467,58 @@ negative-impact-prob
 negative-impact-prob
 0
 1
-1.0
+0.5
 0.1
 1
 NIL
 HORIZONTAL
+
+SLIDER
+707
+502
+879
+535
+peer-restric-filter
+peer-restric-filter
+0
+1
+1.0
+0.05
+1
+NIL
+HORIZONTAL
+
+SLIDER
+662
+52
+834
+85
+recalc-world-interval
+recalc-world-interval
+0
+100
+100.0
+1
+1
+NIL
+HORIZONTAL
+
+BUTTON
+663
+87
+761
+120
+NIL
+recalc-world
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -1842,7 +1900,7 @@ NetLogo 6.0.4
 @#$#@#$#@
 @#$#@#$#@
 <experiments>
-  <experiment name="experiment" repetitions="4" runMetricsEveryStep="true">
+  <experiment name="experiment-similar-over-neighbourhood" repetitions="4" runMetricsEveryStep="true">
     <setup>setup</setup>
     <go>go</go>
     <timeLimit steps="4000"/>
@@ -1988,6 +2046,323 @@ NetLogo 6.0.4
     </enumeratedValueSet>
     <enumeratedValueSet variable="dist1">
       <value value="&quot;Uniform&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sd3">
+      <value value="16"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="experiment-negavite-impact-prob-effect" repetitions="4" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="6000"/>
+    <metric>mean [soc-capital-inner-p] of turtles</metric>
+    <enumeratedValueSet variable="dist1">
+      <value value="&quot;Uniform&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="auto-stop">
+      <value value="&quot;Condition&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="dist2">
+      <value value="&quot;Uniform&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="peer-restric-filter">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="xthr">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="similar-over-neighbourhood">
+      <value value="0.7"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prob-inactivity-gene">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="move-fraction">
+      <value value="0.05"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="soc-cap-increment">
+      <value value="0.05"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="display-dimensions">
+      <value value="&quot;2-3&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="custom-location-scale">
+      <value value="12"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sample-interval">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="event-impact-radius">
+      <value value="0.16"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="neighbours-to-choose-from">
+      <value value="13"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="cultural-distance">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="export-file">
+      <value value="&quot;result.csv&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="multiplier-for-stopping">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="change-shape">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="social-capital-weight">
+      <value value="0.1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prob-event">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prob-creator-gene">
+      <value value="0.13"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="var2-y">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="ticks-to-run">
+      <value value="2000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="mean3">
+      <value value="55"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="event-exp-impact-scale">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="meanf">
+      <value value="29"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-agents">
+      <value value="402"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="color-cap">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="event-distance-impact">
+      <value value="&quot;Distance squared&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="soc-capital-inner-dist">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="dist3">
+      <value value="&quot;Uniform&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="distf">
+      <value value="&quot;Uniform&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="var3-x">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="var3-y">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="var1-x">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="negative-impact-prob">
+      <value value="0"/>
+      <value value="0.5"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="event-impact">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="var1-y">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="verbose">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sd1">
+      <value value="17"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="mean1">
+      <value value="33"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="var2-x">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sd2">
+      <value value="17"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="random-peer-interaction-prob">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="mean2">
+      <value value="80"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="interaction-neighbours-per-tick">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sd3">
+      <value value="16"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="adjust-n-neighbours-choose-on-capital?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sdf">
+      <value value="8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="soc-capital-inner-init">
+      <value value="0"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="experiment-similar-over-neighbourhood-recalworld" repetitions="4" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="15000"/>
+    <metric>count turtles</metric>
+    <enumeratedValueSet variable="soc-capital-inner-init">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="dist1">
+      <value value="&quot;Uniform&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="dist2">
+      <value value="&quot;Uniform&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="peer-restric-filter">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="xthr">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="similar-over-neighbourhood">
+      <value value="0"/>
+      <value value="0.4"/>
+      <value value="0.7"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prob-inactivity-gene">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="move-fraction">
+      <value value="0.05"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="display-dimensions">
+      <value value="&quot;1-2&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="soc-cap-increment">
+      <value value="0.05"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sample-interval">
+      <value value="1000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="custom-location-scale">
+      <value value="12"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="cultural-distance">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="neighbours-to-choose-from">
+      <value value="15"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="event-impact-radius">
+      <value value="0.16"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="multiplier-for-stopping">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="change-shape">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="social-capital-weight">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prob-event">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prob-creator-gene">
+      <value value="0.13"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="var2-y">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="ticks-to-run">
+      <value value="2000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="mean3">
+      <value value="55"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="meanf">
+      <value value="29"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="event-exp-impact-scale">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-agents">
+      <value value="402"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="color-cap">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="event-distance-impact">
+      <value value="&quot;Linear World Distance&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="soc-capital-inner-dist">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="dist3">
+      <value value="&quot;Uniform&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="distf">
+      <value value="&quot;Uniform&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="var3-x">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="var3-y">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="var1-x">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="negative-impact-prob">
+      <value value="0.5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="event-impact">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="var1-y">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="verbose">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sd1">
+      <value value="17"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="mean1">
+      <value value="33"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="var2-x">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sd2">
+      <value value="17"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="random-peer-interaction-prob">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="recalc-world-interval">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="mean2">
+      <value value="80"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="interaction-neighbours-per-tick">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="adjust-n-neighbours-choose-on-capital?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sdf">
+      <value value="8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="auto-stop">
+      <value value="&quot;Condition&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="sd3">
       <value value="16"/>
