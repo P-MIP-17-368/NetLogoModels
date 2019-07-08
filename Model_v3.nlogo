@@ -605,7 +605,7 @@ prob-event
 prob-event
 0
 1
-1.0
+0.0
 0.01
 1
 NIL
@@ -866,7 +866,7 @@ similar-over-neighbourhood
 similar-over-neighbourhood
 0
 1
-0.7
+1.0
 0.01
 1
 NIL
@@ -1251,7 +1251,7 @@ SWITCH
 690
 cultural-distance
 cultural-distance
-1
+0
 1
 -1000
 
@@ -2254,7 +2254,7 @@ NetLogo 6.0.4
       <value value="12"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="cultural-distance">
-      <value value="false"/>
+      <value value="true"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="neighbours-to-choose-from">
       <value value="15"/>
@@ -2275,7 +2275,7 @@ NetLogo 6.0.4
       <value value="0"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="prob-creator-gene">
-      <value value="0.13"/>
+      <value value="0.2"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="var2-y">
       <value value="1"/>
@@ -2299,7 +2299,7 @@ NetLogo 6.0.4
       <value value="true"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="event-distance-impact">
-      <value value="&quot;Linear World Distance&quot;"/>
+      <value value="&quot;Distance squared&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="soc-capital-inner-dist">
       <value value="0"/>

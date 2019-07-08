@@ -1,6 +1,13 @@
 library("fpc")
 library("dplyr")
 
+if (Sys.info()['nodename'] == "DESKTOP-DTFRNI0") {
+  wdNetlogoCode <- 'C:/git/MII-NetlogoModels/NetLogoModels'
+  wdExperimentArchive <- 'C:/Users/oruna/OneDrive/darbas/MII projektas/Experiments/'
+} else {
+  wdNetlogoCode <- 'C:/code/u/NetLogoModels'
+  wdExperimentArchive <- 'C:/Users/milibaru/OneDrive/darbas/MII projektas/Experiments/'
+}
 
 calc_clusters <- function(df) {
   ds = df[3:5]
@@ -118,8 +125,12 @@ loadAndPlotSingle <- function(fileName) {
   
 }
 
-#dr = "C:/git/MII-NetlogoModels/NetLogoModels"
-dr = "C:/code/u/NetLogoModels"
+plotPairs <- function(df,ticks,i){
+  di <- dfls [dfls$Ticks == ticks & dfls$Experiment == i,]
+  pairs(di[,3:5],pch=19, main = sprintf("Exp %s", i))
+}
+
+dr = wdNetlogoCode
 setwd(dr)
 #loadAndPlotMany(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"),scenarios_no = 3,repetitions = 4)
 
@@ -129,9 +140,12 @@ loadAndPlotSingle("res-0.csv")
 #dt1 = load_data_single_file("res-0.csv")
 #d1 <- dt1[dt1$Ticks == 100,]
 #pairs(d1[,3:5],pch=19)
-dfls <- load_data(list.files(path = "C:/Users/milibaru/OneDrive/darbas/MII projektas/Experiments/0708-1", pattern = "res-[1-9]\\d*\\.csv$"))
+dr <- paste(wdExperimentArchive,"0708-3",sep='')
+setwd(dr)
+dfls <- load_data(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"))
 for (i in 1:16){
-  di <- dfls [dfls$Ticks == 15000 & dfls$Experiment == i,]
-  pairs(di[,3:5],pch=19, main = sprintf("Exp %s", i))
+  plotPairs(dfls,15000,i)
 }
+
+
 
