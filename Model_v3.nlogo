@@ -4,7 +4,7 @@ turtles-own [culture creator-gene inactivity-gene cluster ll custom-location soc
 ;custom-location - each agent has location, that doesn't change
 ; last-random-event - just for testing purposes - stores last random generated number which is used to determine participation in event
 
-globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-x color-list g-fixed last-event-participants-count avg-last-p-final-peer avg-last-p-final-event o-file export-file]
+globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-x color-list g-fixed last-event-participants-count avg-last-p-final-peer avg-last-p-final-event o-file export-file ]
 
 ;ask turtle 29 [ask max-n-of neighbours-to-choose-from other turtles [similarity [culture] of myself culture] [set color green ]]
 
@@ -12,7 +12,6 @@ to setup
   clear-all
   set export-file ( word "res-" behaviorspace-run-number ".csv" )
   if file-exists? export-file [ file-delete export-file]
-  set g-fixed 1
   setup-patches
   setup-turtles
   reset-ticks
@@ -27,14 +26,7 @@ to go
   [
     world-to-file
   ]
- ; if ticks mod sample-interval = 0 [
- ;   update-plot
- ;   if auto-stop != "None"
- ;     [ifelse auto-stop = "Ticks"
- ;       [if ticks >= ticks-to-run [stop]]
- ;       [if ticks mod ( sample-interval * multiplier-for-stopping ) = 0 [if check-end? [stop]]]
- ;     ]
- ; ]
+  strive-uniqueness
   if color-cap [set-color-on-cap]
 end
 
@@ -61,7 +53,9 @@ to setup-turtles
     set culture []
     set custom-location list random custom-location-scale random custom-location-scale
 
-    set culture ( list ( rnd-culture-item distf meanf sdf )  ( rnd-culture-item dist1 mean1 sd1 ) ( rnd-culture-item dist2 mean2 sd2 ) ( rnd-culture-item dist3 mean3 sd3 ))
+    set culture []
+    repeat num-features [
+      set culture fput random 100 culture ]
     update-position-for-turtle
   ]
   reset-colors
@@ -87,26 +81,13 @@ to-report p-to-color5 [p]
   report ( ( round ( p * 10 ) * 10)  + 5 )
 end
 
-to-report rnd-culture-item [dist m sd ]
-  ifelse dist = "Uniform"
-  [report random 100]
-  [report random-normal-in-bounds m sd 0 100]
-end
-
-to-report random-normal-in-bounds [mid dev mmin mmax]
-  let result random-normal mid dev
-  if result < mmin or result > mmax
-    [ report random-normal-in-bounds mid dev mmin mmax ]
-  report result
-end
-
 
 to recalc-world
   let i 0
    repeat 4
   [recal-dimension i
   set i i + 1]
-  update-possition-all2
+  update-position-all
 end
 
 to recal-dimension [i]
@@ -118,6 +99,35 @@ to recal-dimension [i]
     set culture ( replace-item i culture new-v )
   ]
 end
+
+to turtle-strive-uniqueness
+ ; procedure for turtle
+
+  let peers []
+  let neighbours-to-choose-from-adjusted neighbours-to-choose-from
+  if adjust-n-neighbours-choose-on-capital? [set neighbours-to-choose-from-adjusted ceiling ( neighbours-to-choose-from * soc-capital-inner-p ) ]
+  ifelse random-float 1 < similar-over-neighbourhood [
+    set peers max-n-of neighbours-to-choose-from-adjusted other turtles [similarity [culture] of myself culture]
+  ][
+    set peers min-n-of neighbours-to-choose-from-adjusted other turtles  [custom-distance custom-location [custom-location] of myself]
+  ]
+  let d c-uniqueness * sum ( map [x -> exp ((similarity culture x) - 1 ) ] ( [culture] of peers ) )
+  set d max ( list 0 min ( list 1 d ) )
+  if random-float 1 < d
+  [set culture new-culture-neg culture [culture] of one-of peers]
+  output-print (list who culture d [culture] of peers)
+  ;let ssl sum ( map [x -> exp ( - x )] sl )
+
+end
+
+to strive-uniqueness
+  if uniqueness-seekers-per-tick > 0 [
+    ask n-of uniqueness-seekers-per-tick turtles [
+      turtle-strive-uniqueness
+    ]
+  ]
+end
+
 
 
 to peers-interaction
@@ -175,7 +185,7 @@ to peers-interaction
     ;output-print2 "similarity between cultures" P
     if (last-p-final < 0 or last-p-final > 1) [error ( word "last-p-final out of bounds" last-p-final ) ]
     ifelse  last-random-event  < last-p-final [
-      set culture new-culture culture-A culture-B 1
+      set culture new-culture culture-A culture-B
       update-position-for-turtle
       set soc-capital-inner  soc-capital-inner + soc-cap-increment
       set soc-capital-inner-p sigmoid soc-capital-inner
@@ -197,7 +207,7 @@ to peers-interaction
       set soc-capital-inner-p sigmoid soc-capital-inner
       if change-shape [ set shape "face neutral"]
       if ( negative-impact-prob > random-float 1 )  [
-          set culture new-culture-neg culture-A culture-B 1
+          set culture new-culture-neg culture-A culture-B
           update-position-for-turtle
           if change-shape [ set shape "face sad"]
         ]
@@ -217,12 +227,14 @@ to-report apply-soc-capital-effect [p lst-soc-cap]
   report   p * ( 1 - social-capital-weight) +  social-capital-weight * ( mean lst-soc-cap )
 end
 
-to-report new-culture [c-obj c-trgt fixed]
+to-report new-culture [c-obj c-trgt]
+  let fixed fixed-features
   let l length c-obj
   report sentence ( sublist c-obj  0  fixed ) (move (sublist c-obj  fixed l) (sublist c-trgt fixed l) move-fraction)
 end
 
-to-report new-culture-neg [c-obj c-trgt fixed]
+to-report new-culture-neg [c-obj c-trgt]
+  let fixed fixed-features
   let l length c-obj
   report sentence ( sublist c-obj  0  fixed ) (move (sublist c-obj  fixed l) (sublist c-trgt fixed l) ( - move-fraction) )
 end
@@ -233,8 +245,12 @@ to-report move [c-obj c-trg fraction]
 end
 
 to-report keep-in-bounds [val min-val max-val]
-  report  max (list min-val  ( min (list max-val val) ))
+  ifelse recalc-world-interval > 0
+  [report val]
+  [report  max (list min-val  ( min (list max-val val) ))]
 end
+
+
 
 to make-event
   let p-event prob-event
@@ -264,7 +280,7 @@ to make-event
         if (last-p-final > 0 and last-p-final < 1) and last-random-event < last-p-final
         [
           if change-shape [ set shape "triangle" ]
-          set culture new-culture culture ( [culture] of myself) 1
+          set culture new-culture culture ( [culture] of myself)
           update-position-for-turtle
           set participants-count participants-count + 1
         ]]]]
@@ -377,58 +393,22 @@ to update-position-all
   ]
 end
 
-to update-possition-all2
-  if (display-dimensions = "1-2")
-  [
-    set-x-vars [1 0 0]
-    set-y-vars [0 1 0]
-  ]
-  if (display-dimensions = "1-3")
-  [
-    set-x-vars [1 0 0]
-    set-y-vars [0 0 1]
-  ]
-  if (display-dimensions = "2-3")
-  [
-    set-x-vars [0 1 0]
-    set-y-vars [0 0 1]
-  ]
 
-  update-position-all
-end
-
-to set-x-vars [l]
-  set var1-x item 0 l
-  set var2-x item 1 l
-  set var3-x item 2 l
-end
-
-
-to set-y-vars [l]
-  set var1-y item 0 l
-  set var2-y item 1 l
-  set var3-y item 2 l
-end
 
 to update-position-for-turtle
-    let r calc-position-for-turtle self
-    setxy item 0 r item 1 r
+    setxy ( calc-position-x item x-axis-feature culture ) ( calc-position-y item  y-axis-feature culture )
 end
 
-to-report calc-position-for-turtle [trtl]
-  let c [sublist culture g-fixed (length culture) ] of trtl
-  report list calc-position-x c  calc-position-y c
-end
 
 
 to-report calc-position-x
   [l]
-  report ( ( world-width - 1 ) * ( (item 0 l / 100 ) *  var1-x +  (item 1 l / 100) * var2-x + (item 2 l / 100 ) * var3-x ) / ( var1-x +  var2-x +  var3-x  ) )  - ( world-width - 1 ) / 2
+  report ( ( world-width - 1 ) *  l / 100  )  - ( world-width - 1 ) / 2
 end
 
 to-report calc-position-y
   [l]
-  report ( (world-height - 1 ) * ( (item 0 l / 100) * var1-y +  (item 1 l / 100) * var2-y + (item 2 l / 100) * var3-y ) / ( var1-y +  var2-y +  var3-y  ) ) - ( world-height - 1 ) / 2
+  report ( (world-height - 1 ) *  l / 100 )  - ( world-height - 1 ) / 2
 end
 
 to-report custom-distance
@@ -443,18 +423,14 @@ to-report max-world-dist [l]
 end
 
 to export-csv
-  ;file-open file-name
-  ;ask turtles [ file-print reduce [ [ x y ] -> ( word  x ","  y )   ] ( fput ticks ( sublist culture 1 4 ) ) ]
-  ;let l (length [culture] of one-of turtles)
   csv:to-file "result.csv" [sublist culture 1 4] of turtles
 end
 
 
 to world-to-file
   file-open export-file
-  ask turtles [file-print csv:to-row ( fput behaviorspace-run-number ( fput ticks ( sublist culture 1 4 ) ) ) ]
+  ask turtles [file-print csv:to-row ( sentence (list behaviorspace-run-number ticks who)   culture soc-capital-inner-p ) ]
   close-file
-  ;;csv:to-file ( word "res-" behaviorspace-run-number "-" ticks ".csv" )  [sublist culture 1 4] of turtles
 end
 
 to close-file
@@ -519,17 +495,17 @@ num-agents
 num-agents
 2
 2000
-402.0
+12.0
 10
 1
 NIL
 HORIZONTAL
 
 SLIDER
-201
-462
-373
-495
+4
+219
+176
+252
 prob-creator-gene
 prob-creator-gene
 0
@@ -565,15 +541,15 @@ NIL
 1
 
 SLIDER
-390
-455
-617
-488
+214
+452
+441
+485
 interaction-neighbours-per-tick
 interaction-neighbours-per-tick
 0
-100
-10.0
+30
+2.0
 1
 1
 NIL
@@ -597,15 +573,15 @@ NIL
 1
 
 SLIDER
-200
-534
-372
-567
+4
+293
+176
+326
 prob-event
 prob-event
 0
 1
-0.0
+0.44
 0.01
 1
 NIL
@@ -663,10 +639,10 @@ NIL
 1
 
 SLIDER
-198
-571
-370
-604
+4
+329
+176
+362
 event-impact
 event-impact
 0
@@ -686,17 +662,17 @@ neighbours-to-choose-from
 neighbours-to-choose-from
 1
 100
-15.0
+2.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-200
-498
-372
-531
+4
+257
+176
+290
 prob-inactivity-gene
 prob-inactivity-gene
 0
@@ -706,121 +682,6 @@ prob-inactivity-gene
 1
 NIL
 HORIZONTAL
-
-SLIDER
-12
-261
-184
-294
-mean1
-mean1
-0
-100
-33.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-12
-295
-184
-328
-sd1
-sd1
-0
-100
-17.0
-0.5
-1
-NIL
-HORIZONTAL
-
-SLIDER
-11
-381
-183
-414
-mean2
-mean2
-0
-100
-80.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-11
-417
-183
-450
-sd2
-sd2
-0
-100
-17.0
-0.5
-1
-NIL
-HORIZONTAL
-
-SLIDER
-10
-506
-182
-539
-mean3
-mean3
-0
-100
-55.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-9
-542
-181
-575
-sd3
-sd3
-0
-100
-16.0
-0.5
-1
-NIL
-HORIZONTAL
-
-SLIDER
-851
-14
-1023
-47
-multiplier-for-stopping
-multiplier-for-stopping
-1
-100
-1.0
-1
-1
-NIL
-HORIZONTAL
-
-CHOOSER
-1088
-66
-1226
-111
-auto-stop
-auto-stop
-"None" "Ticks" "Condition"
-2
 
 SLIDER
 852
@@ -892,96 +753,36 @@ SLIDER
 10
 1385
 43
-var1-x
-var1-x
+x-axis-feature
+x-axis-feature
 0
+num-features
+0.0
 1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+1233
+45
+1384
+78
+y-axis-feature
+y-axis-feature
+0
+num-features
 1.0
-0.01
 1
-NIL
-HORIZONTAL
-
-SLIDER
-1234
-46
-1385
-79
-var2-x
-var2-x
-0
-1
-0.0
-0.01
-1
-NIL
-HORIZONTAL
-
-SLIDER
-1234
-86
-1387
-119
-var3-x
-var3-x
-0
-1
-0.0
-0.01
-1
-NIL
-HORIZONTAL
-
-SLIDER
-1237
-140
-1388
-173
-var1-y
-var1-y
-0
-1
-0.0
-0.01
-1
-NIL
-HORIZONTAL
-
-SLIDER
-1237
-180
-1389
-213
-var2-y
-var2-y
-0
-1
-1.0
-0.01
-1
-NIL
-HORIZONTAL
-
-SLIDER
-1238
-220
-1389
-253
-var3-y
-var3-y
-0
-1
-0.0
-0.01
 1
 NIL
 HORIZONTAL
 
 BUTTON
-1089
-170
-1223
-203
+1237
+86
+1371
+119
 NIL
 update-position-all
 NIL
@@ -994,81 +795,11 @@ NIL
 NIL
 1
 
-CHOOSER
-11
-213
-184
-258
-dist1
-dist1
-"Uniform" "Normal"
-0
-
-CHOOSER
-11
-334
-183
-379
-dist2
-dist2
-"Uniform" "Normal"
-0
-
-CHOOSER
-11
-458
-184
-503
-dist3
-dist3
-"Uniform" "Normal"
-0
-
-CHOOSER
-10
-90
-148
-135
-distf
-distf
-"Uniform" "Normal"
-0
-
 SLIDER
-10
-136
-182
-169
-meanf
-meanf
-0
-100
-29.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-10
-173
-182
-206
-sdf
-sdf
-0
-100
-8.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-9
-616
-181
-649
+6
+164
+178
+197
 move-fraction
 move-fraction
 0
@@ -1080,10 +811,10 @@ NIL
 HORIZONTAL
 
 CHOOSER
-199
-608
-368
-653
+6
+365
+175
+410
 event-distance-impact
 event-distance-impact
 "None" "Linear World Distance" "Distance squared" "Distance exponential"
@@ -1106,38 +837,11 @@ NIL
 NIL
 1
 
-CHOOSER
-1087
-121
-1225
-166
-display-dimensions
-display-dimensions
-"1-2" "1-3" "2-3"
-0
-
-BUTTON
-1078
-208
-1225
-241
-NIL
-update-possition-all2
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
 SLIDER
-9
-665
-181
-698
+7
+603
+179
+636
 soc-cap-increment
 soc-cap-increment
 0
@@ -1149,10 +853,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-10
-703
-182
-736
+8
+639
+180
+672
 soc-capital-inner-init
 soc-capital-inner-init
 -5
@@ -1182,10 +886,10 @@ PENS
 "default" 1.0 0 -16777216 true "" "histogram [soc-capital-inner] of turtles"
 
 BUTTON
-85
-803
-182
-836
+77
+715
+174
+748
 NIL
 reset-colors\n
 NIL
@@ -1200,9 +904,9 @@ NIL
 
 BUTTON
 194
-802
+685
 317
-835
+718
 NIL
 set-color-on-cap
 NIL
@@ -1234,10 +938,10 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot mean [soc-capital-inner-p] of turtles"
 
 SWITCH
-200
-763
-306
-796
+203
+628
+309
+661
 color-cap
 color-cap
 0
@@ -1245,10 +949,10 @@ color-cap
 -1000
 
 SWITCH
-200
-657
-347
-690
+6
+413
+153
+446
 cultural-distance
 cultural-distance
 0
@@ -1256,10 +960,10 @@ cultural-distance
 -1000
 
 BUTTON
-349
-800
-455
-833
+327
+681
+433
+714
 Reset shapes
 ask turtles [set shape \"dot\"] 
 NIL
@@ -1273,10 +977,10 @@ NIL
 1
 
 SWITCH
-333
-762
-467
-795
+331
+641
+465
+674
 change-shape
 change-shape
 1
@@ -1284,10 +988,10 @@ change-shape
 -1000
 
 SLIDER
-200
-692
-380
-725
+5
+450
+185
+483
 event-exp-impact-scale
 event-exp-impact-scale
 1
@@ -1335,10 +1039,10 @@ PENS
 "default" 0.05 0 -16777216 true "" "  plot-pen-reset\nhistogram [soc-capital-inner-p] of turtles"
 
 SWITCH
-391
-525
-667
-558
+388
+526
+664
+559
 adjust-n-neighbours-choose-on-capital?
 adjust-n-neighbours-choose-on-capital?
 1
@@ -1397,10 +1101,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-11
-740
-183
-773
+7
+675
+179
+708
 soc-capital-inner-dist
 soc-capital-inner-dist
 0
@@ -1427,10 +1131,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-200
-727
-372
-760
+5
+484
+177
+517
 event-impact-radius
 event-impact-radius
 0
@@ -1497,7 +1201,7 @@ recalc-world-interval
 recalc-world-interval
 0
 100
-100.0
+0.0
 1
 1
 NIL
@@ -1519,6 +1223,83 @@ NIL
 NIL
 NIL
 1
+
+SLIDER
+7
+90
+179
+123
+num-features
+num-features
+1
+5
+2.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+6
+127
+178
+160
+fixed-features
+fixed-features
+0
+num-features
+0.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+445
+451
+650
+484
+uniqueness-seekers-per-tick
+uniqueness-seekers-per-tick
+0
+100
+2.0
+1
+1
+NIL
+HORIZONTAL
+
+BUTTON
+1046
+487
+1175
+520
+NIL
+strive-uniqueness\n
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+SLIDER
+671
+454
+843
+487
+c-uniqueness
+c-uniqueness
+0
+1
+0.7
+0.1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
