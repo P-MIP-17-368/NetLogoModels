@@ -102,6 +102,7 @@ end
 
 to turtle-strive-uniqueness
  ; procedure for turtle
+  output-print1 who
 
   let peers []
   let neighbours-to-choose-from-adjusted neighbours-to-choose-from
@@ -111,11 +112,16 @@ to turtle-strive-uniqueness
   ][
     set peers min-n-of neighbours-to-choose-from-adjusted other turtles  [custom-distance custom-location [custom-location] of myself]
   ]
-  let d c-uniqueness * sum ( map [x -> exp ((similarity culture x) - 1 ) ] ( [culture] of peers ) )
-  set d max ( list 0 min ( list 1 d ) )
-  if random-float 1 < d
-  [set culture new-culture-neg culture [culture] of one-of peers]
-  output-print (list who culture d [culture] of peers)
+  output-print1 [who] of peers
+  let ds map [x -> exp ((similarity culture x) - 1 ) ] ( [culture] of peers )
+  output-print1 ds
+  let d c-uniqueness * ( sum ds )  / neighbours-to-choose-from
+  let dl max ( list 0 min ( list 1 d ) )
+  output-print1 list d dl
+  set culture mutate-random-culture-feature culture dl
+  ;if random-float 1 < d
+  ;[set culture new-culture-neg culture [culture] of one-of peers]
+  output-print1 (list who culture d [culture] of peers)
   ;let ssl sum ( map [x -> exp ( - x )] sl )
 
 end
@@ -233,11 +239,22 @@ to-report new-culture [c-obj c-trgt]
   report sentence ( sublist c-obj  0  fixed ) (move (sublist c-obj  fixed l) (sublist c-trgt fixed l) move-fraction)
 end
 
+; this makes distancing, by some fraction
 to-report new-culture-neg [c-obj c-trgt]
   let fixed fixed-features
   let l length c-obj
   report sentence ( sublist c-obj  0  fixed ) (move (sublist c-obj  fixed l) (sublist c-trgt fixed l) ( - move-fraction) )
 end
+
+to-report mutate-random-culture-feature [c-obj vr]
+  let fixed fixed-features
+  let l length c-obj
+  let i ( random l - fixed ) + fixed
+  let oldval ( item i c-obj )
+  let newval keep-in-bounds-pure ( oldval + random-normal 0 ( vr * 100) ) 0 100
+  report replace-item i c-obj newval
+end
+
 
 to-report move [c-obj c-trg fraction]
   ;let dist custom-distance c-obj c-trg
@@ -247,9 +264,12 @@ end
 to-report keep-in-bounds [val min-val max-val]
   ifelse recalc-world-interval > 0
   [report val]
-  [report  max (list min-val  ( min (list max-val val) ))]
+  [report keep-in-bounds-pure val min-val max-val]
 end
 
+to-report keep-in-bounds-pure [val min-val max-val]
+  report  max (list min-val  ( min (list max-val val) ))
+end
 
 
 to make-event
@@ -495,7 +515,7 @@ num-agents
 num-agents
 2
 2000
-12.0
+92.0
 10
 1
 NIL
@@ -515,13 +535,6 @@ prob-creator-gene
 1
 NIL
 HORIZONTAL
-
-OUTPUT
-1402
-47
-1777
-502
-11
 
 BUTTON
 79
@@ -549,7 +562,7 @@ interaction-neighbours-per-tick
 interaction-neighbours-per-tick
 0
 30
-2.0
+10.0
 1
 1
 NIL
@@ -581,7 +594,7 @@ prob-event
 prob-event
 0
 1
-0.44
+0.0
 0.01
 1
 NIL
@@ -662,7 +675,7 @@ neighbours-to-choose-from
 neighbours-to-choose-from
 1
 100
-2.0
+10.0
 1
 1
 NIL
@@ -846,7 +859,7 @@ soc-cap-increment
 soc-cap-increment
 0
 0.5
-0.05
+0.01
 0.01
 1
 NIL
@@ -1094,7 +1107,7 @@ social-capital-weight
 social-capital-weight
 0
 1
-0.0
+0.1
 0.1
 1
 NIL
@@ -1139,7 +1152,7 @@ event-impact-radius
 event-impact-radius
 0
 1
-0.16
+0.12
 0.01
 1
 NIL
@@ -1186,7 +1199,7 @@ peer-restric-filter
 peer-restric-filter
 0
 1
-1.0
+0.7
 0.05
 1
 NIL
@@ -1295,11 +1308,18 @@ c-uniqueness
 c-uniqueness
 0
 1
-0.7
-0.1
+0.04
+0.01
 1
 NIL
 HORIZONTAL
+
+OUTPUT
+1400
+45
+1849
+522
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
