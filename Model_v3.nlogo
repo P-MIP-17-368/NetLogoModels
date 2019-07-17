@@ -219,7 +219,7 @@ to peers-interaction
         ]
       ask turtle-B [
         set last-peer-ineraction-result false
-        set soc-capital-inner  soc-capital-inner - soc-cap-increment
+        set soc-capital-inner  soc-capital-inner - soc-cap-decrement
         set soc-capital-inner-p sigmoid soc-capital-inner
         if change-shape [ set shape "face neutral"]
         ]
@@ -1199,7 +1199,7 @@ peer-restric-filter
 peer-restric-filter
 0
 1
-0.7
+1.0
 0.05
 1
 NIL
@@ -1276,7 +1276,7 @@ uniqueness-seekers-per-tick
 uniqueness-seekers-per-tick
 0
 100
-2.0
+10.0
 1
 1
 NIL
@@ -1320,6 +1320,21 @@ OUTPUT
 1849
 522
 11
+
+SLIDER
+7
+566
+179
+599
+soc-cap-decrement
+soc-cap-decrement
+0
+0.5
+0.1
+0.01
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
