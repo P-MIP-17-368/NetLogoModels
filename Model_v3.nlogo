@@ -562,7 +562,7 @@ interaction-neighbours-per-tick
 interaction-neighbours-per-tick
 0
 30
-10.0
+5.0
 1
 1
 NIL
@@ -594,7 +594,7 @@ prob-event
 prob-event
 0
 1
-0.0
+1.0
 0.01
 1
 NIL
@@ -660,7 +660,7 @@ event-impact
 event-impact
 0
 1
-1.0
+0.5
 0.01
 1
 NIL
@@ -740,7 +740,7 @@ similar-over-neighbourhood
 similar-over-neighbourhood
 0
 1
-1.0
+0.0
 0.01
 1
 NIL
@@ -755,7 +755,7 @@ custom-location-scale
 custom-location-scale
 0
 100
-12.0
+4.0
 1
 1
 NIL
@@ -1276,7 +1276,7 @@ uniqueness-seekers-per-tick
 uniqueness-seekers-per-tick
 0
 100
-10.0
+5.0
 1
 1
 NIL
