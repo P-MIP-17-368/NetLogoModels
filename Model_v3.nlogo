@@ -1,10 +1,10 @@
 ;extensions [r csv]
 extensions [csv]
-turtles-own [culture creator-gene inactivity-gene cluster ll custom-location soc-capital-inner soc-capital-inner-p last-random-event last-p-final last-peer-interacted last-peer-interaction-step last-peer-ineraction-result]
+turtles-own [culture creator-gene inactivity-gene cluster ll custom-location soc-capital last-random-event last-p-final last-peer-interacted last-peer-interaction-step last-peer-ineraction-results ]
 ;custom-location - each agent has location, that doesn't change
 ; last-random-event - just for testing purposes - stores last random generated number which is used to determine participation in event
 
-globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-x color-list g-fixed last-event-participants-count avg-last-p-final-peer avg-last-p-final-event o-file export-file ]
+globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-x color-list g-fixed last-event-participants-count avg-last-p-final-peer avg-last-p-final-event o-file export-file interaction-discount-weights ]
 
 ;ask turtle 29 [ask max-n-of neighbours-to-choose-from other turtles [similarity [culture] of myself culture] [set color green ]]
 
@@ -37,6 +37,8 @@ end
 to setup-turtles
   create-turtles num-agents
 
+  set interaction-discount-weights n-values history-size [ i -> interaction-history-discount ^ i]
+
   ask turtles [
    ; setxy random-xcor random-ycor
     set shape "dot"
@@ -44,12 +46,9 @@ to setup-turtles
     set inactivity-gene (random-float 1 < prob-inactivity-gene)
     set ll false
 
-    set soc-capital-inner soc-capital-inner-init
-
-    ifelse soc-capital-inner-dist > 0 [ set soc-capital-inner  random-normal soc-capital-inner-init soc-capital-inner-dist  ] [ set soc-capital-inner soc-capital-inner-init ]
-
   ;  set soc-capital-inner (random-float 2) - 1
-     set soc-capital-inner-p sigmoid soc-capital-inner
+    set last-peer-ineraction-results n-values history-size [ random 1]
+    set soc-capital weighted-average last-peer-ineraction-results interaction-discount-weights
     set culture []
     set custom-location list random custom-location-scale random custom-location-scale
 
@@ -73,8 +72,7 @@ end
 to set-color-on-cap
 ask turtles
   [
-    let s sigmoid soc-capital-inner
-    set color p-to-color5 s
+    set color p-to-color5 soc-capital
   ]
 end
 to-report p-to-color5 [p]
@@ -106,7 +104,7 @@ to turtle-strive-uniqueness
 
   let peers []
   let neighbours-to-choose-from-adjusted neighbours-to-choose-from
-  if adjust-n-neighbours-choose-on-capital? [set neighbours-to-choose-from-adjusted ceiling ( neighbours-to-choose-from * soc-capital-inner-p ) ]
+  if adjust-n-neighbours-choose-on-capital? [set neighbours-to-choose-from-adjusted ceiling ( neighbours-to-choose-from * soc-capital ) ]
   ifelse random-float 1 < similar-over-neighbourhood [
     set peers max-n-of neighbours-to-choose-from-adjusted other turtles [similarity [culture] of myself culture]
   ][
@@ -145,7 +143,7 @@ to peers-interaction
   [
     let culture-A []
     let neighbours-to-choose-from-adjusted neighbours-to-choose-from
-    if adjust-n-neighbours-choose-on-capital? [set neighbours-to-choose-from-adjusted ceiling ( neighbours-to-choose-from * soc-capital-inner-p ) ]
+    if adjust-n-neighbours-choose-on-capital? [set neighbours-to-choose-from-adjusted ceiling ( neighbours-to-choose-from * soc-capital ) ]
 
     let turtle-A 0
     let location-A custom-location
@@ -184,7 +182,7 @@ to peers-interaction
     set last-peer-interaction-step ticks
     ;output-print4 "selected cultureA" culture-A "selected culture B" culture-B
     let similar ( similarity culture-A culture-B )
-    set last-p-final peer-restric-filter * ( apply-soc-capital-effect similar (list soc-capital-inner-p [soc-capital-inner-p] of turtle-B ) )
+    set last-p-final peer-restric-filter * ( apply-soc-capital-effect similar (list soc-capital [soc-capital] of turtle-B ) )
    ;set last-random-event random-float 1
     set last-random-event random-float 1
     set var-avg-last-p-final-peer var-avg-last-p-final-peer + last-p-final
@@ -193,24 +191,14 @@ to peers-interaction
     ifelse  last-random-event  < last-p-final [
       set culture new-culture culture-A culture-B
       update-position-for-turtle
-      set soc-capital-inner  soc-capital-inner + soc-cap-increment
-      set soc-capital-inner-p sigmoid soc-capital-inner
       if change-shape [ set shape "face happy"]
-      set last-peer-ineraction-result true
-    ;  output-print ( list "+soc-self:" soc-capital-inner [who] of self )
       ask turtle-B [
-        set last-peer-ineraction-result true
-        set soc-capital-inner  soc-capital-inner + soc-cap-increment
-        set soc-capital-inner-p sigmoid soc-capital-inner
-       ; output-print ( list "+soc-peer:" soc-capital-inner  [who] of self )
+        turtle-update-interaction-results 1
         if change-shape [ set shape "face happy"]
         ]
     ] [
-      set last-peer-ineraction-result false
       ; additionaly check when distancing needs to applied and apply
-
-      set soc-capital-inner  soc-capital-inner - soc-cap-increment
-      set soc-capital-inner-p sigmoid soc-capital-inner
+      turtle-update-interaction-results 0
       if change-shape [ set shape "face neutral"]
       if ( negative-impact-prob > random-float 1 )  [
           set culture new-culture-neg culture-A culture-B
@@ -218,9 +206,7 @@ to peers-interaction
           if change-shape [ set shape "face sad"]
         ]
       ask turtle-B [
-        set last-peer-ineraction-result false
-        set soc-capital-inner  soc-capital-inner - soc-cap-decrement
-        set soc-capital-inner-p sigmoid soc-capital-inner
+        turtle-update-interaction-results 0
         if change-shape [ set shape "face neutral"]
         ]
     ]
@@ -228,6 +214,12 @@ to peers-interaction
   set avg-last-p-final-peer var-avg-last-p-final-peer / interaction-neighbours-per-tick
   ]
 end
+
+to turtle-update-interaction-results [res]
+    set last-peer-ineraction-results fput res but-last last-peer-ineraction-results
+    set soc-capital weighted-average last-peer-ineraction-results interaction-discount-weights
+end
+
 
 to-report apply-soc-capital-effect [p lst-soc-cap]
   report   p * ( 1 - social-capital-weight) +  social-capital-weight * ( mean lst-soc-cap )
@@ -292,7 +284,7 @@ to make-event
             [set distance-effect distance-degrade-event custom-location [custom-location] of myself]
         ifelse distance-effect = 0
            [set last-p-final 0]
-           [set last-p-final  ( event-impact * P-similar * distance-effect * (1 - social-capital-weight)  ) +  ( social-capital-weight * soc-capital-inner-p )]
+           [set last-p-final  ( event-impact * P-similar * distance-effect * (1 - social-capital-weight)  ) +  ( social-capital-weight * soc-capital )]
         output-print4 "p-final" last-p-final "P-similar:" P-similar
 
         set last-random-event random-float 1
@@ -449,7 +441,7 @@ end
 
 to world-to-file
   file-open export-file
-  ask turtles [file-print csv:to-row ( sentence (list behaviorspace-run-number ticks who)   culture soc-capital-inner-p ) ]
+  ask turtles [file-print csv:to-row ( sentence (list behaviorspace-run-number ticks who)   culture soc-capital ) ]
   close-file
 end
 
@@ -460,6 +452,10 @@ end
 
 to-report sigmoid [x]
   report 1 / (1 + exp ( - x) )
+end
+
+to-report weighted-average [vals weights]
+  report (sum (map [ [ x d ] -> x * d] vals weights)) / (sum weights)
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -594,7 +590,7 @@ prob-event
 prob-event
 0
 1
-1.0
+0.0
 0.01
 1
 NIL
@@ -660,7 +656,7 @@ event-impact
 event-impact
 0
 1
-0.5
+0.51
 0.01
 1
 NIL
@@ -740,7 +736,7 @@ similar-over-neighbourhood
 similar-over-neighbourhood
 0
 1
-0.0
+1.0
 0.01
 1
 NIL
@@ -755,7 +751,7 @@ custom-location-scale
 custom-location-scale
 0
 100
-4.0
+3.0
 1
 1
 NIL
@@ -785,7 +781,7 @@ y-axis-feature
 y-axis-feature
 0
 num-features
-1.0
+2.0
 1
 1
 NIL
@@ -850,54 +846,6 @@ NIL
 NIL
 1
 
-SLIDER
-7
-603
-179
-636
-soc-cap-increment
-soc-cap-increment
-0
-0.5
-0.01
-0.01
-1
-NIL
-HORIZONTAL
-
-SLIDER
-8
-639
-180
-672
-soc-capital-inner-init
-soc-capital-inner-init
--5
-5
-0.0
-0.5
-1
-NIL
-HORIZONTAL
-
-PLOT
-506
-639
-694
-830
-soc capital raw inner distribution
-NIL
-NIL
--20.0
-20.0
-0.0
-10.0
-true
-false
-"" ""
-PENS
-"default" 1.0 0 -16777216 true "" "histogram [soc-capital-inner] of turtles"
-
 BUTTON
 77
 715
@@ -948,7 +896,7 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot mean [soc-capital-inner-p] of turtles"
+"default" 1.0 0 -16777216 true "" "plot mean [soc-capital] of turtles"
 
 SWITCH
 203
@@ -1049,7 +997,7 @@ true
 false
 "" ""
 PENS
-"default" 0.05 0 -16777216 true "" "  plot-pen-reset\nhistogram [soc-capital-inner-p] of turtles"
+"default" 0.05 0 -16777216 true "" "  plot-pen-reset\nhistogram [soc-capital] of turtles"
 
 SWITCH
 388
@@ -1107,22 +1055,7 @@ social-capital-weight
 social-capital-weight
 0
 1
-0.1
-0.1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-7
-675
-179
-708
-soc-capital-inner-dist
-soc-capital-inner-dist
-0
-10
-0.0
+0.2
 0.1
 1
 NIL
@@ -1137,7 +1070,7 @@ random-peer-interaction-prob
 random-peer-interaction-prob
 0
 1
-0.0
+0.1
 0.1
 1
 NIL
@@ -1246,7 +1179,7 @@ num-features
 num-features
 1
 5
-2.0
+3.0
 1
 1
 NIL
@@ -1308,7 +1241,7 @@ c-uniqueness
 c-uniqueness
 0
 1
-0.04
+0.03
 0.01
 1
 NIL
@@ -1323,15 +1256,45 @@ OUTPUT
 
 SLIDER
 7
-566
-179
-599
-soc-cap-decrement
-soc-cap-decrement
+538
+209
+571
+interaction-history-discount
+interaction-history-discount
 0
+1
+0.8
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+7
+575
+179
+608
+soc-capital-init
+soc-capital-init
+0
+1
 0.5
 0.1
-0.01
+1
+NIL
+HORIZONTAL
+
+SLIDER
+8
+611
+180
+644
+history-size
+history-size
+0
+100
+10.0
+1
 1
 NIL
 HORIZONTAL
