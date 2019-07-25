@@ -47,7 +47,7 @@ to setup-turtles
     set ll false
 
   ;  set soc-capital-inner (random-float 2) - 1
-    set last-peer-ineraction-results n-values history-size [ random 1]
+    set last-peer-ineraction-results n-values history-size [ random-int-bool soc-capital-init ]
     set soc-capital weighted-average last-peer-ineraction-results interaction-discount-weights
     set culture []
     set custom-location list random custom-location-scale random custom-location-scale
@@ -79,6 +79,9 @@ to-report p-to-color5 [p]
   report ( ( round ( p * 10 ) * 10)  + 5 )
 end
 
+to-report random-int-bool [v]
+  ifelse random-float 1 < v [ report 1] [report 0]
+end
 
 to recalc-world
   let i 0
@@ -656,7 +659,7 @@ event-impact
 event-impact
 0
 1
-0.51
+0.53
 0.01
 1
 NIL
@@ -736,7 +739,7 @@ similar-over-neighbourhood
 similar-over-neighbourhood
 0
 1
-1.0
+0.0
 0.01
 1
 NIL
@@ -957,7 +960,7 @@ event-exp-impact-scale
 event-exp-impact-scale
 1
 100
-10.0
+8.0
 1
 1
 NIL
@@ -1278,7 +1281,7 @@ soc-capital-init
 soc-capital-init
 0
 1
-0.5
+0.0
 0.1
 1
 NIL
