@@ -37,7 +37,7 @@ load_data_file <- function(filename) {
   return(dfres)
 }
 
-load_data <- function(lf){
+load_data <- function(lf,newColumnNames){
   for (file_name in lf){
     print(file_name)
     if (!exists("dres"))
@@ -45,7 +45,7 @@ load_data <- function(lf){
     else
       dres <- rbind(dres,read.table(file_name, header = FALSE, sep = ",", fill = TRUE ))
   }
-  dres <- setNames(dres,c("Experiment","Ticks","V1","V2","V3"))
+  dres <- setNames(dres,newColumnNames)
   return(dres)
 }
 
@@ -61,9 +61,27 @@ experimentdata2clusterdata <- function(dfres){
   return(dtf)
 }
 
+experimentdata2meandata <- function(dfres){
+  dt <- NULL 
+  for (ea in split(dfres,dfres$Experiment)) {
+    for (s in split(ea,ea$Ticks)){
+      r1 <- unlist(c( s[1,1:2], mean(s)))
+      dt <- rbind(dt,r1)
+    }
+  }
+  dtf <-  as.data.frame(dt,c("Experiment","Ticks","ClusterNo","NoicePoints","silwidth"))
+  return(dtf)
+}
+
 aggregate_by_clusters <- function(dtf) {
   df <- group_by(dtf,Ticks)
   df <- summarize(df, V3A = mean(V3))
+  return(df)
+}
+
+aggregate_by_soccap <- function(dtf) {
+  df <- group_by(dtf,Ticks)
+  df <- summarize(df, scA = mean(sc))
   return(df)
 }
 
@@ -80,7 +98,7 @@ loadAndPlotMany <- function(fileList,scenarios_no,repetitions) {
   if (experimentsNo != length(fileList))
     throw("Files don't match experiments")
   
-  dfres <- load_data(fileList)
+  dfres <- load_data(fileList,c("Experiment","Ticks","V1","V2","V3"))
   dtf <- experimentdata2clusterdata(dfres)
   
   dtf <- mutate(dtf, Scenario = ceiling(Experiment / repetitions))
@@ -109,7 +127,22 @@ loadAndPlotMany <- function(fileList,scenarios_no,repetitions) {
   return()
 
 }
-
+loadAndPlotBySocCap <- function(listfiles,scenarios_no,repetitions){
+  dfls <- load_data(listfiles,c("Experiment","Ticks","id","V1","V2","V3","sc"))
+  dtf <- mutate(dfls, Scenario = ceiling(Experiment / 4))
+  t1 <- group_by(dtf,Experiment)
+  ts <- lapply(split(t1,t1$Experiment),aggregate_by_soccap)
+  xrange <- range(dtf$Ticks) 
+  yrange <- range(dtf$sc)
+  colors <- rainbow(2)
+  linetype <- c(1:2)
+  plot(xrange, yrange, type="n", xlab="Ticks", ylab="Soc cap (average)" ) 
+  for (i in 1:8) {
+    i_dt <- ts[[i]]
+    lines(x = i_dt$Ticks, y=i_dt$scA, type="b", col=colors[ceiling(i / 4)], lty=linetype[ceiling(i / 4)]  )
+  }
+  return()
+}
 
 loadAndPlotSingle <- function(fileName) {
   
@@ -134,18 +167,24 @@ dr = wdNetlogoCode
 setwd(dr)
 #loadAndPlotMany(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"),scenarios_no = 3,repetitions = 4)
 
-loadAndPlotSingle("res-0.csv")
+#loadAndPlotSingle("res-0.csv")
 
 
 #dt1 = load_data_single_file("res-0.csv")
 #d1 <- dt1[dt1$Ticks == 100,]
 #pairs(d1[,3:5],pch=19)
-dr <- paste(wdExperimentArchive,"0708-3",sep='')
+dr <- paste(wdExperimentArchive,"0802-1",sep='')
 setwd(dr)
-dfls <- load_data(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"))
-for (i in 1:16){
-  plotPairs(dfls,15000,i)
-}
+
+loadAndPlotBySocCap(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"),scenarios_no = 3,repetitions = 4)
+
+#dfls <- load_data(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"),c("Experiment","Ticks","V1","V2","V3"))
+
+#for (i in 1:8){
+#  plotPairs(dfls,12000,i)
+#}
+#dfls[10,]
+
 
 
 
