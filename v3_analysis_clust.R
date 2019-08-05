@@ -173,10 +173,10 @@ setwd(dr)
 #dt1 = load_data_single_file("res-0.csv")
 #d1 <- dt1[dt1$Ticks == 100,]
 #pairs(d1[,3:5],pch=19)
-dr <- paste(wdExperimentArchive,"0802-1",sep='')
+dr <- paste(wdExperimentArchive,"0805-3",sep='')
 setwd(dr)
 
-loadAndPlotBySocCap(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"),scenarios_no = 3,repetitions = 4)
+loadAndPlotBySocCap(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"), scenarios_no = 3, repetitions = 4)
 
 #dfls <- load_data(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"),c("Experiment","Ticks","V1","V2","V3"))
 

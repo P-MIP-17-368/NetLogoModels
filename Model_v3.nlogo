@@ -193,6 +193,7 @@ to peers-interaction
     if (last-p-final < 0 or last-p-final > 1) [error ( word "last-p-final out of bounds" last-p-final ) ]
     ifelse  last-random-event  < last-p-final [
       set culture new-culture culture-A culture-B
+      turtle-update-interaction-results 1
       update-position-for-turtle
       if change-shape [ set shape "face happy"]
       ask turtle-B [
@@ -1058,7 +1059,7 @@ social-capital-weight
 social-capital-weight
 0
 1
-0.4
+0.1
 0.1
 1
 NIL
@@ -2153,7 +2154,7 @@ NetLogo 6.0.4
   <experiment name="experiment -social capital weight" repetitions="4" runMetricsEveryStep="true">
     <setup>setup</setup>
     <go>go</go>
-    <timeLimit steps="15000"/>
+    <timeLimit steps="10000"/>
     <metric>count turtles</metric>
     <enumeratedValueSet variable="peer-restric-filter">
       <value value="1"/>
@@ -2162,6 +2163,7 @@ NetLogo 6.0.4
       <value value="1"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="c-uniqueness">
+      <value value="0.01"/>
       <value value="0.03"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="similar-over-neighbourhood">
@@ -2205,7 +2207,6 @@ NetLogo 6.0.4
     </enumeratedValueSet>
     <enumeratedValueSet variable="social-capital-weight">
       <value value="0.1"/>
-      <value value="0.4"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="prob-event">
       <value value="0"/>
