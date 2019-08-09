@@ -784,7 +784,7 @@ SLIDER
 y-axis-feature
 y-axis-feature
 0
-num-features
+num-features - 1
 2.0
 1
 1
@@ -1059,7 +1059,7 @@ social-capital-weight
 social-capital-weight
 0
 1
-0.1
+0.5
 0.1
 1
 NIL
@@ -2163,7 +2163,6 @@ NetLogo 6.0.4
       <value value="1"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="c-uniqueness">
-      <value value="0.01"/>
       <value value="0.03"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="similar-over-neighbourhood">
@@ -2206,7 +2205,9 @@ NetLogo 6.0.4
       <value value="false"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="social-capital-weight">
-      <value value="0.1"/>
+      <value value="0"/>
+      <value value="0.2"/>
+      <value value="0.5"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="prob-event">
       <value value="0"/>

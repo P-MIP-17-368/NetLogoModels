@@ -128,18 +128,19 @@ loadAndPlotMany <- function(fileList,scenarios_no,repetitions) {
 
 }
 loadAndPlotBySocCap <- function(listfiles,scenarios_no,repetitions){
+  exps <- scenarios_no * repetitions
   dfls <- load_data(listfiles,c("Experiment","Ticks","id","V1","V2","V3","sc"))
-  dtf <- mutate(dfls, Scenario = ceiling(Experiment / 4))
+  dtf <- mutate(dfls, Scenario = ceiling(Experiment / repetitions))
   t1 <- group_by(dtf,Experiment)
   ts <- lapply(split(t1,t1$Experiment),aggregate_by_soccap)
   xrange <- range(dtf$Ticks) 
   yrange <- range(dtf$sc)
-  colors <- rainbow(2)
-  linetype <- c(1:2)
+  colors <- rainbow(scenarios_no)
+  linetype <- c(1:scenarios_no)
   plot(xrange, yrange, type="n", xlab="Ticks", ylab="Soc cap (average)" ) 
-  for (i in 1:8) {
+  for (i in 1:exps) {
     i_dt <- ts[[i]]
-    lines(x = i_dt$Ticks, y=i_dt$scA, type="b", col=colors[ceiling(i / 4)], lty=linetype[ceiling(i / 4)]  )
+    lines(x = i_dt$Ticks, y=i_dt$scA, type="b", col=colors[ceiling(i / repetitions)], lty=linetype[ceiling(i / repetitions)]  )
   }
   return()
 }
@@ -173,7 +174,7 @@ setwd(dr)
 #dt1 = load_data_single_file("res-0.csv")
 #d1 <- dt1[dt1$Ticks == 100,]
 #pairs(d1[,3:5],pch=19)
-dr <- paste(wdExperimentArchive,"0805-3",sep='')
+dr <- paste(wdExperimentArchive,"0809-1",sep='')
 setwd(dr)
 
 loadAndPlotBySocCap(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"), scenarios_no = 3, repetitions = 4)
