@@ -106,12 +106,11 @@ to turtle-strive-uniqueness
   output-print1 who
 
   let peers []
-  let neighbours-to-choose-from-adjusted neighbours-to-choose-from
-  if adjust-n-neighbours-choose-on-capital? [set neighbours-to-choose-from-adjusted ceiling ( neighbours-to-choose-from * soc-capital ) ]
+
   ifelse random-float 1 < similar-over-neighbourhood [
-    set peers max-n-of neighbours-to-choose-from-adjusted other turtles [similarity [culture] of myself culture]
+    set peers max-n-of neighbours-to-choose-from other turtles [similarity [culture] of myself culture]
   ][
-    set peers min-n-of neighbours-to-choose-from-adjusted other turtles  [custom-distance custom-location [custom-location] of myself]
+    set peers min-n-of neighbours-to-choose-from other turtles  [custom-distance custom-location [custom-location] of myself]
   ]
   output-print1 [who] of peers
   let ds map [x -> exp ((similarity culture x) - 1 ) ] ( [culture] of peers )
@@ -145,9 +144,6 @@ to peers-interaction
   ask n-of interaction-neighbours-per-tick turtles
   [
     let culture-A []
-    let neighbours-to-choose-from-adjusted neighbours-to-choose-from
-    if adjust-n-neighbours-choose-on-capital? [set neighbours-to-choose-from-adjusted ceiling ( neighbours-to-choose-from * soc-capital ) ]
-
     let turtle-A 0
     let location-A custom-location
     let culture-B []
@@ -165,12 +161,12 @@ to peers-interaction
       ; selecting one of neighbours-to-choose-from closest turtles to him without himself
       ifelse random-float 1 < similar-over-neighbourhood
       [ ;similar
-        let peers max-n-of neighbours-to-choose-from-adjusted other turtles [similarity culture-A culture]
+        let peers max-n-of neighbours-to-choose-from other turtles [similarity culture-A culture]
         set turtle-B one-of peers
         ;ask peers [set color green]
       ]
       [;neighbours
-        let peers min-n-of neighbours-to-choose-from-adjusted other turtles  [custom-distance custom-location location-A ]
+        let peers min-n-of neighbours-to-choose-from other turtles  [custom-distance custom-location location-A ]
         set turtle-B one-of peers
         ; ask peers [set color yellow]
       ]
@@ -185,7 +181,8 @@ to peers-interaction
     set last-peer-interaction-step ticks
     ;output-print4 "selected cultureA" culture-A "selected culture B" culture-B
     let similar ( similarity culture-A culture-B )
-    set last-p-final peer-restric-filter * ( apply-soc-capital-effect similar (list soc-capital [soc-capital] of turtle-B ) )
+    ;set last-p-final peer-restric-filter * ( apply-soc-capital-effect similar (list soc-capital [soc-capital] of turtle-B ) )
+    set last-p-final peer-restric-filter * ( apply-soc-capital-effect similar (list soc-capital ) ) ; jei tik inicijatoriaus soc kapitalas svarbu
    ;set last-random-event random-float 1
     set last-random-event random-float 1
     set var-avg-last-p-final-peer var-avg-last-p-final-peer + last-p-final
@@ -594,7 +591,7 @@ prob-event
 prob-event
 0
 1
-0.0
+1.0
 0.01
 1
 NIL
@@ -609,7 +606,7 @@ sample-interval
 sample-interval
 0
 2000
-1000.0
+10.0
 10
 1
 NIL
@@ -660,7 +657,7 @@ event-impact
 event-impact
 0
 1
-0.53
+1.0
 0.01
 1
 NIL
@@ -740,7 +737,7 @@ similar-over-neighbourhood
 similar-over-neighbourhood
 0
 1
-0.7
+1.0
 0.01
 1
 NIL
@@ -1003,17 +1000,6 @@ false
 PENS
 "default" 0.05 0 -16777216 true "" "  plot-pen-reset\nhistogram [soc-capital] of turtles"
 
-SWITCH
-388
-526
-664
-559
-adjust-n-neighbours-choose-on-capital?
-adjust-n-neighbours-choose-on-capital?
-1
-1
--1000
-
 PLOT
 1028
 636
@@ -1059,7 +1045,7 @@ social-capital-weight
 social-capital-weight
 0
 1
-0.5
+0.1
 0.1
 1
 NIL
@@ -1074,7 +1060,7 @@ random-peer-interaction-prob
 random-peer-interaction-prob
 0
 1
-0.1
+0.0
 0.1
 1
 NIL
@@ -1089,7 +1075,7 @@ event-impact-radius
 event-impact-radius
 0
 1
-0.12
+0.1
 0.01
 1
 NIL
@@ -1121,7 +1107,7 @@ negative-impact-prob
 negative-impact-prob
 0
 1
-0.5
+0.0
 0.1
 1
 NIL
@@ -1282,7 +1268,7 @@ soc-capital-init
 soc-capital-init
 0
 1
-0.5
+0.3
 0.1
 1
 NIL
@@ -2151,11 +2137,11 @@ NetLogo 6.0.4
       <value value="16"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="experiment -social capital weight" repetitions="4" runMetricsEveryStep="true">
+  <experiment name="soc_cap_weight" repetitions="4" runMetricsEveryStep="true">
     <setup>setup</setup>
     <go>go</go>
-    <timeLimit steps="10000"/>
-    <metric>count turtles</metric>
+    <timeLimit steps="400"/>
+    <metric>mean [soc-capital] of turtles</metric>
     <enumeratedValueSet variable="peer-restric-filter">
       <value value="1"/>
     </enumeratedValueSet>
@@ -2178,7 +2164,7 @@ NetLogo 6.0.4
       <value value="3"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="sample-interval">
-      <value value="1000"/>
+      <value value="10"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="event-impact-radius">
       <value value="0.12"/>
@@ -2196,7 +2182,7 @@ NetLogo 6.0.4
       <value value="10"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="soc-capital-init">
-      <value value="0.5"/>
+      <value value="0.3"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="x-axis-feature">
       <value value="0"/>
@@ -2259,6 +2245,116 @@ NetLogo 6.0.4
     </enumeratedValueSet>
     <enumeratedValueSet variable="adjust-n-neighbours-choose-on-capital?">
       <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="fixed-features">
+      <value value="0"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="EUSoN" repetitions="4" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="100000"/>
+    <enumeratedValueSet variable="peer-restric-filter">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="xthr">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="c-uniqueness">
+      <value value="0.03"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="similar-over-neighbourhood">
+      <value value="0"/>
+      <value value="0.4"/>
+      <value value="0.7"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prob-inactivity-gene">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="move-fraction">
+      <value value="0.05"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sample-interval">
+      <value value="1000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="custom-location-scale">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="event-impact-radius">
+      <value value="0.1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="cultural-distance">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="neighbours-to-choose-from">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="interaction-history-discount">
+      <value value="0.8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="history-size">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="soc-capital-init">
+      <value value="0.3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="x-axis-feature">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="change-shape">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="social-capital-weight">
+      <value value="0.1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-features">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prob-creator-gene">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prob-event">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="ticks-to-run">
+      <value value="2000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="event-exp-impact-scale">
+      <value value="8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="y-axis-feature">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-agents">
+      <value value="92"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="color-cap">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="event-distance-impact">
+      <value value="&quot;Distance squared&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="negative-impact-prob">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="event-impact">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="uniqueness-seekers-per-tick">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="verbose">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="random-peer-interaction-prob">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="recalc-world-interval">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="interaction-neighbours-per-tick">
+      <value value="5"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="fixed-features">
       <value value="0"/>

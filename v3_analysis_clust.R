@@ -142,6 +142,8 @@ loadAndPlotBySocCap <- function(listfiles,scenarios_no,repetitions){
     i_dt <- ts[[i]]
     lines(x = i_dt$Ticks, y=i_dt$scA, type="b", col=colors[ceiling(i / repetitions)], lty=linetype[ceiling(i / repetitions)]  )
   }
+  legend(xrange[1], yrange[2], 1:scenarios_no, cex=0.8, col=colors,
+          lty=linetype, title="Scenario no")
   return()
 }
 
@@ -174,7 +176,7 @@ setwd(dr)
 #dt1 = load_data_single_file("res-0.csv")
 #d1 <- dt1[dt1$Ticks == 100,]
 #pairs(d1[,3:5],pch=19)
-dr <- paste(wdExperimentArchive,"0809-1",sep='')
+dr <- paste(wdExperimentArchive,"0812-07",sep='')
 setwd(dr)
 
 loadAndPlotBySocCap(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"), scenarios_no = 3, repetitions = 4)
