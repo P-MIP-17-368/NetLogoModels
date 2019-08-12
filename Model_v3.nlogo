@@ -2253,7 +2253,7 @@ NetLogo 6.0.4
   <experiment name="EUSoN" repetitions="4" runMetricsEveryStep="true">
     <setup>setup</setup>
     <go>go</go>
-    <timeLimit steps="100000"/>
+    <timeLimit steps="3000"/>
     <enumeratedValueSet variable="peer-restric-filter">
       <value value="1"/>
     </enumeratedValueSet>
@@ -2276,7 +2276,7 @@ NetLogo 6.0.4
       <value value="0.05"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="sample-interval">
-      <value value="1000"/>
+      <value value="10"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="custom-location-scale">
       <value value="3"/>

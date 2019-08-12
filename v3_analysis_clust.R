@@ -10,8 +10,8 @@ if (Sys.info()['nodename'] == "DESKTOP-DTFRNI0") {
 }
 
 calc_clusters <- function(df) {
-  ds = df[3:5]
-  db_p <- fpc::dbscan(ds, eps = 7, MinPts = 30)
+  ds = df[4:6]
+  db_p <- fpc::dbscan(ds, eps = 7, MinPts = 15)
   num_of_noicepoints = length(db_p$cluster[db_p$cluster == 0])
   num_of_clusters = max(db_p$cluster)
   if ((length(db_p$cluster[db_p$cluster > 0]) > 0 ) && (num_of_noicepoints > 0)) {
@@ -92,16 +92,17 @@ aggregate_by_soccap <- function(dtf) {
 #cs = cluster.stats(dist(ds), db$cluster)
 # experiment_data <- split(dfres,dfres$Experiment)
 
-loadAndPlotMany <- function(fileList,scenarios_no,repetitions) {
+loadAndPlotManyByClusters <- function(fileList,scenarios_no,repetitions) {
   experimentsNo <- scenarios_no * repetitions
 
   if (experimentsNo != length(fileList))
     throw("Files don't match experiments")
   
-  dfres <- load_data(fileList,c("Experiment","Ticks","V1","V2","V3"))
+  dfres <- load_data(fileList,c("Experiment","Ticks","id","V1","V2","V3","sc"))
   dtf <- experimentdata2clusterdata(dfres)
   
   dtf <- mutate(dtf, Scenario = ceiling(Experiment / repetitions))
+  #dtf <- mutate(dtf, Ticks = Ticks / 1000) #skale mazinam
   
   t1 <- group_by(dtf,Scenario)
   ts <- lapply(split(t1,t1$Scenario),aggregate_by_clusters)
@@ -112,12 +113,13 @@ loadAndPlotMany <- function(fileList,scenarios_no,repetitions) {
   linetype <- c(1:scenarios_no)
   plotchar <- seq(18,18+scenarios_no,1)
   
-  plot(xrange, yrange, type="n", xlab="Ticks",
-       ylab="Clusters (average)" ) 
+  #plot(xrange, yrange, type="n", xlab="Ticks (1000)", ylab="Clusters (average)" )
+  plot(xrange, yrange, type="n", xlab="Ticks", ylab="Clusters (average)" ) 
   
   for (i in 1:scenarios_no) {
     i_dt <- ts[[i]]
-    lines(x = i_dt$Ticks, y=i_dt$V3A, type="b", lty=linetype[i], col=colors[i], pch=plotchar[i]  )
+    #lines(x = i_dt$Ticks, y=i_dt$V3A, type="b", lty=linetype[i], col=colors[i], pch=plotchar[i]  )
+    lines(x = i_dt$Ticks, y=i_dt$V3A, type="l", lty=linetype[i], col=colors[i]  )# tik linijoe
   }
   
   title("Clusters", "Avergage cluters in scenarios")
@@ -140,10 +142,12 @@ loadAndPlotBySocCap <- function(listfiles,scenarios_no,repetitions){
   plot(xrange, yrange, type="n", xlab="Ticks", ylab="Soc cap (average)" ) 
   for (i in 1:exps) {
     i_dt <- ts[[i]]
-    lines(x = i_dt$Ticks, y=i_dt$scA, type="b", col=colors[ceiling(i / repetitions)], lty=linetype[ceiling(i / repetitions)]  )
+    lines(x = i_dt$Ticks, y=i_dt$scA, type="l", col=colors[ceiling(i / repetitions)] #, lty=linetype[ceiling(i / repetitions)] 
+          )
   }
-  legend(xrange[1], yrange[2], 1:scenarios_no, cex=0.8, col=colors,
-          lty=linetype, title="Scenario no")
+  legend("center", yrange, legend = 1:scenarios_no, cex=0.8, col=colors,
+         lty=linetype, 
+         title="Scenario no")
   return()
 }
 
@@ -168,7 +172,7 @@ plotPairs <- function(df,ticks,i){
 
 dr = wdNetlogoCode
 setwd(dr)
-#loadAndPlotMany(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"),scenarios_no = 3,repetitions = 4)
+
 
 #loadAndPlotSingle("res-0.csv")
 
@@ -176,10 +180,11 @@ setwd(dr)
 #dt1 = load_data_single_file("res-0.csv")
 #d1 <- dt1[dt1$Ticks == 100,]
 #pairs(d1[,3:5],pch=19)
-dr <- paste(wdExperimentArchive,"0812-07",sep='')
+dr <- paste(wdExperimentArchive,"0812-11",sep='')
 setwd(dr)
 
-loadAndPlotBySocCap(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"), scenarios_no = 3, repetitions = 4)
+loadAndPlotBySocCap(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"), scenarios_no = 4, repetitions = 4)
+loadAndPlotManyByClusters(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"),scenarios_no = 4,repetitions = 4)
 
 #dfls <- load_data(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"),c("Experiment","Ticks","V1","V2","V3"))
 
