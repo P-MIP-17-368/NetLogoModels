@@ -92,15 +92,22 @@ aggregate_by_soccap <- function(dtf) {
 #cs = cluster.stats(dist(ds), db$cluster)
 # experiment_data <- split(dfres,dfres$Experiment)
 
-loadAndPlotMany <- function(fileList,scenarios_no,repetitions) {
+#loads experiments from files.
+loadExperiments <- function(fileList,scenarios_no,repetitions) {
+  experimentsCount <- scenarios_no * repetitions
+  if (experimentsCount != length(fileList))
+    throw("Files don't match experiments")
+  df <- load_data(fileList,c("Experiment","Ticks","id","V1","V2","V3","sc"))
+  #df <- mutate(df, Scenario = ceiling(Experiment / repetitions))
+  return(df)
+  
+}
+
+loadAndPlotClusters <- function(fileList,scenarios_no,repetitions) {
   experimentsNo <- scenarios_no * repetitions
 
-  if (experimentsNo != length(fileList))
-    throw("Files don't match experiments")
-  
-  dfres <- load_data(fileList,c("Experiment","Ticks","V1","V2","V3"))
+  dfres <- loadExperiments(fileList,scenarios_no,repetitions)
   dtf <- experimentdata2clusterdata(dfres)
-  
   dtf <- mutate(dtf, Scenario = ceiling(Experiment / repetitions))
   
   t1 <- group_by(dtf,Scenario)
@@ -129,7 +136,7 @@ loadAndPlotMany <- function(fileList,scenarios_no,repetitions) {
 }
 loadAndPlotBySocCap <- function(listfiles,scenarios_no,repetitions){
   exps <- scenarios_no * repetitions
-  dfls <- load_data(listfiles,c("Experiment","Ticks","id","V1","V2","V3","sc"))
+  dfls <- loadExperiments(listfiles,scenarios_no,repetitions)
   dtf <- mutate(dfls, Scenario = ceiling(Experiment / repetitions))
   t1 <- group_by(dtf,Experiment)
   ts <- lapply(split(t1,t1$Experiment),aggregate_by_soccap)
@@ -178,8 +185,13 @@ setwd(dr)
 #pairs(d1[,3:5],pch=19)
 dr <- paste(wdExperimentArchive,"0812-07",sep='')
 setwd(dr)
+fileList <- list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$")
 
-loadAndPlotBySocCap(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"), scenarios_no = 3, repetitions = 4)
+loadAndPlotClusters(fileList, scenarios_no = 3, repetitions = 4)
+
+loadAndPlotClusters(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"), scenarios_no = 3, repetitions = 4)
+
+
 
 #dfls <- load_data(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"),c("Experiment","Ticks","V1","V2","V3"))
 
