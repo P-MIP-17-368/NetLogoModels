@@ -92,32 +92,22 @@ aggregate_by_soccap <- function(dtf) {
 #cs = cluster.stats(dist(ds), db$cluster)
 # experiment_data <- split(dfres,dfres$Experiment)
 
-<<<<<<< HEAD
+
 #loads experiments from files.
 loadExperiments <- function(fileList,scenarios_no,repetitions) {
   experimentsCount <- scenarios_no * repetitions
   if (experimentsCount != length(fileList))
-=======
-loadAndPlotManyByClusters <- function(fileList,scenarios_no,repetitions) {
-  experimentsNo <- scenarios_no * repetitions
-
-  if (experimentsNo != length(fileList))
->>>>>>> 9bde509121dbed6014c0e7b93f3e4f15d6affc03
     throw("Files don't match experiments")
   df <- load_data(fileList,c("Experiment","Ticks","id","V1","V2","V3","sc"))
   #df <- mutate(df, Scenario = ceiling(Experiment / repetitions))
   return(df)
-  
-<<<<<<< HEAD
+
 }
 
 loadAndPlotClusters <- function(fileList,scenarios_no,repetitions) {
   experimentsNo <- scenarios_no * repetitions
 
   dfres <- loadExperiments(fileList,scenarios_no,repetitions)
-=======
-  dfres <- load_data(fileList,c("Experiment","Ticks","id","V1","V2","V3","sc"))
->>>>>>> 9bde509121dbed6014c0e7b93f3e4f15d6affc03
   dtf <- experimentdata2clusterdata(dfres)
   dtf <- mutate(dtf, Scenario = ceiling(Experiment / repetitions))
   #dtf <- mutate(dtf, Ticks = Ticks / 1000) #skale mazinam
@@ -207,11 +197,6 @@ loadAndPlotClusters(fileList, scenarios_no = 3, repetitions = 4)
 loadAndPlotClusters(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"), scenarios_no = 3, repetitions = 4)
 
 
-<<<<<<< HEAD
-=======
-loadAndPlotBySocCap(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"), scenarios_no = 4, repetitions = 4)
-loadAndPlotManyByClusters(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"),scenarios_no = 4,repetitions = 4)
->>>>>>> 9bde509121dbed6014c0e7b93f3e4f15d6affc03
 
 #dfls <- load_data(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"),c("Experiment","Ticks","V1","V2","V3"))
 

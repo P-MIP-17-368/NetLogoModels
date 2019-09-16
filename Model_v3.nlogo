@@ -25,6 +25,7 @@ to go
   if sample-interval > 0 and ticks mod sample-interval = 0 and length(export-file) > 3
   [
     world-to-file
+    if save-world-png [export-view (word ticks ".png") ]
   ]
   strive-uniqueness
   if color-cap [set-color-on-cap]
@@ -605,8 +606,8 @@ SLIDER
 sample-interval
 sample-interval
 0
-2000
-10.0
+10000
+2000.0
 10
 1
 NIL
@@ -737,7 +738,7 @@ similar-over-neighbourhood
 similar-over-neighbourhood
 0
 1
-1.0
+0.7
 0.01
 1
 NIL
@@ -752,7 +753,7 @@ custom-location-scale
 custom-location-scale
 0
 100
-3.0
+5.0
 1
 1
 NIL
@@ -1169,7 +1170,7 @@ num-features
 num-features
 1
 5
-3.0
+5.0
 1
 1
 NIL
@@ -1231,7 +1232,7 @@ c-uniqueness
 c-uniqueness
 0
 1
-0.03
+0.05
 0.01
 1
 NIL
@@ -1288,6 +1289,17 @@ history-size
 1
 NIL
 HORIZONTAL
+
+SWITCH
+1102
+131
+1244
+164
+save-world-png
+save-world-png
+0
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
