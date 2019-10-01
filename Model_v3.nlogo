@@ -552,9 +552,9 @@ NIL
 1
 
 SLIDER
-214
+447
 452
-441
+674
 485
 interaction-neighbours-per-tick
 interaction-neighbours-per-tick
@@ -607,8 +607,8 @@ sample-interval
 sample-interval
 0
 10000
-2000.0
-10
+500.0
+50
 1
 NIL
 HORIZONTAL
@@ -665,10 +665,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-389
-489
-583
-522
+447
+524
+641
+557
 neighbours-to-choose-from
 neighbours-to-choose-from
 1
@@ -730,15 +730,15 @@ PENS
 "3rd" 1.0 0 -2674135 true "" "  plot-pen-reset\n  histogram [item 3 culture] of turtles\n  "
 
 SLIDER
-390
-598
-595
-631
+226
+452
+431
+485
 similar-over-neighbourhood
 similar-over-neighbourhood
 0
 1
-0.7
+0.85
 0.01
 1
 NIL
@@ -1192,10 +1192,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-445
-451
-650
-484
+447
+489
+652
+522
 uniqueness-seekers-per-tick
 uniqueness-seekers-per-tick
 0
@@ -1224,10 +1224,10 @@ NIL
 1
 
 SLIDER
-671
-454
-843
-487
+678
+452
+850
+485
 c-uniqueness
 c-uniqueness
 0
