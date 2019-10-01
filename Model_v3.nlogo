@@ -183,7 +183,8 @@ to peers-interaction
     ;output-print4 "selected cultureA" culture-A "selected culture B" culture-B
     let similar ( similarity culture-A culture-B )
     ;set last-p-final peer-restric-filter * ( apply-soc-capital-effect similar (list soc-capital [soc-capital] of turtle-B ) )
-    set last-p-final peer-restric-filter * ( apply-soc-capital-effect similar (list soc-capital ) ) ; jei tik inicijatoriaus soc kapitalas svarbu
+    ;set last-p-final peer-restric-filter * ( apply-soc-capital-effect similar (list soc-capital ) ) ; jei tik inicijatoriaus soc kapitalas svarbu
+    set last-p-final ( apply-soc-capital-effect similar (list soc-capital ) )
    ;set last-random-event random-float 1
     set last-random-event random-float 1
     set var-avg-last-p-final-peer var-avg-last-p-final-peer + last-p-final
@@ -384,20 +385,6 @@ to output-print1 [par1]
   ]
 end
 
-to update-plot
-  ;find-clusters
-  set-current-plot "Culture clustering"
-  set-plot-x-range 0 ticks
-  set-plot-y-range 0 num-agents
-  set-current-plot-pen "Number"
-  plotxy ticks num-cluster
-  set-current-plot-pen "Largest"
-  plotxy ticks max-cluster
-  set-current-plot-pen ">xthr"
-  plotxy ticks num-cluster-bigger-than-x
-
-  ;set-color
-end
 
 
 to update-position-all
@@ -520,10 +507,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-4
-219
-176
-252
+3
+245
+175
+278
 prob-creator-gene
 prob-creator-gene
 0
@@ -584,10 +571,10 @@ NIL
 1
 
 SLIDER
-4
-293
-176
-326
+3
+319
+175
+352
 prob-event
 prob-event
 0
@@ -607,7 +594,7 @@ sample-interval
 sample-interval
 0
 10000
-500.0
+0.0
 50
 1
 NIL
@@ -624,21 +611,6 @@ verbose
 1
 -1000
 
-SLIDER
-1046
-15
-1218
-48
-xthr
-xthr
-0
-20
-1.0
-1
-1
-NIL
-HORIZONTAL
-
 TEXTBOX
 791
 619
@@ -650,10 +622,10 @@ NIL
 1
 
 SLIDER
-4
-329
-176
-362
+3
+355
+175
+388
 event-impact
 event-impact
 0
@@ -680,31 +652,16 @@ NIL
 HORIZONTAL
 
 SLIDER
-4
-257
-176
-290
+3
+283
+175
+316
 prob-inactivity-gene
 prob-inactivity-gene
 0
 1
 0.0
 0.01
-1
-NIL
-HORIZONTAL
-
-SLIDER
-852
-63
-1024
-96
-ticks-to-run
-ticks-to-run
-100
-100000
-2000.0
-100
 1
 NIL
 HORIZONTAL
@@ -745,10 +702,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-389
-560
-561
-593
+6
+162
+178
+195
 custom-location-scale
 custom-location-scale
 0
@@ -760,10 +717,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-1233
-10
-1385
-43
+1146
+20
+1298
+53
 x-axis-feature
 x-axis-feature
 0
@@ -775,25 +732,25 @@ NIL
 HORIZONTAL
 
 SLIDER
-1233
-45
-1384
-78
+1146
+55
+1297
+88
 y-axis-feature
 y-axis-feature
 0
 num-features - 1
-2.0
+3.0
 1
 1
 NIL
 HORIZONTAL
 
 BUTTON
-1237
-86
-1371
-119
+1150
+96
+1284
+129
 NIL
 update-position-all
 NIL
@@ -808,9 +765,9 @@ NIL
 
 SLIDER
 6
-164
+196
 178
-197
+229
 move-fraction
 move-fraction
 0
@@ -822,37 +779,20 @@ NIL
 HORIZONTAL
 
 CHOOSER
-6
-365
-175
-410
+5
+391
+174
+436
 event-distance-impact
 event-distance-impact
 "None" "Linear World Distance" "Distance squared" "Distance exponential"
-2
+3
 
 BUTTON
-1264
-568
-1356
-601
-export-csv
-export-csv
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-77
-715
-174
-748
+340
+653
+437
+686
 NIL
 reset-colors\n
 NIL
@@ -866,10 +806,10 @@ NIL
 1
 
 BUTTON
-194
-685
-317
-718
+443
+653
+566
+686
 NIL
 set-color-on-cap
 NIL
@@ -901,10 +841,10 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot mean [soc-capital] of turtles"
 
 SWITCH
-203
-628
-309
-661
+460
+616
+566
+649
 color-cap
 color-cap
 0
@@ -912,10 +852,10 @@ color-cap
 -1000
 
 SWITCH
-6
-413
-153
-446
+5
+439
+152
+472
 cultural-distance
 cultural-distance
 0
@@ -923,10 +863,10 @@ cultural-distance
 -1000
 
 BUTTON
-327
-681
-433
-714
+571
+654
+677
+687
 Reset shapes
 ask turtles [set shape \"dot\"] 
 NIL
@@ -940,10 +880,10 @@ NIL
 1
 
 SWITCH
-331
-641
-465
-674
+573
+617
+707
+650
 change-shape
 change-shape
 1
@@ -951,10 +891,10 @@ change-shape
 -1000
 
 SLIDER
-5
-450
-185
-483
+4
+476
+184
+509
 event-exp-impact-scale
 event-exp-impact-scale
 1
@@ -988,7 +928,7 @@ PLOT
 261
 1393
 423
-soc capital p distribution
+soc capital distribution
 NIL
 NIL
 0.0
@@ -1002,10 +942,10 @@ PENS
 "default" 0.05 0 -16777216 true "" "  plot-pen-reset\nhistogram [soc-capital] of turtles"
 
 PLOT
-1028
-636
-1307
-830
+1069
+527
+1348
+721
 avg-last-p-final-peer
 NIL
 NIL
@@ -1020,10 +960,10 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot avg-last-p-final-peer"
 
 PLOT
-1312
-635
-1576
-831
+1353
+526
+1617
+722
 avg-last-p-final-event
 NIL
 NIL
@@ -1038,10 +978,10 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot avg-last-p-final-event"
 
 SLIDER
-616
-600
-788
-633
+213
+564
+385
+597
 social-capital-weight
 social-capital-weight
 0
@@ -1053,10 +993,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-697
-555
-912
-588
+763
+567
+978
+600
 random-peer-interaction-prob
 random-peer-interaction-prob
 0
@@ -1068,10 +1008,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-5
-484
-177
-517
+4
+510
+176
+543
 event-impact-radius
 event-impact-radius
 0
@@ -1082,28 +1022,11 @@ event-impact-radius
 NIL
 HORIZONTAL
 
-BUTTON
-1378
-554
-1458
-587
-NIL
-close-file\n
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
 SLIDER
-943
-563
-1115
-596
+763
+604
+935
+637
 negative-impact-prob
 negative-impact-prob
 0
@@ -1115,25 +1038,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-707
-502
-879
-535
-peer-restric-filter
-peer-restric-filter
-0
-1
-1.0
-0.05
-1
-NIL
-HORIZONTAL
-
-SLIDER
-662
-52
-834
-85
+763
+532
+935
+565
 recalc-world-interval
 recalc-world-interval
 0
@@ -1145,10 +1053,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-663
-87
-761
-120
+936
+532
+1034
+565
 NIL
 recalc-world
 NIL
@@ -1206,23 +1114,6 @@ uniqueness-seekers-per-tick
 NIL
 HORIZONTAL
 
-BUTTON
-1046
-487
-1175
-520
-NIL
-strive-uniqueness\n
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
 SLIDER
 678
 452
@@ -1246,10 +1137,10 @@ OUTPUT
 11
 
 SLIDER
-7
-538
-209
-571
+6
+564
+208
+597
 interaction-history-discount
 interaction-history-discount
 0
@@ -1261,10 +1152,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-7
-575
-179
-608
+6
+601
+178
+634
 soc-capital-init
 soc-capital-init
 0
@@ -1276,10 +1167,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-8
-611
-180
-644
+7
+637
+179
+670
 history-size
 history-size
 0
@@ -1291,13 +1182,13 @@ NIL
 HORIZONTAL
 
 SWITCH
-1102
-131
-1244
-164
+662
+49
+804
+82
 save-world-png
 save-world-png
-0
+1
 1
 -1000
 
