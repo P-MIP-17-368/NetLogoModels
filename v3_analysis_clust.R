@@ -1,5 +1,6 @@
 library("fpc")
 library("dplyr")
+library("dbscan")
 
 if (Sys.info()['nodename'] == "DESKTOP-DTFRNI0") {
   wdNetlogoCode <- 'C:/git/MII-NetlogoModels/NetLogoModels'
@@ -23,6 +24,13 @@ calc_clusters <- function(df) {
   else
     {return(c(num_of_clusters,num_of_noicepoints,NA))}
   #return(c (cs$cluster.number, cs$avg.silwidth ))
+}
+
+calc_and_append_clusters <- function(df) {
+  ds = df[4:6]
+  db_p <- dbscan::dbscan(ds, eps = 7, minPts = 15)
+  df$cluster <- db_p$cluster
+  return(df)
 }
 
 load_data_single_file <- function(filename) {
@@ -51,14 +59,33 @@ load_data <- function(lf,newColumnNames){
 
 experimentdata2clusterdata <- function(dfres){
   dt <- NULL #data.frame(Experiment = integer(), Ticks = integer(), ClusterNo =  integer(), NoicePoints = integer(), silwidth = double())
+  # split by experiments
   for (ea in split(dfres,dfres$Experiment)) {
+    # split further by ticks
     for (s in split(ea,ea$Ticks)){
+      # foreach tick in experiment we calculate clusters
+      # first row, and first 2 columns (experiment and ticks)
       r1 <- unlist(c( s[1,1:2], calc_clusters(s)))
       dt <- rbind(dt,r1)
     }
   }
   dtf <-  as.data.frame(dt,c("Experiment","Ticks","ClusterNo","NoicePoints","silwidth"))
   return(dtf)
+}
+
+#version where cluster no just added to data
+experimentdataextendwithclusterdata <- function(dfres){
+  dt <- NULL #data.frame(Experiment = integer(), Ticks = integer(), ClusterNo =  integer(), NoicePoints = integer(), silwidth = double())
+  # split by experiments
+  for (ea in split(dfres,dfres$Experiment)) {
+    # split further by ticks
+    for (s in split(ea,ea$Ticks)){
+      # foreach tick in experiment we calculate clusters. Function just appends cluster no
+      dt <- rbind(dt,calc_and_append_clusters(s))
+    }
+  }
+#dtf <-  as.data.frame(dt,c("Experiment","Ticks","ClusterNo","NoicePoints","silwidth"))
+  return(dt)
 }
 
 experimentdata2meandata <- function(dfres){
@@ -192,7 +219,7 @@ dr <- paste(wdExperimentArchive,"0812-11",sep='')
 setwd(dr)
 fileList <- list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$")
 
-loadAndPlotClusters(fileList, scenarios_no = 3, repetitions = 4)
+loadAndPlotClusters(fileList, scenarios_no = 4, repetitions = 4)
 
 loadAndPlotClusters(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"), scenarios_no = 3, repetitions = 4)
 
@@ -205,6 +232,16 @@ loadAndPlotClusters(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"), sce
 #}
 #dfls[10,]
 
+#prints plots and uses colors from dbscan cluster no
+#pairs(d1[4:6], col =  db_p$cluster + 1L)
+#colMeans(d1[db_p$cluster==1, ])
 
+#currently it works with one experiment selected
+#d2 <- calc_and_append_clusters(dfres[which(dfres$Experiment == 1),])
 
+#can plot pairs
+#d4 <- d2[which(d2$Ticks == 1000),]
+#pairs(d4[4:6], col = d4$cluster + 1L)
 
+#this is not working yet
+#d5 <- d2 %>% group_by(d2$Experiment,d2$Ticks, d2$cluster) %>%  summarize(V12 = mean(d2$V1))
