@@ -33,6 +33,7 @@ calc_and_append_clusters <- function(df) {
   return(df)
 }
 
+
 load_data_single_file <- function(filename) {
   return(setNames(load_data_file(filename),c("Experiment","Ticks","V1","V2","V3")))
 }
@@ -70,6 +71,7 @@ experimentdata2clusterdata <- function(dfres){
     }
   }
   dtf <-  as.data.frame(dt,c("Experiment","Ticks","ClusterNo","NoicePoints","silwidth"))
+  dtf <-  setNames(dtf,c("Experiment","Ticks","ClusterNo","NoicePoints","silwidth"))
   return(dtf)
 }
 
@@ -86,6 +88,28 @@ experimentdataextendwithclusterdata <- function(dfres){
   }
 #dtf <-  as.data.frame(dt,c("Experiment","Ticks","ClusterNo","NoicePoints","silwidth"))
   return(dt)
+}
+
+# should be same as experimentdataextendwithclusterdata only code is shorter
+experimentdataextendwithclusterdata2 <- function(dfres) {
+  t <- split(dfres,list(dfres$Experiment,dfres$Ticks))
+  t2 <- lapply(t,calc_and_append_clusters)
+  result_t<- do.call(rbind, t2)
+  return(result_t)
+}
+
+
+
+#calculates mean values, standard deviation for columns V1, V2, V3 in frame. should filtered, grouped if needed before
+meanValues <- function(d) {
+  return(c(mean(d$V1),sd(d$V1),mean(d$V2),sd(d$V2),mean(d$V3),sd(d$V3), sd(as.matrix(d))))
+}
+
+#calculated mean values by cluster
+meanValues2 <- function(d){
+  dbycluster <- split(d,d$cluster)
+  r <- lapply(dbycluster,meanValues)
+  return(do.call(rbind,r))
 }
 
 experimentdata2meandata <- function(dfres){
@@ -111,6 +135,8 @@ aggregate_by_soccap <- function(dtf) {
   df <- summarize(df, scA = mean(sc))
   return(df)
 }
+
+
 
 #ds = dfres[3:5]
 #db <- fpc::dbscan(ds, eps = 7, MinPts = 30)
@@ -164,6 +190,9 @@ loadAndPlotClusters <- function(fileList,scenarios_no,repetitions) {
   return()
 
 }
+
+
+
 loadAndPlotBySocCap <- function(listfiles,scenarios_no,repetitions){
   exps <- scenarios_no * repetitions
   dfls <- loadExperiments(listfiles,scenarios_no,repetitions)
@@ -218,30 +247,38 @@ setwd(dr)
 dr <- paste(wdExperimentArchive,"0812-11",sep='')
 setwd(dr)
 fileList <- list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$")
+scenarios_no <- 4
+repetitions <- 4
+
+#usually run until this line (functions and main vars)
+#code below for testing and should be run line by line
+
 
 loadAndPlotClusters(fileList, scenarios_no = 4, repetitions = 4)
-
-loadAndPlotClusters(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"), scenarios_no = 3, repetitions = 4)
-
+#loadAndPlotClusters(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"), scenarios_no = 3, repetitions = 4)
 
 
-#dfls <- load_data(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"),c("Experiment","Ticks","V1","V2","V3"))
+dfls <- load_data(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"),c("Experiment","Ticks","V1","V2","V3"))
 
-#for (i in 1:8){
-#  plotPairs(dfls,12000,i)
-#}
-#dfls[10,]
+for (i in 1:8){
+  plotPairs(dfls,12000,i)
+}
+dfls[10,]
 
 #prints plots and uses colors from dbscan cluster no
-#pairs(d1[4:6], col =  db_p$cluster + 1L)
-#colMeans(d1[db_p$cluster==1, ])
+pairs(d1[4:6], col =  db_p$cluster + 1L)
+colMeans(d1[db_p$cluster==1, ])
 
 #currently it works with one experiment selected
-#d2 <- calc_and_append_clusters(dfres[which(dfres$Experiment == 1),])
+d2 <- calc_and_append_clusters(dfres[which(dfres$Experiment == 14 & dfres$Ticks == 1500),])
+
 
 #can plot pairs
-#d4 <- d2[which(d2$Ticks == 1000),]
-#pairs(d4[4:6], col = d4$cluster + 1L)
+d4 <- d2[which(d2$Ticks == 1000),]
+pairs(d2[4:6], col = d2$cluster + 1L)
 
 #this is not working yet
-#d5 <- d2 %>% group_by(d2$Experiment,d2$Ticks, d2$cluster) %>%  summarize(V12 = mean(d2$V1))
+d5 <- d2 %>% group_by(d2$Experiment,d2$Ticks, d2$cluster) %>%  summarize(V12 = mean(d2$V1))
+
+# on value cal
+meanValues2(t2[which(t2$Experiment == 14 & t2$Ticks == 1000 & t2$cluster > 0),])
