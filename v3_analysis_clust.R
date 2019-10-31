@@ -67,12 +67,12 @@ experimentdata2clusterdata <- function(dfres){
     for (s in split(ea,ea$Ticks)){
       # foreach tick in experiment we calculate clusters
       # first row, and first 2 columns (experiment and ticks)
-      r1 <- unlist(c( s[1,1:2], calc_clusters(s)))
+      r1 <- unlist(c( s[1,1:2], calc_clusters(s),sdm(s),sdi(s)))
       dt <- rbind(dt,r1)
     }
   }
-  dtf <-  as.data.frame(dt,c("Experiment","Ticks","ClusterNo","NoicePoints","silwidth"))
-  dtf <-  setNames(dtf,c("Experiment","Ticks","ClusterNo","NoicePoints","silwidth"))
+  dtf <-  as.data.frame(dt,c("Experiment","Ticks","ClusterNo","NoicePoints","silwidth","sdmean","sdall"))
+  dtf <-  setNames(dtf,c("Experiment","Ticks","ClusterNo","NoicePoints","silwidth","sdmean","sdall"))
   return(dtf)
 }
 
@@ -193,6 +193,29 @@ loadAndPlotClusters <- function(fileList,scenarios_no,repetitions) {
 
 }
 
+drawSomething <- function(dtf,experiments){
+  exps <- range(dtf$Experiment)[2] #hardocde change
+  xrange <- range(dtf$Ticks) 
+  yrange <- c(0,100)
+  colors <- rainbow(exps)  
+  linetype <- c(1:exps)
+  plotchar <- seq(18,18+exps,1)
+  ts <-split(dtf,dtf$Experiment)
+
+  
+  plot(xrange, yrange, type="n", xlab="Ticks", ylab="Cohesion" ) 
+  
+  for (i in experiments) {
+    i_dt <- ts[[i]]
+    lines(x = i_dt$Ticks, y=i_dt$sdmean, lty=linetype[i], pch=plotchar[i], type="l", col=colors[i]  )# tik linijoe
+  }
+  
+  title("Cohesion", "Standard deviation of all points")
+  
+  legend(xrange[1], yrange[2], experiments, cex=0.8, col=colors,
+         pch=plotchar, lty=linetype, title="Experiment")
+  return()
+}
 
 
 loadAndPlotBySocCap <- function(listfiles,scenarios_no,repetitions){
@@ -211,9 +234,7 @@ loadAndPlotBySocCap <- function(listfiles,scenarios_no,repetitions){
     lines(x = i_dt$Ticks, y=i_dt$scA, type="l", col=colors[ceiling(i / repetitions)] #, lty=linetype[ceiling(i / repetitions)] 
           )
   }
-  legend("center", yrange, legend = 1:scenarios_no, cex=0.8, col=colors,
-         lty=linetype, 
-         title="Scenario no")
+  legend("center", yrange, legend = 1:scenarios_no, cex=0.8, col=colors, lty=linetype,     title="Scenario no")
   return()
 }
 
@@ -281,6 +302,11 @@ colMeans(d1[db_p$cluster==1, ])
 
 #currently it works with one experiment selected
 t2 <- experimentdataextendwithclusterdata2(dfres)
+dtf2 <- experimentdata2clusterdata(t2)
+drawSomething(dtf2,1:4)
+drawSomething(dtf2,5:8)
+drawSomething(dtf2,9:12)
+drawSomething(dtf2,13:16)
 
 
 #can plot pairs
@@ -289,14 +315,22 @@ pairs(d2[4:6], col = d2$cluster + 1L)
 
 sdm <- function(d){
   d1 <- d %>% filter(cluster > 0) 
-  d1s <- split(d1,d$cluster)
-  r <- lapply(d1s,sdi)
+  if (nrow(d1) > 0){
+    d1s <- split(d1,d1$cluster)
+    r <- d1s %>%  lapply(sdi) %>% unlist(use.names = FALSE) %>% mean()  
+  }
+  else {r = NA}
+  
   return(r)
 }
 
-sdi <- function() {
+sdi <- function(d) {
   t <- d %>% select(starts_with("V")) %>% as.matrix()
   return(sd(t))
+}
+
+sda <- function(d){
+  return(c(sdm(d),sdi(d)))
 }
 
 
@@ -304,8 +338,8 @@ sdi <- function() {
 #this is not working yet
 d5 <- t2 %>% filter(cluster > 0)
 d6 <- split(t2,list(t2$Experiment,t2$Ticks))
-d7 <- lapply(d6,sdm)
-%>% group_by(Experiment,Ticks, cluster) %>% summarise(s = sds())
+d_c <- lapply(d6,sdm)
+group_by(Experiment,Ticks, cluster) %>% summarise(s = sds())
   summarize(V12 = mean(d2$V1))
 
 # on value cal
