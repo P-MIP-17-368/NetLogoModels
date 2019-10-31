@@ -1,6 +1,7 @@
 library("fpc")
 library("dplyr")
 library("dbscan")
+#library("tidyverse")
 
 if (Sys.info()['nodename'] == "DESKTOP-DTFRNI0") {
   wdNetlogoCode <- 'C:/git/MII-NetlogoModels/NetLogoModels'
@@ -105,8 +106,9 @@ meanValues <- function(d) {
   return(c(mean(d$V1),sd(d$V1),mean(d$V2),sd(d$V2),mean(d$V3),sd(d$V3), sd(as.matrix(d))))
 }
 
+
 #calculated mean values by cluster
-meanValues2 <- function(d){
+meanValuesByCluster <- function(d){
   dbycluster <- split(d,d$cluster)
   r <- lapply(dbycluster,meanValues)
   return(do.call(rbind,r))
@@ -229,6 +231,8 @@ loadAndPlotSingle <- function(fileName) {
   
 }
 
+
+
 plotPairs <- function(df,ticks,i){
   di <- dfls [dfls$Ticks == ticks & dfls$Experiment == i,]
   pairs(di[,3:5],pch=19, main = sprintf("Exp %s", i))
@@ -247,8 +251,7 @@ setwd(dr)
 dr <- paste(wdExperimentArchive,"0812-11",sep='')
 setwd(dr)
 fileList <- list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$")
-scenarios_no <- 4
-repetitions <- 4
+
 
 #usually run until this line (functions and main vars)
 #code below for testing and should be run line by line
@@ -265,20 +268,45 @@ for (i in 1:8){
 }
 dfls[10,]
 
+
+scenarios_no <- 4
+repetitions <- 4
+
+dfres <- loadExperiments(fileList,scenarios_no,repetitions)
+dtf <- experimentdata2clusterdata(dfres)
+
 #prints plots and uses colors from dbscan cluster no
 pairs(d1[4:6], col =  db_p$cluster + 1L)
 colMeans(d1[db_p$cluster==1, ])
 
 #currently it works with one experiment selected
-d2 <- calc_and_append_clusters(dfres[which(dfres$Experiment == 14 & dfres$Ticks == 1500),])
+t2 <- experimentdataextendwithclusterdata2(dfres)
 
 
 #can plot pairs
 d4 <- d2[which(d2$Ticks == 1000),]
 pairs(d2[4:6], col = d2$cluster + 1L)
 
+sdm <- function(d){
+  d1 <- d %>% filter(cluster > 0) 
+  d1s <- split(d1,d$cluster)
+  r <- lapply(d1s,sdi)
+  return(r)
+}
+
+sdi <- function() {
+  t <- d %>% select(starts_with("V")) %>% as.matrix()
+  return(sd(t))
+}
+
+
+
 #this is not working yet
-d5 <- d2 %>% group_by(d2$Experiment,d2$Ticks, d2$cluster) %>%  summarize(V12 = mean(d2$V1))
+d5 <- t2 %>% filter(cluster > 0)
+d6 <- split(t2,list(t2$Experiment,t2$Ticks))
+d7 <- lapply(d6,sdm)
+%>% group_by(Experiment,Ticks, cluster) %>% summarise(s = sds())
+  summarize(V12 = mean(d2$V1))
 
 # on value cal
-meanValues2(t2[which(t2$Experiment == 14 & t2$Ticks == 1000 & t2$cluster > 0),])
+meanValuesByCluster(t2[which(t2$Experiment == 14 & t2$Ticks == 1000 & t2$cluster > 0),])
