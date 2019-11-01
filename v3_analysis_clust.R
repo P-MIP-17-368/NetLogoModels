@@ -193,26 +193,26 @@ loadAndPlotClusters <- function(fileList,scenarios_no,repetitions) {
 
 }
 
-drawSomething <- function(dtf,experiments){
-  exps <- range(dtf$Experiment)[2] #hardocde change
+drawSomething <- function(dtf,experiments,main_title,sub_title){
+  exps <- range(dtf$Experiment)[2]
   xrange <- range(dtf$Ticks) 
-  yrange <- c(0,100)
+  yrange <- c(0,40)
   colors <- rainbow(exps)  
   linetype <- c(1:exps)
   plotchar <- seq(18,18+exps,1)
   ts <-split(dtf,dtf$Experiment)
 
   
-  plot(xrange, yrange, type="n", xlab="Ticks", ylab="Cohesion" ) 
+  plot(xrange, yrange, type="n", xlab="Ticks", ylab="Deviation" ) 
   
   for (i in experiments) {
     i_dt <- ts[[i]]
-    lines(x = i_dt$Ticks, y=i_dt$sdmean, lty=linetype[i], pch=plotchar[i], type="l", col=colors[i]  )# tik linijoe
+    lines(x = i_dt$Ticks, y=i_dt$sdall, lty=linetype[i], pch=plotchar[i], type="l", col=colors[i]  )# tik linijoe
   }
   
-  title("Cohesion", "Standard deviation of all points")
+  title(main_title, sub_title)
   
-  legend(xrange[1], yrange[2], experiments, cex=0.8, col=colors,
+  legend(xrange[1], yrange[2], experiments, cex=0.8, col=colors[experiments],
          pch=plotchar, lty=linetype, title="Experiment")
   return()
 }
@@ -251,6 +251,27 @@ loadAndPlotSingle <- function(fileName) {
   return()
   
 }
+
+sdm <- function(d){
+  d1 <- d %>% filter(cluster > 0) 
+  if (nrow(d1) > 0){
+    d1s <- split(d1,d1$cluster)
+    r <- d1s %>%  lapply(sdi) %>% unlist(use.names = FALSE) %>% mean()  
+  }
+  else {r = NA}
+  
+  return(r)
+}
+
+sdi <- function(d) {
+  t <- d %>% select(starts_with("V")) %>% as.matrix()
+  return(sd(t))
+}
+
+sda <- function(d){
+  return(c(sdm(d),sdi(d)))
+}
+
 
 
 
@@ -303,35 +324,15 @@ colMeans(d1[db_p$cluster==1, ])
 #currently it works with one experiment selected
 t2 <- experimentdataextendwithclusterdata2(dfres)
 dtf2 <- experimentdata2clusterdata(t2)
-drawSomething(dtf2,1:4)
-drawSomething(dtf2,5:8)
-drawSomething(dtf2,9:12)
-drawSomething(dtf2,13:16)
+drawSomething(dtf2,1:4,"Deviation1:4","Standard deviantion of all points, when similar-over-neighbourhood = 0")
+drawSomething(dtf2,5:8, "Deviation5:8","Standard deviantion of all points, when similar-over-neighbourhood = 0.4")
+drawSomething(dtf2,9:12, "Deviation9:12","Standard deviantion of all points, when similar-over-neighbourhood = 0.7")
+drawSomething(dtf2,13:16, "Deviation13:16","Standard deviantion of all points, when similar-over-neighbourhood = 1")
 
 
 #can plot pairs
 d4 <- d2[which(d2$Ticks == 1000),]
 pairs(d2[4:6], col = d2$cluster + 1L)
-
-sdm <- function(d){
-  d1 <- d %>% filter(cluster > 0) 
-  if (nrow(d1) > 0){
-    d1s <- split(d1,d1$cluster)
-    r <- d1s %>%  lapply(sdi) %>% unlist(use.names = FALSE) %>% mean()  
-  }
-  else {r = NA}
-  
-  return(r)
-}
-
-sdi <- function(d) {
-  t <- d %>% select(starts_with("V")) %>% as.matrix()
-  return(sd(t))
-}
-
-sda <- function(d){
-  return(c(sdm(d),sdi(d)))
-}
 
 
 
