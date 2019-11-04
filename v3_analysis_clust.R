@@ -200,6 +200,8 @@ drawSomething <- function(dtf,experiments,main_title,sub_title){
   colors <- rainbow(exps)  
   linetype <- c(1:exps)
   plotchar <- seq(18,18+exps,1)
+  plotchar <- seq(0,exps-1,1)
+  
   ts <-split(dtf,dtf$Experiment)
 
   
@@ -207,13 +209,13 @@ drawSomething <- function(dtf,experiments,main_title,sub_title){
   
   for (i in experiments) {
     i_dt <- ts[[i]]
-    lines(x = i_dt$Ticks, y=i_dt$sdall, lty=linetype[i], pch=plotchar[i], type="l", col=colors[i]  )# tik linijoe
+    lines(x = i_dt$Ticks, y=i_dt$sdall, lty=linetype[i], pch=1, type="l", col=colors[i]  )# tik linijoe
   }
   
   title(main_title, sub_title)
   
   legend(xrange[1], yrange[2], experiments, cex=0.8, col=colors[experiments],
-         pch=plotchar, lty=linetype, title="Experiment")
+          lty=linetype[experiments], title="Experiment") # pch=plotchar[experiments],
   return()
 }
 
@@ -335,7 +337,7 @@ d4 <- d2[which(d2$Ticks == 1000),]
 pairs(d2[4:6], col = d2$cluster + 1L)
 
 
-
+  
 #this is not working yet
 d5 <- t2 %>% filter(cluster > 0)
 d6 <- split(t2,list(t2$Experiment,t2$Ticks))
