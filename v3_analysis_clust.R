@@ -1,6 +1,7 @@
 library("fpc")
 library("dplyr")
 library("dbscan")
+library("xlsx")
 #library("tidyverse")
 
 if (Sys.info()['nodename'] == "DESKTOP-DTFRNI0") {
@@ -193,7 +194,7 @@ loadAndPlotClusters <- function(fileList,scenarios_no,repetitions) {
 
 }
 
-drawSomething <- function(dtf,experiments,main_title,sub_title){
+drawClusterDistributionMetrics <- function(dtf,experiments,columnName,main_title,sub_title){
   exps <- range(dtf$Experiment)[2]
   xrange <- range(dtf$Ticks) 
   yrange <- c(0,40)
@@ -201,19 +202,13 @@ drawSomething <- function(dtf,experiments,main_title,sub_title){
   linetype <- c(1:exps)
   plotchar <- seq(18,18+exps,1)
   plotchar <- seq(0,exps-1,1)
-  
   ts <-split(dtf,dtf$Experiment)
-
-  
   plot(xrange, yrange, type="n", xlab="Ticks", ylab="Deviation" ) 
-  
   for (i in experiments) {
     i_dt <- ts[[i]]
-    lines(x = i_dt$Ticks, y=i_dt$sdall, lty=linetype[i], pch=1, type="l", col=colors[i]  )# tik linijoe
+    lines(x = i_dt$Ticks, y=i_dt[,columnName], lty=linetype[i], pch=1, type="l", col=colors[i]  )# tik linijoe
   }
-  
   title(main_title, sub_title)
-  
   legend(xrange[1], yrange[2], experiments, cex=0.8, col=colors[experiments],
           lty=linetype[experiments], title="Experiment") # pch=plotchar[experiments],
   return()
@@ -317,7 +312,7 @@ scenarios_no <- 4
 repetitions <- 4
 
 dfres <- loadExperiments(fileList,scenarios_no,repetitions)
-dtf <- experimentdata2clusterdata(dfres)
+#dtf <- experimentdata2clusterdata(dfres)
 
 #prints plots and uses colors from dbscan cluster no
 pairs(d1[4:6], col =  db_p$cluster + 1L)
@@ -326,11 +321,16 @@ colMeans(d1[db_p$cluster==1, ])
 #currently it works with one experiment selected
 t2 <- experimentdataextendwithclusterdata2(dfres)
 dtf2 <- experimentdata2clusterdata(t2)
-drawSomething(dtf2,1:4,"Deviation1:4","Standard deviantion of all points, when similar-over-neighbourhood = 0")
-drawSomething(dtf2,5:8, "Deviation5:8","Standard deviantion of all points, when similar-over-neighbourhood = 0.4")
-drawSomething(dtf2,9:12, "Deviation9:12","Standard deviantion of all points, when similar-over-neighbourhood = 0.7")
-drawSomething(dtf2,13:16, "Deviation13:16","Standard deviantion of all points, when similar-over-neighbourhood = 1")
+drawClusterDistributionMetrics(dtf2,1:4,"sdall","Deviation1:4","Standard deviantion of all points, when similar-over-neighbourhood = 0")
+drawClusterDistributionMetrics(dtf2,1:4,"sdmean","Deviation1:4","Mean deviantion of clusters, when similar-over-neighbourhood = 0")
+drawClusterDistributionMetrics(dtf2,5:8,"sdall", "Deviation5:8","Standard deviantion of all points, when similar-over-neighbourhood = 0.4")
+drawClusterDistributionMetrics(dtf2,5:8,"sdmean", "Deviation5:8","Mean deviantion of clusters, when similar-over-neighbourhood = 0.4")
+drawClusterDistributionMetrics(dtf2,9:12,"sdall", "Deviation9:12","Standard deviantion of all points, when similar-over-neighbourhood = 0.7")
+drawClusterDistributionMetrics(dtf2,9:12,"sdmean", "Deviation9:12","Mean deviantion of clusters, when similar-over-neighbourhood = 0.7")
+drawClusterDistributionMetrics(dtf2,13:16,"sdall", "Deviation13:16","Standard deviantion of all points, when similar-over-neighbourhood = 1")
+drawClusterDistributionMetrics(dtf2,13:16,"sdmean", "Deviation13:16","Mean deviantion of clusters, when similar-over-neighbourhood = 1")
 
+write.xlsx(dtf2, "c:/temp/data.xlsx")
 
 #can plot pairs
 d4 <- d2[which(d2$Ticks == 1000),]
