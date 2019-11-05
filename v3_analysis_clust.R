@@ -249,6 +249,16 @@ loadAndPlotSingle <- function(fileName) {
   
 }
 
+plotPairs4Steps <- function(d,experiment,ticks) {
+  d1 <- d[which(d$Experiment == experiment),]
+  for (t in ticks) {
+    d1t <- d1[which(d1$Ticks == t  ),]
+    pairs(d1t[c("V1","V2","V3")],
+          col =  d1t$cluster + 1L,
+          main=sprintf("Experiment %s. Step %s",experiment,t))
+  }
+}
+
 sdm <- function(d){
   d1 <- d %>% filter(cluster > 0) 
   if (nrow(d1) > 0){
@@ -315,12 +325,14 @@ dfres <- loadExperiments(fileList,scenarios_no,repetitions)
 #dtf <- experimentdata2clusterdata(dfres)
 
 #prints plots and uses colors from dbscan cluster no
+
 pairs(d1[4:6], col =  db_p$cluster + 1L)
 colMeans(d1[db_p$cluster==1, ])
 
 #currently it works with one experiment selected
 t2 <- experimentdataextendwithclusterdata2(dfres)
 dtf2 <- experimentdata2clusterdata(t2)
+
 drawClusterDistributionMetrics(dtf2,1:4,"sdall","Deviation1:4","Standard deviantion of all points, when similar-over-neighbourhood = 0")
 drawClusterDistributionMetrics(dtf2,1:4,"sdmean","Deviation1:4","Mean deviantion of clusters, when similar-over-neighbourhood = 0")
 drawClusterDistributionMetrics(dtf2,5:8,"sdall", "Deviation5:8","Standard deviantion of all points, when similar-over-neighbourhood = 0.4")
@@ -330,10 +342,14 @@ drawClusterDistributionMetrics(dtf2,9:12,"sdmean", "Deviation9:12","Mean deviant
 drawClusterDistributionMetrics(dtf2,13:16,"sdall", "Deviation13:16","Standard deviantion of all points, when similar-over-neighbourhood = 1")
 drawClusterDistributionMetrics(dtf2,13:16,"sdmean", "Deviation13:16","Mean deviantion of clusters, when similar-over-neighbourhood = 1")
 
+
+plotPairs4Steps(t2,11,seq(750,850, by = 10))
+
+
 write.xlsx(dtf2, "c:/temp/data.xlsx")
 
 #can plot pairs
-d4 <- d2[which(d2$Ticks == 1000),]
+d4 <- d2[which(d2$Ticks == 1000 ),]
 pairs(d2[4:6], col = d2$cluster + 1L)
 
 
