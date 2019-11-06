@@ -21,7 +21,8 @@ calc_clusters <- function(df) {
     cs = cluster.stats(dist(ds), db_p$cluster)
     #num_of_clusters = cs$cluster.number
     #plot(db_p, ds, main = "DBSCAN", frame = FALSE)
-    return(c (cs$cluster.number, num_of_noicepoints, cs$avg.silwidth ))
+    #return(c (cs$cluster.number, num_of_noicepoints, cs$avg.silwidth )) when 1 cluster is gives 2
+    return(c (num_of_clusters, num_of_noicepoints, cs$avg.silwidth )) 
   }
   else
     {return(c(num_of_clusters,num_of_noicepoints,NA))}
@@ -343,7 +344,7 @@ drawClusterDistributionMetrics(dtf2,13:16,"sdall", "Deviation13:16","Standard de
 drawClusterDistributionMetrics(dtf2,13:16,"sdmean", "Deviation13:16","Mean deviantion of clusters, when similar-over-neighbourhood = 1")
 
 
-plotPairs4Steps(t2,11,seq(750,850, by = 10))
+plotPairs4Steps(t2,6,seq(920,940, by = 10))
 
 
 write.xlsx(dtf2, "c:/temp/data.xlsx")
