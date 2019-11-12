@@ -30,7 +30,7 @@ calc_clusters <- function(df) {
 }
 
 calc_and_append_clusters <- function(df) {
-  ds = df[4:6]
+  ds = df %>% select(starts_with("V"))
   db_p <- dbscan::dbscan(ds, eps = 7, minPts = 15)
   df$cluster <- db_p$cluster
   return(df)
@@ -69,12 +69,12 @@ experimentdata2clusterdata <- function(dfres){
     for (s in split(ea,ea$Ticks)){
       # foreach tick in experiment we calculate clusters
       # first row, and first 2 columns (experiment and ticks)
-      r1 <- unlist(c( s[1,1:2], calc_clusters(s),sdm(s),sdi(s)))
+      r1 <- unlist(c( s[1,c("Experiment","Ticks","Scenario")], calc_clusters(s),sdm(s),sdi(s)))
       dt <- rbind(dt,r1)
     }
   }
-  dtf <-  as.data.frame(dt,c("Experiment","Ticks","ClusterNo","NoicePoints","silwidth","sdmean","sdall"))
-  dtf <-  setNames(dtf,c("Experiment","Ticks","ClusterNo","NoicePoints","silwidth","sdmean","sdall"))
+  dtf <-  as.data.frame(dt,c("Experiment","Ticks","Scenario","ClusterNo","NoicePoints","silwidth","sdmean","sdall"))
+  dtf <-  setNames(dtf,c("Experiment","Ticks","Scenario","ClusterNo","NoicePoints","silwidth","sdmean","sdall"))
   return(dtf)
 }
 
@@ -156,9 +156,8 @@ loadExperiments <- function(fileList,scenarios_no,repetitions) {
   if (experimentsCount != length(fileList))
     throw("Files don't match experiments")
   df <- load_data(fileList,c("Experiment","Ticks","id","V1","V2","V3","sc"))
-  #df <- mutate(df, Scenario = ceiling(Experiment / repetitions))
+  df <- mutate(dfres, Scenario = as.integer(ceiling(df$Experiment / repetitions)) ) 
   return(df)
-
 }
 
 loadAndPlotClusters <- function(fileList,scenarios_no,repetitions) {
@@ -166,10 +165,10 @@ loadAndPlotClusters <- function(fileList,scenarios_no,repetitions) {
 
   dfres <- loadExperiments(fileList,scenarios_no,repetitions)
   dtf <- experimentdata2clusterdata(dfres)
-  dtf <- mutate(dtf, Scenario = ceiling(Experiment / repetitions))
+  #dtf <- mutate(dtf, Scenario = ceiling(Experiment / repetitions) + 1L)
   #dtf <- mutate(dtf, Ticks = Ticks / 1000) #skale mazinam
-  
-  t1 <- group_by(dtf,Scenario)
+  dtf <- mutate(dtf,Scenario = as.integer(Scenario))
+  t1 <- group_by(dtf,dtf$Scenario)
   ts <- lapply(split(t1,t1$Scenario),aggregate_by_clusters)
   
   xrange <- range(dtf$Ticks) 
@@ -271,6 +270,7 @@ sdm <- function(d){
   return(r)
 }
 
+
 sdi <- function(d) {
   t <- d %>% select(starts_with("V")) %>% as.matrix()
   return(sd(t))
@@ -279,8 +279,6 @@ sdi <- function(d) {
 sda <- function(d){
   return(c(sdm(d),sdi(d)))
 }
-
-
 
 
 plotPairs <- function(df,ticks,i){
@@ -298,7 +296,7 @@ setwd(dr)
 #dt1 = load_data_single_file("res-0.csv")
 #d1 <- dt1[dt1$Ticks == 100,]
 #pairs(d1[,3:5],pch=19)
-dr <- paste(wdExperimentArchive,"0812-11",sep='')
+dr <- paste(wdExperimentArchive,"1112-01",sep='')
 setwd(dr)
 fileList <- list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$")
 
@@ -307,7 +305,7 @@ fileList <- list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$")
 #code below for testing and should be run line by line
 
 
-loadAndPlotClusters(fileList, scenarios_no = 4, repetitions = 4)
+loadAndPlotClusters(fileList, scenarios_no = 7, repetitions = 4)
 #loadAndPlotClusters(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"), scenarios_no = 3, repetitions = 4)
 
 
@@ -319,7 +317,7 @@ for (i in 1:8){
 dfls[10,]
 
 
-scenarios_no <- 4
+scenarios_no <- 7
 repetitions <- 4
 
 dfres <- loadExperiments(fileList,scenarios_no,repetitions)
