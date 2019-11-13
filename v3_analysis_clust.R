@@ -62,6 +62,9 @@ load_data <- function(lf,newColumnNames){
 }
 
 experimentdata2clusterdata <- function(dfres){
+  
+  dfres %>% group_by(Experiment,Ticks) %>% do(calc_clusters())
+  
   dt <- NULL #data.frame(Experiment = integer(), Ticks = integer(), ClusterNo =  integer(), NoicePoints = integer(), silwidth = double())
   # split by experiments
   for (ea in split(dfres,dfres$Experiment)) {
@@ -69,38 +72,25 @@ experimentdata2clusterdata <- function(dfres){
     for (s in split(ea,ea$Ticks)){
       # foreach tick in experiment we calculate clusters
       # first row, and first 2 columns (experiment and ticks)
-      r1 <- unlist(c( s[1,c("Experiment","Ticks","Scenario")], calc_clusters(s),sdm(s),sdi(s)))
+      #r1 <- unlist(c( s[1,c("Experiment","Ticks","Scenario")], calc_clusters(s),sdm(s),sdi(s)))
+      r1 <- unlist(c( s[1,c("Experiment","Ticks")], calc_clusters(s),sdm(s),sdi(s)))
       dt <- rbind(dt,r1)
     }
   }
-  dtf <-  as.data.frame(dt,c("Experiment","Ticks","Scenario","ClusterNo","NoicePoints","silwidth","sdmean","sdall"))
-  dtf <-  setNames(dtf,c("Experiment","Ticks","Scenario","ClusterNo","NoicePoints","silwidth","sdmean","sdall"))
+  #dtf <-  as.data.frame(dt,c("Experiment","Ticks","Scenario","ClusterNo","NoicePoints","silwidth","sdmean","sdall"))
+  dtf <-  as.data.frame(dt,c("Experiment","Ticks","ClusterNo","NoicePoints","silwidth","sdmean","sdall"))
+ # dtf <-  setNames(dtf,c("Experiment","Ticks","Scenario","ClusterNo","NoicePoints","silwidth","sdmean","sdall"))
+  dtf <-  setNames(dtf,c("Experiment","Ticks","ClusterNo","NoicePoints","silwidth","sdmean","sdall"))
   return(dtf)
 }
 
-#version where cluster no just added to data
-experimentdataextendwithclusterdata <- function(dfres){
-  dt <- NULL #data.frame(Experiment = integer(), Ticks = integer(), ClusterNo =  integer(), NoicePoints = integer(), silwidth = double())
-  # split by experiments
-  for (ea in split(dfres,dfres$Experiment)) {
-    # split further by ticks
-    for (s in split(ea,ea$Ticks)){
-      # foreach tick in experiment we calculate clusters. Function just appends cluster no
-      dt <- rbind(dt,calc_and_append_clusters(s))
-    }
-  }
-#dtf <-  as.data.frame(dt,c("Experiment","Ticks","ClusterNo","NoicePoints","silwidth"))
-  return(dt)
-}
 
-# should be same as experimentdataextendwithclusterdata only code is shorter
 experimentdataextendwithclusterdata2 <- function(dfres) {
   t <- split(dfres,list(dfres$Experiment,dfres$Ticks))
   t2 <- lapply(t,calc_and_append_clusters)
   result_t<- do.call(rbind, t2)
   return(result_t)
 }
-
 
 
 #calculates mean values, standard deviation for columns V1, V2, V3 in frame. should filtered, grouped if needed before
@@ -116,21 +106,10 @@ meanValuesByCluster <- function(d){
   return(do.call(rbind,r))
 }
 
-experimentdata2meandata <- function(dfres){
-  dt <- NULL 
-  for (ea in split(dfres,dfres$Experiment)) {
-    for (s in split(ea,ea$Ticks)){
-      r1 <- unlist(c( s[1,1:2], mean(s)))
-      dt <- rbind(dt,r1)
-    }
-  }
-  dtf <-  as.data.frame(dt,c("Experiment","Ticks","ClusterNo","NoicePoints","silwidth"))
-  return(dtf)
-}
 
 aggregate_by_clusters <- function(dtf) {
   df <- group_by(dtf,Ticks)
-  df <- summarize(df, V3A = mean(V3))
+  df <- summarize(df, V3A = mean(ClusterNo))
   return(df)
 }
 
@@ -141,22 +120,13 @@ aggregate_by_soccap <- function(dtf) {
 }
 
 
-
-#ds = dfres[3:5]
-#db <- fpc::dbscan(ds, eps = 7, MinPts = 30)
-#num_of_clusters = max(db$cluster)
-#num_of_noicepoints = length(db$cluster[db$cluster == 0])
-#cs = cluster.stats(dist(ds), db$cluster)
-# experiment_data <- split(dfres,dfres$Experiment)
-
-
 #loads experiments from files.
 loadExperiments <- function(fileList,scenarios_no,repetitions) {
   experimentsCount <- scenarios_no * repetitions
   if (experimentsCount != length(fileList))
     throw("Files don't match experiments")
   df <- load_data(fileList,c("Experiment","Ticks","id","V1","V2","V3","sc"))
-  df <- mutate(dfres, Scenario = as.integer(ceiling(df$Experiment / repetitions)) ) 
+#  df <- mutate(df, Scenario = as.integer(ceiling(df$Experiment / repetitions)) ) 
   return(df)
 }
 
@@ -165,11 +135,11 @@ loadAndPlotClusters <- function(fileList,scenarios_no,repetitions) {
 
   dfres <- loadExperiments(fileList,scenarios_no,repetitions)
   dtf <- experimentdata2clusterdata(dfres)
-  #dtf <- mutate(dtf, Scenario = ceiling(Experiment / repetitions) + 1L)
+  dtf <- mutate(dtf, Scenario = ceiling(Experiment / repetitions))
   #dtf <- mutate(dtf, Ticks = Ticks / 1000) #skale mazinam
   dtf <- mutate(dtf,Scenario = as.integer(Scenario))
-  t1 <- group_by(dtf,dtf$Scenario)
-  ts <- lapply(split(t1,t1$Scenario),aggregate_by_clusters)
+ # t1 <- group_by(dtf,Scenario)
+  ts <- lapply(split(dtf,dtf$Scenario),aggregate_by_clusters)
   
   xrange <- range(dtf$Ticks) 
   yrange <- range(dtf$V3)
@@ -235,19 +205,6 @@ loadAndPlotBySocCap <- function(listfiles,scenarios_no,repetitions){
   return()
 }
 
-loadAndPlotSingle <- function(fileName) {
-  
-  dfres <- load_data_single_file(fileName)
-  dtf <- experimentdata2clusterdata(dfres)
-  
-  plot(dtf$Ticks, dtf$V3, type="b", xlab="Ticks",
-       ylab="Clusters" ) 
-  
-  title("Clusters", "Clusters")
-  
-  return()
-  
-}
 
 plotPairs4Steps <- function(d,experiment,ticks) {
   d1 <- d[which(d$Experiment == experiment),]
@@ -290,13 +247,10 @@ dr = wdNetlogoCode
 setwd(dr)
 
 
-#loadAndPlotSingle("res-0.csv")
-
-
 #dt1 = load_data_single_file("res-0.csv")
 #d1 <- dt1[dt1$Ticks == 100,]
 #pairs(d1[,3:5],pch=19)
-dr <- paste(wdExperimentArchive,"1112-01",sep='')
+dr <- paste(wdExperimentArchive,"0812-11",sep='')
 setwd(dr)
 fileList <- list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$")
 
@@ -305,9 +259,7 @@ fileList <- list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$")
 #code below for testing and should be run line by line
 
 
-loadAndPlotClusters(fileList, scenarios_no = 7, repetitions = 4)
-#loadAndPlotClusters(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"), scenarios_no = 3, repetitions = 4)
-
+loadAndPlotClusters(fileList, scenarios_no = 4, repetitions = 4)
 
 dfls <- load_data(list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$"),c("Experiment","Ticks","V1","V2","V3"))
 
@@ -317,7 +269,7 @@ for (i in 1:8){
 dfls[10,]
 
 
-scenarios_no <- 7
+scenarios_no <- 4
 repetitions <- 4
 
 dfres <- loadExperiments(fileList,scenarios_no,repetitions)
