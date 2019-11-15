@@ -28,7 +28,7 @@ def get_path():
       wdExperimentArchive = 'C:/Users/milibaru/OneDrive/darbas/MII projektas/Experiments/'
     return(wdExperimentArchive)
     
-dfs = []
+
 
 rootdir = get_path()
 regex = re.compile('res-[1-9]\\d*\\.csv$')
@@ -38,17 +38,64 @@ li = []
 for file in os.listdir(folder):
     if regex.match(file):
         print(file)
-        df = pd.read_csv(folder + '/' + file, header = None, names = ["Experiment","Ticks","V1","V2","V3","sc"])
+        df = pd.read_csv(folder + '/' + file, header = None, names = ["Experiment","Ticks",'id',"V1","V2","V3","sc"])
         li.append(df)
+
+df = pd.concat(li, ignore_index = True)
+  
+        
+#%%
+
+from sklearn.cluster import DBSCAN  
+import numpy as np
+
+def calc_cluster(data):
+    clustering = DBSCAN(eps=7, min_samples=30).fit(data)
+    core_samples_mask = np.zeros_like(clustering.labels_, dtype=bool)
+    core_samples_mask[clustering.core_sample_indices_] = True
+    labels = clustering.labels_
+    n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+    n_noise_ = list(labels).count(-1)
+    return(pd.Series(data = [n_clusters_,n_noise_], index= ['ClusterNo','NoicePoints']))
+
+def calc_append_cluster_no(data):
+    '''clustering = DBSCAN(eps=7, min_samples=30).fit(data.loc[:,['V1','V2','V3']])
+    labels = clustering.labels_'''
+    print(data.head())
+    '''data = data.insert(loc = len(data.columns),
+                       column = 'ClusterNo',
+                       value = labels)
+    print(data)'''
+    return(data)
+    
+#%%
+
+r = df.groupby(["Experiment","Ticks"]).apply(calc_cluster)
+r1 = r.reset_index()
+
+# vietoje calc_append_cluster_no
+r3 = pd.merge(df,r1, how = 'left', on = ['Experiment','Ticks'], left_index = False, right_index = False)
+
+# r2 = df.groupby(["Experiment","Ticks"]).apply(calc_append_cluster_no)
+
+
+#%%  plotting pairs
+import seaborn as sns
+
+#%% examples
+sns.pairplot(df_10_2000,vars = ['V1','V2','V3'])
+sns.pairplot(df.loc[((df['Experiment'] == 8) & (df['Ticks'] == 3000)),:],vars=['V1','V2','V3'])
+clustering = DBSCAN(eps=7, min_samples=30).fit(df.loc[((df['Experiment'] == 8) & (df['Ticks'] == 2500)),['V1','V2','V3']])
+df_10_2000.insert(loc = 7, column = 'ClusterNo', value = DBSCAN(eps=7, min_samples=30).fit(df_10_2000).labels_)
+
 
 
 #%%
-
-from sklearn.cluster import DBSCAN      
-        
-clustering = DBSCAN(eps=7, min_samples=30).fit(X)
-
-    
-        
+import scipy.spatial as sp
+from scipy.spatial import distance
+a = (1, 2, 3)
+b = (4, 5, 6)
+dst = distance.euclidean(a, b)
 
 
+d = sp.distance_matrix(df_10_2000.loc[:,['V1','V2','V3']],df_10_2000.loc[:,['V1','V2','V3']])
