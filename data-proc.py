@@ -4,8 +4,7 @@ Created on Mon Mar 26 13:57:28 2018
 
 @author: Arunas
 """
-import pandas as pd
-import matplotlib.pyplot as plt
+
 
 """
 dt = pd.read_csv('C:/temp/Model_v2 experiment-table po 100.csv')
@@ -18,6 +17,8 @@ plt.figure(); dtg.plot(y='max-cluster', x='[step]');
 
 import platform
 import os, re
+import pandas as pd
+import matplotlib.pyplot as plt
 
 def get_path():
     if platform.node()== "DESKTOP-DTFRNI0":
@@ -69,14 +70,23 @@ def calc_append_cluster_no(data):
     return(data)
     
 #%%
-
-r = df.groupby(["Experiment","Ticks"]).apply(calc_cluster)
-r1 = r.reset_index()
+dfg = df.groupby(["Experiment","Ticks"])
+r = dfg.apply(calc_cluster).reset_index()
 
 # vietoje calc_append_cluster_no
-r3 = pd.merge(df,r1, how = 'left', on = ['Experiment','Ticks'], left_index = False, right_index = False)
+r3 = pd.merge(df,r, how = 'left', on = ['Experiment','Ticks'], left_index = False, right_index = False)
 
+df_mean = dfg.agg(V1mean = pd.NamedAgg(column='V1', aggfunc = 'mean'), V2mean = pd.NamedAgg(column = 'V2', aggfunc = 'mean'), V3mean = pd.NamedAgg(column='V3', aggfunc = 'mean')).reset_index()
+r_mean =  pd.merge(df,df_mean, how = 'left', on = ['Experiment','Ticks'], left_index = False, right_index = False)
+# susiskaiciuojame pagal euklida kiekvieno nuokrypi nuo vidurkiniu reiksmiu
+r_mean['dist'] = (r_mean.V1 - r_mean.V1mean)**2 + (r_mean.V2 - r_mean.V2mean)**2 + (r_mean.V3 - r_mean.V3mean)**2
+# istraukiame kuba
+#r_mean['sdist'] = r_mean['dist'].apply(sqrt)
 # r2 = df.groupby(["Experiment","Ticks"]).apply(calc_append_cluster_no)
+# sugrupuojame i kiekvienai grupe paskaiciuojam suma nuokrypiu ir kiek grupeje yra viso
+r_mean2 = r_mean.groupby(['Experiment','Ticks']).agg(devSum = pd.NamedAgg(column = 'dist', aggfunc='sum'), cnt = pd.NamedAgg(column = 'dist', aggfunc = 'count')).reset_index()
+r_mean2['devSum'] = r_mean2['devSum'].apply(sqrt)
+r_mean2 = r_mean2.assign(sd = lambda x: x.devSum / ( x.cnt - 1 ))
 
 
 #%%  plotting pairs
@@ -88,14 +98,22 @@ sns.pairplot(df.loc[((df['Experiment'] == 8) & (df['Ticks'] == 3000)),:],vars=['
 clustering = DBSCAN(eps=7, min_samples=30).fit(df.loc[((df['Experiment'] == 8) & (df['Ticks'] == 2500)),['V1','V2','V3']])
 df_10_2000.insert(loc = 7, column = 'ClusterNo', value = DBSCAN(eps=7, min_samples=30).fit(df_10_2000).labels_)
 
-
+ dfg.agg(V1mean = pd.NamedAgg(column='V1', aggfunc = 'mean'))
 
 #%%
 import scipy.spatial as sp
 from scipy.spatial import distance
+from statistics import mean
+
+from math import sqrt
 a = (1, 2, 3)
 b = (4, 5, 6)
 dst = distance.euclidean(a, b)
 
 
 d = sp.distance_matrix(df_10_2000.loc[:,['V1','V2','V3']],df_10_2000.loc[:,['V1','V2','V3']])
+
+def tst(x):
+    print(type(x))
+    print(x)
+    
