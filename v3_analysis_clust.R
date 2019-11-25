@@ -258,6 +258,8 @@ fileList <- list.files(path = dr, pattern = "res-[1-9]\\d*\\.csv$")
 #usually run until this line (functions and main vars)
 #code below for testing and should be run line by line
 
+#neveiki  > t2 %>% filter( Experiment == 1 & Ticks == 1000 ) %>% select(starts_with("V")) %>% as.matrix() %>% sd
+
 
 loadAndPlotClusters(fileList, scenarios_no = 4, repetitions = 4)
 

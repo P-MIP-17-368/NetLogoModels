@@ -99,12 +99,12 @@ calc_sd(df.loc[(df['Experiment']==1) & (df['Ticks'] == 1000),:],['V1','V2','V3']
 from math import sqrt
 
 dfg = df.groupby(["Experiment","Ticks"])
-r = dfg.apply(calc_cluster).reset_index()
+df_agg_cluster = dfg.apply(calc_cluster).reset_index()
 
-r2 = dfg.apply(calc_append_cluster_no).reset_index()
+df_with_cluster = dfg.apply(calc_append_cluster_no).reset_index()
 
 # vietoje calc_append_cluster_no
-r3 = pd.merge(df,r, how = 'left', on = ['Experiment','Ticks'], left_index = False, right_index = False)
+df_full_with_clusteraggs = pd.merge(df,df_agg_cluster, how = 'left', on = ['Experiment','Ticks'], left_index = False, right_index = False)
 
 df_mean = dfg.agg(V1mean = pd.NamedAgg(column='V1', aggfunc = 'mean'), V2mean = pd.NamedAgg(column = 'V2', aggfunc = 'mean'), V3mean = pd.NamedAgg(column='V3', aggfunc = 'mean')).reset_index()
 r_mean =  pd.merge(df,df_mean, how = 'left', on = ['Experiment','Ticks'], left_index = False, right_index = False)
@@ -120,21 +120,47 @@ r_mean2 = r_mean2.assign(sd = lambda x: x.devSum / ( x.cnt - 1 ))
 
 
 # gauname pagal grupes
-sd4clusters = r2.groupby(["Experiment","Ticks","Cluster"]).apply(calc_sd_series).reset_index()
+sd4clusters = df_with_cluster.groupby(["Experiment","Ticks","Cluster"]).apply(calc_sd_series).reset_index()
 
 
+#%%
+from math import ceil
 
-#%%  plotting pairs
-import seaborn as sns
-import matplotlib.pyplot as plt
+experiments = max(df['Experiment'])
+repetitions = 4
+scenarios = int(experiments / repetitions)
+
+df_with_culster_and_scenarios = df_with_cluster.assign( Scenario = (df_with_cluster['Experiment'] / repetitions).apply(ceil))
+df_aggculster_and_scenarios = df_agg_cluster.assign( Scenario = (df_agg_cluster['Experiment'] / repetitions).apply(ceil))
+
+d1 = df_aggculster_and_scenarios.groupby(['Scenario','Ticks']).agg({'ClusterNo' : [np.mean]}).reset_index()
+# panasiai galima daryti ir pivot table
+p1 = df_aggculster_and_scenarios.pivot_table(index = 'Ticks', columns = 'Scenario', values = 'ClusterNo', aggfunc = np.mean)
+
+sd4clusters['Scenario'] = ( sd4clusters['Experiment'] / repetitions).apply(ceil)
+
+sd4clusters_pivot = sd4clusters.pivot_table(index = 'Ticks', columns = ['Scenario','Experiment'])
+
 
 #%% 
+import matplotlib.pyplot as plt
+
+# galima tiesiog plot
+df_aggculster_and_scenarios.pivot_table(index = 'Ticks', columns = 'Scenario', values = 'ClusterNo', aggfunc = np.mean).plot()
+
+for i in range(1,scenarios):
+    dt1 = d1.loc[d1['Scenario']==i],['Ticks','ClusterNo']
+    plt.plot(x= dt1['Ticks'], y = dt1['ClusterNo'])
+    #d1.loc[d1['Scenario']==i,['ClusterNo','Ticks']].plot(x='Ticks', y='ClusterNo')
 
 # norint nupaisyti tiesiog galima naudoti dataFrame metoda.
 r.loc[r['Experiment']==10,['ClusterNo','Ticks']].plot(x='Ticks', y='ClusterNo')
 
 
+
 #%% examples
+import seaborn as sns
+
 sns.pairplot(df_10_2000,vars = ['V1','V2','V3'])
 
 # cia sudetingesnis
