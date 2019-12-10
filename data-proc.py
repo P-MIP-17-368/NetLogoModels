@@ -13,12 +13,11 @@ dt1.to_csv('c:/temp/filtered.csv')
 dtg = dt1.groupby(['[run number]'])
 plt.figure(); dtg.plot(y='max-cluster', x='[step]');
 """
-#%% 
 
+#%% 
 import platform
 import os, re
-import pandas as pd
-
+import shutil
 
 def get_path():
     if platform.node()== "DESKTOP-DTFRNI0":
@@ -29,13 +28,63 @@ def get_path():
       wdExperimentArchive = 'C:/Users/milibaru/OneDrive/darbas/MII projektas/Experiments/'
     return(wdExperimentArchive)
     
+def source_path():
+    if platform.node()== "DESKTOP-DTFRNI0":
+      #wdNetlogoCode = 'C:/git/MII-NetlogoModels/NetLogoModels'
+      codeFolder = 'C:/Users/oruna/OneDrive/darbas/MII projektas/Experiments/'
+    else :
+      #wdNetlogoCode = 'C:/code/u/NetLogoModels'
+      codeFolder = 'C:/code/u/NetLogoModels'
+    return codeFolder
 
+def target_path(target,no):
+    datepart = date.today().strftime("%m%d")
+    tfolderdir = target + '/' + datepart + '-' + no
+    return tfolderdir
 
+def move_exp_files(codeFolder,tfolderdir,regex,deleteFiles = False):
+    
+    print("target folder %s" % tfolderdir)
+    if os.path.isdir(tfolderdir):
+        if (deleteFiles):
+            print("folder %s found. Deleting old files.." % tfolderdir )
+            for file in os.listdir(tfolderdir):
+                if regex.match(file):
+                    tfile = tfolderdir + "/" + file
+                    print("Deleting file %s" % tfile )
+                    os.remove(tfile)
+        else:
+            print("folder %s found. Use deteleFolder = True to overwrite" % tfolderdir)
+            for file in os.listdir(tfolderdir):
+                if regex.match(file): 
+                    print("File %s is in folder %s. Use deteleFolder = True to overwrite" % (file, tfolderdir))
+                    return
+             
+    else:
+        os.mkdir(tfolderdir)
+        
+    for file in os.listdir(codeFolder):
+        if regex.match(file):
+            print("moving file %s" % file )
+            shutil.move(codeFolder + "/" + file,tfolderdir)
+    
+    return 
+
+#%% 
+experiment = "1210-03"
 rootdir = get_path()
 regex = re.compile('res-[1-9]\\d*\\.csv$')
-
 #folder = get_path() + '/' + "0812-11"
-folder = get_path() + '/' + "1112-01"
+folder = get_path() + '/' + experiment
+
+#%% 
+
+
+import pandas as pd
+from datetime import date
+
+columns = ["V1","V2","V3"]
+
 li = []
 for file in os.listdir(folder):
     if regex.match(file):
@@ -45,7 +94,13 @@ for file in os.listdir(folder):
 
 df = pd.concat(li, ignore_index = True)
   
-        
+
+
+#%% run only to copy files to experiment folder
+
+exp_day_no = "03"      
+move_exp_files(source_path(),target_path(get_path(),exp_day_no),regex,True)
+ 
 #%%
 
 from sklearn.cluster import DBSCAN  
@@ -120,15 +175,24 @@ r_mean2 = r_mean2.assign(sd = lambda x: x.devSum / ( x.cnt - 1 ))
 
 
 # gauname pagal grupes
-sd4clusters = df_with_cluster.groupby(["Experiment","Ticks","Cluster"]).apply(calc_sd_series).reset_index()
+sd4clusters = df_with_cluster[df_with_cluster["Cluster"] > -1].groupby(["Experiment","Ticks","Cluster"]).apply(calc_sd_series).reset_index()
+sd4clustersMean = sd4clusters.groupby(["Experiment","Ticks"])["ClusterSD"].mean().reset_index()
+sd4tickworld = df_with_cluster.groupby(["Experiment","Ticks"]).apply(calc_sd_series).reset_index()
+sdMerged = pd.merge(sd4tickworld,sd4clustersMean, how = 'left', on = ['Experiment','Ticks'], suffixes = ["global","mean"])
+sdMerged = pd.merge(sdMerged,df_agg_cluster,how = 'left', on = ['Experiment','Ticks'])
 
 
-#%%
+#%% adding scenario and making calculations by scenario
 from math import ceil
 
 experiments = max(df['Experiment'])
-repetitions = 4
+repetitions = 10
 scenarios = int(experiments / repetitions)
+
+sdMerged['Scenario'] =  ( sdMerged['Experiment'] / repetitions ).apply(ceil)
+cols = sdMerged.columns.tolist()
+cols = cols[-1:] + cols[:-1]
+sdMerged = sdMerged[cols]
 
 df_with_culster_and_scenarios = df_with_cluster.assign( Scenario = (df_with_cluster['Experiment'] / repetitions).apply(ceil))
 df_aggculster_and_scenarios = df_agg_cluster.assign( Scenario = (df_agg_cluster['Experiment'] / repetitions).apply(ceil))
@@ -139,14 +203,29 @@ p1 = df_aggculster_and_scenarios.pivot_table(index = 'Ticks', columns = 'Scenari
 
 sd4clusters['Scenario'] = ( sd4clusters['Experiment'] / repetitions).apply(ceil)
 
-sd4clusters_pivot = sd4clusters.pivot_table(index = 'Ticks', columns = ['Scenario','Experiment'])
+#sd4clusters_pivot = sd4clusters.pivot_table(index = 'Ticks', columns = ['Scenario','Experiment'])
 
 
-#%% 
+#%% export to excel
+xf = folder + "/output.xlsx"
+print("saving file %s" % xf )
+sdMerged.to_excel(xf)
+
+#%%
 import matplotlib.pyplot as plt
 
+
+sdMergedPivot = sdMerged.pivot_table(index = 'Ticks', columns = 'Scenario', values = ['ClusterSDglobal', 'ClusterSDmean'] )
+
+sdMergedPivot.plot(figsize=(12,9))
+
+#%% 
+
+
+
+
 # galima tiesiog plot
-df_aggculster_and_scenarios.pivot_table(index = 'Ticks', columns = 'Scenario', values = 'ClusterNo', aggfunc = np.mean).plot()
+df_aggculster_and_scenarios.pivot_table(index = 'Ticks', columns = 'Scenario', values = 'ClusterNo', aggfunc = np.mean).plot(figsize=(12,9))
 
 for i in range(1,scenarios):
     dt1 = d1.loc[d1['Scenario']==i],['Ticks','ClusterNo']
