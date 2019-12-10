@@ -31,7 +31,7 @@ def get_path():
 def source_path():
     if platform.node()== "DESKTOP-DTFRNI0":
       #wdNetlogoCode = 'C:/git/MII-NetlogoModels/NetLogoModels'
-      codeFolder = 'C:/Users/oruna/OneDrive/darbas/MII projektas/Experiments/'
+      codeFolder = 'C:/git/MII-NetlogoModels/NetLogoModels'
     else :
       #wdNetlogoCode = 'C:/code/u/NetLogoModels'
       codeFolder = 'C:/code/u/NetLogoModels'
@@ -237,8 +237,21 @@ r.loc[r['Experiment']==10,['ClusterNo','Ticks']].plot(x='Ticks', y='ClusterNo')
 
 
 
+
 #%% examples
 import seaborn as sns
+
+def plot_pairs(data,ex,ticks):
+    sns.pairplot(data.loc[(r2['Experiment'] == ex ) & ( data['Ticks'] == ticks),:], 
+                    vars= ['V1','V2','V3'], 
+                    hue = 'Cluster', 
+                    diag_kind = 'hist')
+    
+
+#for i in range(21,31):
+#    plot_pairs(df_with_cluster,i,550)
+    
+#%%
 
 sns.pairplot(df_10_2000,vars = ['V1','V2','V3'])
 
