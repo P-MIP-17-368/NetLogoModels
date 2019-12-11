@@ -14,7 +14,7 @@ dtg = dt1.groupby(['[run number]'])
 plt.figure(); dtg.plot(y='max-cluster', x='[step]');
 """
 
-#%% 
+# %% main IO functions
 import platform
 import os, re
 import shutil
@@ -44,6 +44,19 @@ def target_path(target,no):
 
 def move_exp_files(codeFolder,tfolderdir,regex,deleteFiles = False):
     
+    files_found = False
+    for file in os.listdir(codeFolder):
+        if regex.match(file):
+            print("files found in %s" % codeFolder )
+            files_found = True
+            break
+    
+    if not files_found: 
+        print("No files found in %s. Exiting" % codeFolder)
+        return
+            
+
+    
     print("target folder %s" % tfolderdir)
     if os.path.isdir(tfolderdir):
         if (deleteFiles):
@@ -70,20 +83,19 @@ def move_exp_files(codeFolder,tfolderdir,regex,deleteFiles = False):
     
     return 
 
-#%% 
+# %% set vars
 experiment = "1210-03"
 rootdir = get_path()
 regex = re.compile('res-[1-9]\\d*\\.csv$')
 #folder = get_path() + '/' + "0812-11"
 folder = get_path() + '/' + experiment
 
-#%% 
+columns = ["V1","V2","V3"]
 
+#%% import files
 
 import pandas as pd
 from datetime import date
-
-columns = ["V1","V2","V3"]
 
 li = []
 for file in os.listdir(folder):
@@ -95,13 +107,12 @@ for file in os.listdir(folder):
 df = pd.concat(li, ignore_index = True)
   
 
-
-#%% run only to copy files to experiment folder
+#%% move from code folder (run only to copy files to experiment folder)
 
 exp_day_no = "03"      
 move_exp_files(source_path(),target_path(get_path(),exp_day_no),regex,True)
  
-#%%
+#%% cluster calc functions
 
 from sklearn.cluster import DBSCAN  
 import numpy as np
@@ -125,8 +136,7 @@ def calc_append_cluster_no(data):
                        value = labels)'''
     '''print(data)'''
     return(data)
-    
-#%% 
+
 
 def calc_sd(data, columns):
     a = data.loc[:,columns].to_numpy()
@@ -146,11 +156,15 @@ def sdnp(a):
     
 def calc_sd_series(data):
     return(pd.Series(data = [calc_sd(data, ['V1','V2','V3'])], index = ['ClusterSD']))
+
+def filter_e(data,experiment,ticks):
+    return(data.loc[(data['Experiment'] == experiment ) & ( data['Ticks'] == ticks),:])
+    
     
 '''
 calc_sd(df.loc[(df['Experiment']==1) & (df['Ticks'] == 1000),:],['V1','V2','V3'])
 '''
-#%%
+#%% calc cluster metrics (for ticks)
 from math import sqrt
 
 dfg = df.groupby(["Experiment","Ticks"])
@@ -211,7 +225,7 @@ xf = folder + "/output.xlsx"
 print("saving file %s" % xf )
 sdMerged.to_excel(xf)
 
-#%%
+#%% plot clusters SD values
 import matplotlib.pyplot as plt
 
 
@@ -219,7 +233,7 @@ sdMergedPivot = sdMerged.pivot_table(index = 'Ticks', columns = 'Scenario', valu
 
 sdMergedPivot.plot(figsize=(12,9))
 
-#%% 
+#%% plot cluster no
 
 
 
@@ -233,16 +247,16 @@ for i in range(1,scenarios):
     #d1.loc[d1['Scenario']==i,['ClusterNo','Ticks']].plot(x='Ticks', y='ClusterNo')
 
 # norint nupaisyti tiesiog galima naudoti dataFrame metoda.
-r.loc[r['Experiment']==10,['ClusterNo','Ticks']].plot(x='Ticks', y='ClusterNo')
+#r.loc[r['Experiment']==10,['ClusterNo','Ticks']].plot(x='Ticks', y='ClusterNo')
 
 
 
 
-#%% examples
+#%% seaborn wrapper for pair plot
 import seaborn as sns
 
 def plot_pairs(data,ex,ticks):
-    sns.pairplot(data.loc[(r2['Experiment'] == ex ) & ( data['Ticks'] == ticks),:], 
+    sns.pairplot(data.loc[(data['Experiment'] == ex ) & ( data['Ticks'] == ticks),:], 
                     vars= ['V1','V2','V3'], 
                     hue = 'Cluster', 
                     diag_kind = 'hist')
@@ -264,7 +278,8 @@ sns.pairplot(r2.loc[(r2['Experiment'] == 10 ) & ( r2['Ticks'] == 1500),:],
 clustering = DBSCAN(eps=7, min_samples=30).fit(df.loc[((df['Experiment'] == 8) & (df['Ticks'] == 2500)),['V1','V2','V3']])
 df_10_2000.insert(loc = 7, column = 'ClusterNo', value = DBSCAN(eps=7, min_samples=30).fit(df_10_2000).labels_)
 
- dfg.agg(V1mean = pd.NamedAgg(column='V1', aggfunc = 'mean'))
+dfg.agg(V1mean = pd.NamedAgg(column='V1', aggfunc = 'mean'))
+ 
 
 #%%
 import scipy.spatial as sp
@@ -283,3 +298,54 @@ def tst(x):
     print(type(x))
     print(x)
     
+#%% k-means 
+from sklearn.cluster import KMeans
+
+#bandome skaiciuoti pagal K-means. Cia kokkreciame eksperimente matom kad yra klasteriu
+# juos issitraukiam i X. 
+X = filter_e(df_with_cluster,1,1400)[['V1','V2','V3']]
+
+# skaiciuojam ivairiam klasteriu skaiciui ir ziurime grafika pagal elbow method
+wcss = []
+for i in range(1,11):
+    kmeans = KMeans(n_clusters=i, init='k-means++', max_iter=300, n_init=10, random_state=0)
+    kmeans.fit(X)
+    wcss.append(kmeans.inertia_)
+
+plt.plot(range(1, 11), wcss)
+plt.title('Elbow Method')
+plt.xlabel('Number of clusters')
+plt.ylabel('WCSS')
+plt.show()
+
+# jei luzis ant tam tikro skaiciaus issivedama ta vaizda. plius parenkam pagal klasteri spalvas
+elbowBreakPoint = 4
+kmeans = KMeans(n_clusters=elbowBreakPoint, init='k-means++', max_iter=300, n_init=10, random_state=0)
+pred_y = kmeans.fit_predict(X)
+X['clusterKM'] = pred_y
+sns.pairplot(X, vars= ['V1','V2','V3'], hue = "clusterKM", diag_kind = 'hist')
+
+#plt.scatter(X[:,0], X[:,1])
+#plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1], s=300, c='red')
+#plt.show()
+
+#%% pca
+
+from sklearn.decomposition import PCA
+
+pca = PCA(n_components=2)
+
+X = X.reset_index()
+x2 = X[['V1','V2','V3']]
+principalComponents = pca.fit_transform(x2)
+principalDf = pd.DataFrame(data = principalComponents, columns = ['pcV1', 'pcV2'])
+print(pca.explained_variance_ratio_)
+
+finalDf = pd.concat([principalDf, X[['clusterKM']] ], axis = 1)
+
+
+plt.scatter(finalDf.pcV1,finalDf.pcV2,c =finalDf.clusterKM)
+
+
+
+
