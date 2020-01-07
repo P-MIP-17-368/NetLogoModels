@@ -600,7 +600,7 @@ sample-interval
 sample-interval
 0
 10000
-50.0
+10.0
 50
 1
 NIL
@@ -701,7 +701,7 @@ similar-over-neighbourhood
 similar-over-neighbourhood
 0
 1
-0.2
+0.7
 0.01
 1
 NIL
@@ -1022,7 +1022,7 @@ event-impact-radius
 event-impact-radius
 0
 1
-0.3
+0.35
 0.01
 1
 NIL
@@ -2487,7 +2487,7 @@ NetLogo 6.0.4
       <value value="0.03"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="similar-over-neighbourhood">
-      <value value="0.2"/>
+      <value value="0.7"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="prob-inactivity-gene">
       <value value="0"/>
@@ -2499,7 +2499,7 @@ NetLogo 6.0.4
       <value value="10"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="sample-interval">
-      <value value="50"/>
+      <value value="10"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="event-impact-radius">
       <value value="0.05"/>
@@ -2508,6 +2508,7 @@ NetLogo 6.0.4
       <value value="0.2"/>
       <value value="0.25"/>
       <value value="0.3"/>
+      <value value="0.35"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="cultural-distance">
       <value value="true"/>
@@ -2700,8 +2701,13 @@ NetLogo 6.0.4
     <timeLimit steps="3000"/>
     <metric>count turtles</metric>
     <enumeratedValueSet variable="c-uniqueness">
+      <value value="0.01"/>
       <value value="0.03"/>
       <value value="0.05"/>
+      <value value="0.075"/>
+      <value value="0.1"/>
+      <value value="0.15"/>
+      <value value="0.2"/>
       <value value="0.25"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="similar-over-neighbourhood">
@@ -2717,7 +2723,7 @@ NetLogo 6.0.4
       <value value="10"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="sample-interval">
-      <value value="50"/>
+      <value value="20"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="cultural-distance">
       <value value="true"/>
@@ -2760,6 +2766,225 @@ NetLogo 6.0.4
     </enumeratedValueSet>
     <enumeratedValueSet variable="event-exp-impact-scale">
       <value value="8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-agents">
+      <value value="92"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="color-cap">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="event-distance-impact">
+      <value value="&quot;Distance squared&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="save-world-png">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="negative-impact-prob">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="event-impact">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="uniqueness-seekers-per-tick">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="verbose">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="random-peer-interaction-prob">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="recalc-world-interval">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="interaction-neighbours-per-tick">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="fixed-features">
+      <value value="0"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="prob-event" repetitions="10" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="3000"/>
+    <metric>count turtles</metric>
+    <enumeratedValueSet variable="c-uniqueness">
+      <value value="0.03"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="similar-over-neighbourhood">
+      <value value="0.7"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prob-inactivity-gene">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="move-fraction">
+      <value value="0.05"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="custom-location-scale">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sample-interval">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="cultural-distance">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="event-impact-radius">
+      <value value="0.1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="interaction-history-discount">
+      <value value="0.8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="neighbours-to-choose-from">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="history-size">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="soc-capital-init">
+      <value value="0.3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="x-axis-feature">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="change-shape">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="social-capital-weight">
+      <value value="0.1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-features">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prob-creator-gene">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prob-event">
+      <value value="0"/>
+      <value value="0.1"/>
+      <value value="0.2"/>
+      <value value="0.3"/>
+      <value value="0.4"/>
+      <value value="0.5"/>
+      <value value="0.6"/>
+      <value value="0.7"/>
+      <value value="0.8"/>
+      <value value="0.9"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="event-exp-impact-scale">
+      <value value="8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="y-axis-feature">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-agents">
+      <value value="92"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="color-cap">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="event-distance-impact">
+      <value value="&quot;Distance squared&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="save-world-png">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="negative-impact-prob">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="event-impact">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="uniqueness-seekers-per-tick">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="verbose">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="random-peer-interaction-prob">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="recalc-world-interval">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="interaction-neighbours-per-tick">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="fixed-features">
+      <value value="0"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="neighbours-to-choose-from" repetitions="10" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="3000"/>
+    <metric>count turtles</metric>
+    <enumeratedValueSet variable="c-uniqueness">
+      <value value="0.03"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="similar-over-neighbourhood">
+      <value value="0.7"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prob-inactivity-gene">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="move-fraction">
+      <value value="0.05"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="custom-location-scale">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sample-interval">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="cultural-distance">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="event-impact-radius">
+      <value value="0.1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="interaction-history-discount">
+      <value value="0.8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="neighbours-to-choose-from">
+      <value value="5"/>
+      <value value="10"/>
+      <value value="15"/>
+      <value value="20"/>
+      <value value="30"/>
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="history-size">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="soc-capital-init">
+      <value value="0.3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="x-axis-feature">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="change-shape">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="social-capital-weight">
+      <value value="0.1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-features">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prob-creator-gene">
+      <value value="0.2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prob-event">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="event-exp-impact-scale">
+      <value value="8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="y-axis-feature">
+      <value value="1"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="num-agents">
       <value value="92"/>

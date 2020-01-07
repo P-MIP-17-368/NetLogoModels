@@ -18,6 +18,7 @@ plt.figure(); dtg.plot(y='max-cluster', x='[step]');
 import platform
 import os, re
 import shutil
+from datetime import date
 
 def get_path():
     if platform.node()== "DESKTOP-DTFRNI0":
@@ -84,7 +85,7 @@ def move_exp_files(codeFolder,tfolderdir,regex,deleteFiles = False):
     return 
 
 # %% set vars
-experiment = "1210-03"
+experiment = "0107-06"
 rootdir = get_path()
 regex = re.compile('res-[1-9]\\d*\\.csv$')
 #folder = get_path() + '/' + "0812-11"
@@ -95,7 +96,7 @@ columns = ["V1","V2","V3"]
 #%% import files
 
 import pandas as pd
-from datetime import date
+
 
 li = []
 for file in os.listdir(folder):
@@ -109,7 +110,7 @@ df = pd.concat(li, ignore_index = True)
 
 #%% move from code folder (run only to copy files to experiment folder)
 
-exp_day_no = "03"      
+exp_day_no = "06"      
 move_exp_files(source_path(),target_path(get_path(),exp_day_no),regex,True)
  
 #%% cluster calc functions
@@ -234,7 +235,6 @@ sdMergedPivot = sdMerged.pivot_table(index = 'Ticks', columns = 'Scenario', valu
 sdMergedPivot.plot(figsize=(12,9))
 
 #%% plot cluster no
-
 
 
 
