@@ -114,7 +114,7 @@ to turtle-strive-uniqueness
 
   let peers []
 
-  ifelse random-float 1 < similar-over-neighbourhood [
+  ifelse random-float 1 < similar-over-neighborhood [
     set peers max-n-of neighbours-to-choose-from other turtles [similarity [culture] of myself culture]
   ][
     set peers min-n-of neighbours-to-choose-from other turtles  [custom-distance custom-location [custom-location] of myself]
@@ -145,10 +145,10 @@ end
 
 to peers-interaction
   let var-avg-last-p-final-peer 0
-  if interaction-neighbours-per-tick > 0
+  if interaction-neighbors-per-tick > 0
   [
 
-  ask n-of interaction-neighbours-per-tick turtles
+  ask n-of interaction-neighbors-per-tick turtles
   [
     let culture-A []
     let turtle-A 0
@@ -166,7 +166,7 @@ to peers-interaction
     ]
     [
       ; selecting one of neighbours-to-choose-from closest turtles to him without himself
-      ifelse random-float 1 < similar-over-neighbourhood
+      ifelse random-float 1 < similar-over-neighborhood
       [ ;similar
         let peers max-n-of neighbours-to-choose-from other turtles [similarity culture-A culture]
         set turtle-B one-of peers
@@ -220,7 +220,7 @@ to peers-interaction
         ]
     ]
   ]
-  set avg-last-p-final-peer var-avg-last-p-final-peer / interaction-neighbours-per-tick
+  set avg-last-p-final-peer var-avg-last-p-final-peer / interaction-neighbors-per-tick
   ]
 end
 
@@ -521,7 +521,7 @@ prob-creator-gene
 prob-creator-gene
 0
 1
-0.2
+0.23
 0.01
 1
 NIL
@@ -549,8 +549,8 @@ SLIDER
 452
 674
 485
-interaction-neighbours-per-tick
-interaction-neighbours-per-tick
+interaction-neighbors-per-tick
+interaction-neighbors-per-tick
 0
 30
 5.0
@@ -697,8 +697,8 @@ SLIDER
 452
 431
 485
-similar-over-neighbourhood
-similar-over-neighbourhood
+similar-over-neighborhood
+similar-over-neighborhood
 0
 1
 0.7
@@ -864,7 +864,7 @@ SWITCH
 472
 cultural-distance
 cultural-distance
-0
+1
 1
 -1000
 
@@ -1022,7 +1022,7 @@ event-impact-radius
 event-impact-radius
 0
 1
-0.35
+0.2
 0.01
 1
 NIL
