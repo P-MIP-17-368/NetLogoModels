@@ -85,7 +85,7 @@ def move_exp_files(codeFolder,tfolderdir,regex,deleteFiles = False):
     return 
 
 # %% set vars
-experiment = "0107-06"
+experiment = "0201-08"
 rootdir = get_path()
 regex = re.compile('res-[1-9]\\d*\\.csv$')
 #folder = get_path() + '/' + "0812-11"
@@ -110,7 +110,8 @@ df = pd.concat(li, ignore_index = True)
 
 #%% move from code folder (run only to copy files to experiment folder)
 
-exp_day_no = "06"      
+#uztenka tik sito pasetinti is move'ina. data ima is dabartines
+exp_day_no = "08"      
 move_exp_files(source_path(),target_path(get_path(),exp_day_no),regex,True)
  
 #%% cluster calc functions
@@ -221,6 +222,37 @@ sd4clusters['Scenario'] = ( sd4clusters['Experiment'] / repetitions).apply(ceil)
 #sd4clusters_pivot = sd4clusters.pivot_table(index = 'Ticks', columns = ['Scenario','Experiment'])
 
 
+#%% calc average soc capital
+
+df_agg_by_socap = dfg.agg(SCM = pd.NamedAgg(column='sc', aggfunc = 'mean')).reset_index()
+df_agg_by_socap['Scenario'] =  ( df_agg_by_socap['Experiment'] / repetitions ).apply(ceil)
+df_agg_by_socap_gpr = df_agg_by_socap.groupby(["Scenario","Ticks"])
+df_agg_by_socap_scenario = df_agg_by_socap_gpr.agg(SCMS = pd.NamedAgg(column='SCM', aggfunc = 'mean')).reset_index()
+
+import matplotlib.pyplot as plt
+
+
+sc_labels = ["SC 0.1","SC 0.5","SC 0.9"]
+sc_labels = ["0.01","0.03","0.05","1"]
+sc_labels = ["0.2","1","1","0.1","0.5","0.9"]
+
+for i in range(1,scenarios+1):  
+    dt1 = df_agg_by_socap_scenario.loc[df_agg_by_socap_scenario['Scenario']==i]
+    plt.plot(dt1['Ticks'], dt1['SCMS'], label = sc_labels[i-1])
+    #plt.plot(dt1['Ticks'], dt1['SCMS'], label = i)
+    
+    
+#plt.title("Initial values effect on social capital")
+#plt.ylim(0.9,1)
+plt.title("Broadcast impact radius effect on social capital")
+plt.xlabel('Ticks')
+plt.ylabel('Social capital')
+plt.legend()
+plt.show()
+
+#plt.figtext(0,1,"Initial values effect on social capital") 
+
+
 #%% export to excel
 xf = folder + "/output.xlsx"
 print("saving file %s" % xf )
@@ -230,21 +262,34 @@ sdMerged.to_excel(xf)
 import matplotlib.pyplot as plt
 
 
-sdMergedPivot = sdMerged.pivot_table(index = 'Ticks', columns = 'Scenario', values = ['ClusterSDglobal', 'ClusterSDmean'] )
+#sdMergedPivot = sdMerged[sdMerged["Scenario"].isin([4,5,6])].pivot_table(index = 'Ticks', columns = 'Scenario', values = ['ClusterSDglobal', 'ClusterSDmean'] )
+#sdMergedPivot = sdMerged.pivot_table(index = 'Ticks', columns = 'Scenario', values = ['ClusterSDglobal', 'ClusterSDmean'] )
+sdMergedPivotG = sdMerged.pivot_table(index = 'Ticks', columns = 'Scenario', values = ['ClusterSDglobal'] )
+sdMergedPivotC = sdMerged.pivot_table(index = 'Ticks', columns = 'Scenario', values = ['ClusterSDmean'] )
 
-sdMergedPivot.plot(figsize=(12,9))
+p = sdMergedPivotG.plot(figsize=(12,9),title ="Broadcast impact radius effect on standard deviation")
+p.set_ylabel('Standard deviation')
+p.legend(["0.2", "1"])
+#sdMergedPivotC.plot(figsize=(12,9))
 
 #%% plot cluster no
 
 
+lbl1 =  ["0.2","1"]
 
 # galima tiesiog plot
-df_aggculster_and_scenarios.pivot_table(index = 'Ticks', columns = 'Scenario', values = 'ClusterNo', aggfunc = np.mean).plot(figsize=(12,9))
+#df_aggculster_and_scenarios.pivot_table(index = 'Ticks', columns = 'Scenario', values = 'ClusterNo', aggfunc = np.mean).plot(figsize=(12,9))
 
-for i in range(1,scenarios):
-    dt1 = d1.loc[d1['Scenario']==i],['Ticks','ClusterNo']
-    plt.plot(x= dt1['Ticks'], y = dt1['ClusterNo'])
+for i in range(1,scenarios+1):
+    dt1 = d1.loc[d1['Scenario']==i]
+    plt.plot(dt1['Ticks'],  dt1['ClusterNo'], label = lbl1[i-1])
     #d1.loc[d1['Scenario']==i,['ClusterNo','Ticks']].plot(x='Ticks', y='ClusterNo')
+
+plt.title("Broadcast effect effect on clustering")
+plt.xlabel('Ticks')
+plt.ylabel('Clusters count')
+plt.legend()
+plt.show()
 
 # norint nupaisyti tiesiog galima naudoti dataFrame metoda.
 #r.loc[r['Experiment']==10,['ClusterNo','Ticks']].plot(x='Ticks', y='ClusterNo')
@@ -267,12 +312,13 @@ def plot_pairs(data,ex,ticks):
     
 #%%
 
-sns.pairplot(df_10_2000,vars = ['V1','V2','V3'])
+
 
 # cia sudetingesnis
-sns.pairplot(r2.loc[(r2['Experiment'] == 10 ) & ( r2['Ticks'] == 1500),:], 
+r2 = df
+sns.pairplot(r2.loc[(r2['Experiment'] == 30) & ( r2['Ticks'] == 100000),:], 
                     vars= ['V1','V2','V3'], 
-                    hue = 'Cluster', 
+                    #hue = 'Cluster', 
                     diag_kind = 'hist')
 
 clustering = DBSCAN(eps=7, min_samples=30).fit(df.loc[((df['Experiment'] == 8) & (df['Ticks'] == 2500)),['V1','V2','V3']])
