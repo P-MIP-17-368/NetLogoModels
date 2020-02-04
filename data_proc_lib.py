@@ -19,6 +19,9 @@ import platform
 import os, re
 import shutil
 from datetime import date
+import pandas as pd
+from math import sqrt
+
 
 def get_path():
     if platform.node()== "DESKTOP-DTFRNI0":
@@ -84,35 +87,25 @@ def move_exp_files(codeFolder,tfolderdir,regex,deleteFiles = False):
     
     return 
 
-# %% set vars
-experiment = "0201-08"
-rootdir = get_path()
-regex = re.compile('res-[1-9]\\d*\\.csv$')
-#folder = get_path() + '/' + "0812-11"
-folder = get_path() + '/' + experiment
 
-columns = ["V1","V2","V3"]
+def import_data(experiment, folder):
+    li = []
+    for file in os.listdir(folder):
+        if regex.match(file):
+            print(file)
+            df = pd.read_csv(folder + '/' + file, header = None, names = ["Experiment","Ticks",'id',"V1","V2","V3","sc"])
+            li.append(df)
+    
+    df = pd.concat(li, ignore_index = True)
+    return df
 
-#%% import files
-
-import pandas as pd
-
-
-li = []
-for file in os.listdir(folder):
-    if regex.match(file):
-        print(file)
-        df = pd.read_csv(folder + '/' + file, header = None, names = ["Experiment","Ticks",'id',"V1","V2","V3","sc"])
-        li.append(df)
-
-df = pd.concat(li, ignore_index = True)
   
-
-#%% move from code folder (run only to copy files to experiment folder)
-
 #uztenka tik sito pasetinti is move'ina. data ima is dabartines
-exp_day_no = "08"      
-move_exp_files(source_path(),target_path(get_path(),exp_day_no),regex,True)
+def move_experiment_files(exp_day_no)
+#exp_day_no = "08"      
+    regex = re.compile('res-[1-9]\\d*\\.csv$')
+    move_exp_files(source_path(),target_path(get_path(),exp_day_no),regex,True)
+    return
  
 #%% cluster calc functions
 
@@ -166,28 +159,31 @@ def filter_e(data,experiment,ticks):
 '''
 calc_sd(df.loc[(df['Experiment']==1) & (df['Ticks'] == 1000),:],['V1','V2','V3'])
 '''
-#%% calc cluster metrics (for ticks)
-from math import sqrt
 
-dfg = df.groupby(["Experiment","Ticks"])
-df_agg_cluster = dfg.apply(calc_cluster).reset_index()
 
-df_with_cluster = dfg.apply(calc_append_cluster_no).reset_index()
+def  
 
-# vietoje calc_append_cluster_no
-df_full_with_clusteraggs = pd.merge(df,df_agg_cluster, how = 'left', on = ['Experiment','Ticks'], left_index = False, right_index = False)
-
-df_mean = dfg.agg(V1mean = pd.NamedAgg(column='V1', aggfunc = 'mean'), V2mean = pd.NamedAgg(column = 'V2', aggfunc = 'mean'), V3mean = pd.NamedAgg(column='V3', aggfunc = 'mean')).reset_index()
-r_mean =  pd.merge(df,df_mean, how = 'left', on = ['Experiment','Ticks'], left_index = False, right_index = False)
-# susiskaiciuojame pagal euklida kiekvieno nuokrypi nuo vidurkiniu reiksmiu
-r_mean['dist'] = (r_mean.V1 - r_mean.V1mean)**2 + (r_mean.V2 - r_mean.V2mean)**2 + (r_mean.V3 - r_mean.V3mean)**2
-# istraukiame kuba
-r_mean['sdist'] = r_mean['dist'].apply(sqrt)
-# r2 = df.groupby(["Experiment","Ticks"]).apply(calc_append_cluster_no)
-# sugrupuojame i kiekvienai grupe paskaiciuojam suma nuokrypiu ir kiek grupeje yra viso
-r_mean2 = r_mean.groupby(['Experiment','Ticks']).agg(devSum = pd.NamedAgg(column = 'sdist', aggfunc='sum'), cnt = pd.NamedAgg(column = 'dist', aggfunc = 'count')).reset_index()
-#r_mean2['devSum'] = r_mean2['devSum'].apply(sqrt)
-r_mean2 = r_mean2.assign(sd = lambda x: x.devSum / ( x.cnt - 1 ))
+    dfg = df.groupby(["Experiment","Ticks"])
+    #paskaiciuojamt klasterius
+    df_agg_cluster = dfg.apply(calc_cluster).reset_index()
+    # kadangi agreguotas, tai prideama prie pradinio kad gauti agentus su priskirtais klasteraisi
+    df_with_cluster = dfg.apply(calc_append_cluster_no).reset_index()
+    
+    # vietoje calc_append_cluster_no
+    df_full_with_clusteraggs = pd.merge(df,df_agg_cluster, how = 'left', on = ['Experiment','Ticks'], left_index = False, right_index = False)
+    
+    #skaiciuoam vidurkius. taip zinosime pasaulio centra kiekviename zingsnyje
+    df_mean = dfg.agg(V1mean = pd.NamedAgg(column='V1', aggfunc = 'mean'), V2mean = pd.NamedAgg(column = 'V2', aggfunc = 'mean'), V3mean = pd.NamedAgg(column='V3', aggfunc = 'mean')).reset_index()
+    r_mean =  pd.merge(df,df_mean, how = 'left', on = ['Experiment','Ticks'], left_index = False, right_index = False)
+    # susiskaiciuojame pagal euklida kiekvieno nuokrypi nuo vidurkiniu reiksmiu
+    r_mean['dist'] = (r_mean.V1 - r_mean.V1mean)**2 + (r_mean.V2 - r_mean.V2mean)**2 + (r_mean.V3 - r_mean.V3mean)**2
+    # istraukiame kuba
+    r_mean['sdist'] = r_mean['dist'].apply(sqrt)
+    # r2 = df.groupby(["Experiment","Ticks"]).apply(calc_append_cluster_no)
+    # sugrupuojame i kiekvienai grupe paskaiciuojam suma nuokrypiu ir kiek grupeje yra viso
+    r_mean2 = r_mean.groupby(['Experiment','Ticks']).agg(devSum = pd.NamedAgg(column = 'sdist', aggfunc='sum'), cnt = pd.NamedAgg(column = 'dist', aggfunc = 'count')).reset_index()
+    #r_mean2['devSum'] = r_mean2['devSum'].apply(sqrt)
+    r_mean2 = r_mean2.assign(sd = lambda x: x.devSum / ( x.cnt - 1 ))
 
 
 # gauname pagal grupes
@@ -245,7 +241,7 @@ for i in range(1,scenarios+1):
 #plt.title("Initial values effect on social capital")
 #plt.ylim(0.9,1)
 plt.title("Broadcast impact radius effect on social capital")
-plt.xlabel('Steps')
+plt.xlabel('Ticks')
 plt.ylabel('Social capital')
 plt.legend()
 plt.show()
