@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#-*- coding: utf-8 -*-
 """
 Created on Mon Mar 26 13:57:28 2018
 
@@ -14,14 +14,23 @@ dtg = dt1.groupby(['[run number]'])
 plt.figure(); dtg.plot(y='max-cluster', x='[step]');
 """
 
-# %% main IO functions
 import platform
 import os, re
 import shutil
 from datetime import date
 import pandas as pd
 from math import sqrt
+from sklearn.cluster import DBSCAN  
+import numpy as np
+import matplotlib.pyplot as plt
+from math import ceil
+import scipy.spatial as sp
+from scipy.spatial import distance
+from statistics import mean
 
+
+
+regex = re.compile('res-[1-9]\\d*\\.csv$')
 
 def get_path():
     if platform.node()== "DESKTOP-DTFRNI0":
@@ -47,7 +56,7 @@ def target_path(target,no):
     return tfolderdir
 
 def move_exp_files(codeFolder,tfolderdir,regex,deleteFiles = False):
-    
+       
     files_found = False
     for file in os.listdir(codeFolder):
         if regex.match(file):
@@ -58,9 +67,7 @@ def move_exp_files(codeFolder,tfolderdir,regex,deleteFiles = False):
     if not files_found: 
         print("No files found in %s. Exiting" % codeFolder)
         return
-            
-
-    
+               
     print("target folder %s" % tfolderdir)
     if os.path.isdir(tfolderdir):
         if (deleteFiles):
@@ -101,7 +108,7 @@ def import_data(experiment, folder):
 
   
 #uztenka tik sito pasetinti is move'ina. data ima is dabartines
-def move_experiment_files(exp_day_no)
+def move_experiment_files(exp_day_no):
 #exp_day_no = "08"      
     regex = re.compile('res-[1-9]\\d*\\.csv$')
     move_exp_files(source_path(),target_path(get_path(),exp_day_no),regex,True)
@@ -109,8 +116,7 @@ def move_experiment_files(exp_day_no)
  
 #%% cluster calc functions
 
-from sklearn.cluster import DBSCAN  
-import numpy as np
+
 
 def calc_cluster(data):
     clustering = DBSCAN(eps=7, min_samples=15).fit(data.loc[:,['V1','V2','V3']])
@@ -159,136 +165,152 @@ def filter_e(data,experiment,ticks):
 '''
 calc_sd(df.loc[(df['Experiment']==1) & (df['Ticks'] == 1000),:],['V1','V2','V3'])
 '''
+# klasteriai
+# sd (su klasteriais ir be)
 
-
-def  
-
+#todo iskelti
+def main(df):
     dfg = df.groupby(["Experiment","Ticks"])
     #paskaiciuojamt klasterius
     df_agg_cluster = dfg.apply(calc_cluster).reset_index()
     # kadangi agreguotas, tai prideama prie pradinio kad gauti agentus su priskirtais klasteraisi
     df_with_cluster = dfg.apply(calc_append_cluster_no).reset_index()
+    return
     
-    # vietoje calc_append_cluster_no
-    df_full_with_clusteraggs = pd.merge(df,df_agg_cluster, how = 'left', on = ['Experiment','Ticks'], left_index = False, right_index = False)
+    # vietoje calc_append_cluster_no uzkomentuoju nes nenaudoju
+    #df_full_with_clusteraggs = pd.merge(df,df_agg_cluster, how = 'left', on = ['Experiment','Ticks'], left_index = False, right_index = False)
     
-    #skaiciuoam vidurkius. taip zinosime pasaulio centra kiekviename zingsnyje
-    df_mean = dfg.agg(V1mean = pd.NamedAgg(column='V1', aggfunc = 'mean'), V2mean = pd.NamedAgg(column = 'V2', aggfunc = 'mean'), V3mean = pd.NamedAgg(column='V3', aggfunc = 'mean')).reset_index()
-    r_mean =  pd.merge(df,df_mean, how = 'left', on = ['Experiment','Ticks'], left_index = False, right_index = False)
-    # susiskaiciuojame pagal euklida kiekvieno nuokrypi nuo vidurkiniu reiksmiu
-    r_mean['dist'] = (r_mean.V1 - r_mean.V1mean)**2 + (r_mean.V2 - r_mean.V2mean)**2 + (r_mean.V3 - r_mean.V3mean)**2
-    # istraukiame kuba
-    r_mean['sdist'] = r_mean['dist'].apply(sqrt)
-    # r2 = df.groupby(["Experiment","Ticks"]).apply(calc_append_cluster_no)
-    # sugrupuojame i kiekvienai grupe paskaiciuojam suma nuokrypiu ir kiek grupeje yra viso
-    r_mean2 = r_mean.groupby(['Experiment','Ticks']).agg(devSum = pd.NamedAgg(column = 'sdist', aggfunc='sum'), cnt = pd.NamedAgg(column = 'dist', aggfunc = 'count')).reset_index()
-    #r_mean2['devSum'] = r_mean2['devSum'].apply(sqrt)
-    r_mean2 = r_mean2.assign(sd = lambda x: x.devSum / ( x.cnt - 1 ))
-
-
-# gauname pagal grupes
-sd4clusters = df_with_cluster[df_with_cluster["Cluster"] > -1].groupby(["Experiment","Ticks","Cluster"]).apply(calc_sd_series).reset_index()
-sd4clustersMean = sd4clusters.groupby(["Experiment","Ticks"])["ClusterSD"].mean().reset_index()
-sd4tickworld = df_with_cluster.groupby(["Experiment","Ticks"]).apply(calc_sd_series).reset_index()
-sdMerged = pd.merge(sd4tickworld,sd4clustersMean, how = 'left', on = ['Experiment','Ticks'], suffixes = ["global","mean"])
-sdMerged = pd.merge(sdMerged,df_agg_cluster,how = 'left', on = ['Experiment','Ticks'])
+    
+def add_sd_cacl(df_with_cluster,df_agg_cluster):
+    # gauname pagal grupes
+    sd4clusters = df_with_cluster[df_with_cluster["Cluster"] > -1].groupby(["Experiment","Ticks","Cluster"]).apply(calc_sd_series).reset_index()
+    sd4clustersMean = sd4clusters.groupby(["Experiment","Ticks"])["ClusterSD"].mean().reset_index()
+    sd4tickworld = df_with_cluster.groupby(["Experiment","Ticks"]).apply(calc_sd_series).reset_index()
+    sdMerged = pd.merge(sd4tickworld,sd4clustersMean, how = 'left', on = ['Experiment','Ticks'], suffixes = ["global","mean"])
+    sdMerged = pd.merge(sdMerged,df_agg_cluster,how = 'left', on = ['Experiment','Ticks'])
+    return(sdMerged)
 
 
 #%% adding scenario and making calculations by scenario
-from math import ceil
 
-experiments = max(df['Experiment'])
-repetitions = 10
-scenarios = int(experiments / repetitions)
 
-sdMerged['Scenario'] =  ( sdMerged['Experiment'] / repetitions ).apply(ceil)
-cols = sdMerged.columns.tolist()
-cols = cols[-1:] + cols[:-1]
-sdMerged = sdMerged[cols]
 
-df_with_culster_and_scenarios = df_with_cluster.assign( Scenario = (df_with_cluster['Experiment'] / repetitions).apply(ceil))
-df_aggculster_and_scenarios = df_agg_cluster.assign( Scenario = (df_agg_cluster['Experiment'] / repetitions).apply(ceil))
+# galima padaryti viena eilute
+def append_scenario(data,repetitions):
+    experiments = max(df['Experiment'])
+    #repetitions = 10
+    scenarios = int(experiments / repetitions)
+    sdMerged = data
+    sdMerged['Scenario'] =  ( sdMerged['Experiment'] / repetitions ).apply(ceil)
+    cols = sdMerged.columns.tolist()
+    cols = cols[-1:] + cols[:-1]
+    sdMerged = sdMerged[cols]
+    return(sdMerged)
 
-d1 = df_aggculster_and_scenarios.groupby(['Scenario','Ticks']).agg({'ClusterNo' : [np.mean]}).reset_index()
+
+
+def cal_avg_cluster_no_perscenariotick(df_agg_cluster,repetitions):
+    df_aggculster_and_scenarios = df_agg_cluster.assign( Scenario = (df_agg_cluster['Experiment'] / repetitions).apply(ceil))
+    return(df_aggculster_and_scenarios.groupby(['Scenario','Ticks']).agg({'ClusterNo' : [np.mean]}).reset_index())
+
+#df_with_culster_and_scenarios = df_with_cluster.assign( Scenario = (df_with_cluster['Experiment'] / repetitions).apply(ceil))
+#df_aggculster_and_scenarios = df_agg_cluster.assign( Scenario = (df_agg_cluster['Experiment'] / repetitions).apply(ceil))
+
+#d1 = df_aggculster_and_scenarios.groupby(['Scenario','Ticks']).agg({'ClusterNo' : [np.mean]}).reset_index()
 # panasiai galima daryti ir pivot table
-p1 = df_aggculster_and_scenarios.pivot_table(index = 'Ticks', columns = 'Scenario', values = 'ClusterNo', aggfunc = np.mean)
+#p1 = df_aggculster_and_scenarios.pivot_table(index = 'Ticks', columns = 'Scenario', values = 'ClusterNo', aggfunc = np.mean)
 
-sd4clusters['Scenario'] = ( sd4clusters['Experiment'] / repetitions).apply(ceil)
+# sd4clusters['Scenario'] = ( sd4clusters['Experiment'] / repetitions).apply(ceil) uzkomentuoju nes veliau nenaudojau
 
 #sd4clusters_pivot = sd4clusters.pivot_table(index = 'Ticks', columns = ['Scenario','Experiment'])
 
 
 #%% calc average soc capital
 
-df_agg_by_socap = dfg.agg(SCM = pd.NamedAgg(column='sc', aggfunc = 'mean')).reset_index()
-df_agg_by_socap['Scenario'] =  ( df_agg_by_socap['Experiment'] / repetitions ).apply(ceil)
-df_agg_by_socap_gpr = df_agg_by_socap.groupby(["Scenario","Ticks"])
-df_agg_by_socap_scenario = df_agg_by_socap_gpr.agg(SCMS = pd.NamedAgg(column='SCM', aggfunc = 'mean')).reset_index()
+def cal_avg_social_capital_per_tick(data,repetitions):
+    dfg = data.groupby(["Experiment","Ticks"])
+    df_agg_by_socap = dfg.agg(SCM = pd.NamedAgg(column='sc', aggfunc = 'mean')).reset_index()
+    df_agg_by_socap['Scenario'] =  ( df_agg_by_socap['Experiment'] / repetitions ).apply(ceil)
+    df_agg_by_socap_gpr = df_agg_by_socap.groupby(["Scenario","Ticks"])
+    df_agg_by_socap_scenario = df_agg_by_socap_gpr.agg(SCMS = pd.NamedAgg(column='SCM', aggfunc = 'mean')).reset_index()
+    return(df_agg_by_socap_scenario)
 
-import matplotlib.pyplot as plt
 
 
-sc_labels = ["SC 0.1","SC 0.5","SC 0.9"]
-sc_labels = ["0.01","0.03","0.05","1"]
-sc_labels = ["0.2","1","1","0.1","0.5","0.9"]
+#plot_var_by_ticks('SCMS',df_agg_by_socap_scenario, \
+#                  {"title":"Broadcast impact radius effect on social capital" , "xlabel":"Steps", "ylabel" : "Social capital", \
+#                   "labels" : ["0.2","1","1","0.1","0.5","0.9"]}
 
-for i in range(1,scenarios+1):  
-    dt1 = df_agg_by_socap_scenario.loc[df_agg_by_socap_scenario['Scenario']==i]
-    plt.plot(dt1['Ticks'], dt1['SCMS'], label = sc_labels[i-1])
-    #plt.plot(dt1['Ticks'], dt1['SCMS'], label = i)
-    
-    
-#plt.title("Initial values effect on social capital")
-#plt.ylim(0.9,1)
-plt.title("Broadcast impact radius effect on social capital")
-plt.xlabel('Ticks')
-plt.ylabel('Social capital')
-plt.legend()
-plt.show()
+
 
 #plt.figtext(0,1,"Initial values effect on social capital") 
 
 
-#%% export to excel
-xf = folder + "/output.xlsx"
-print("saving file %s" % xf )
-sdMerged.to_excel(xf)
 
 #%% plot clusters SD values
-import matplotlib.pyplot as plt
 
 
-#sdMergedPivot = sdMerged[sdMerged["Scenario"].isin([4,5,6])].pivot_table(index = 'Ticks', columns = 'Scenario', values = ['ClusterSDglobal', 'ClusterSDmean'] )
-#sdMergedPivot = sdMerged.pivot_table(index = 'Ticks', columns = 'Scenario', values = ['ClusterSDglobal', 'ClusterSDmean'] )
-sdMergedPivotG = sdMerged.pivot_table(index = 'Ticks', columns = 'Scenario', values = ['ClusterSDglobal'] )
-sdMergedPivotC = sdMerged.pivot_table(index = 'Ticks', columns = 'Scenario', values = ['ClusterSDmean'] )
+def plot_deviation(data,globalSD,meanSD, params,repetitions):
+    sdMerged = data
+    sdMerged['Scenario'] =  ( sdMerged['Experiment'] / repetitions ).apply(ceil)
+    cols = sdMerged.columns.tolist()
+    cols = cols[-1:] + cols[:-1]
+    sdMerged = sdMerged[cols]
+    
+    if meanSD:
+        raise("Not implemented")
+    #sdMergedPivot = sdMerged[sdMerged["Scenario"].isin([4,5,6])].pivot_table(index = 'Ticks', columns = 'Scenario', values = ['ClusterSDglobal', 'ClusterSDmean'] )
+    #sdMergedPivot = sdMerged.pivot_table(index = 'Ticks', columns = 'Scenario', values = ['ClusterSDglobal', 'ClusterSDmean'] )
+    if globalSD:
+        sdMergedPivotG = sdMerged.pivot_table(index = 'Ticks', columns = 'Scenario', values = ['ClusterSDglobal'] )
+    
+    if meanSD:
+        sdMergedPivotC = sdMerged.pivot_table(index = 'Ticks', columns = 'Scenario', values = ['ClusterSDmean'] )
+    
+    if globalSD:
+        p = sdMergedPivotG.plot(figsize=(12,9),title =params["title"])
+        p.set_xlabel(params["xlabel"])
+        p.set_ylabel(params["ylabel"])
+        p.legend(params["labels"])
+    #sdMergedPivotC.plot(figsize=(12,9))
 
-p = sdMergedPivotG.plot(figsize=(12,9),title ="Broadcast impact radius effect on standard deviation")
-p.set_ylabel('Standard deviation')
-p.legend(["0.2", "1"])
-#sdMergedPivotC.plot(figsize=(12,9))
+    return
 
 #%% plot cluster no
 
 
-lbl1 =  ["0.2","1"]
 
-# galima tiesiog plot
-#df_aggculster_and_scenarios.pivot_table(index = 'Ticks', columns = 'Scenario', values = 'ClusterNo', aggfunc = np.mean).plot(figsize=(12,9))
+# params is dict
 
-for i in range(1,scenarios+1):
-    dt1 = d1.loc[d1['Scenario']==i]
-    plt.plot(dt1['Ticks'],  dt1['ClusterNo'], label = lbl1[i-1])
-    #d1.loc[d1['Scenario']==i,['ClusterNo','Ticks']].plot(x='Ticks', y='ClusterNo')
+def plot_var_by_ticks(var_name,data,params):
 
-plt.title("Broadcast effect on clustering")
-plt.xlabel('Ticks')
-plt.ylabel('Clusters count')
-plt.legend()
-plt.show()
-
-# norint nupaisyti tiesiog galima naudoti dataFrame metoda.
-#r.loc[r['Experiment']==10,['ClusterNo','Ticks']].plot(x='Ticks', y='ClusterNo')
+    # galima tiesiog plot
+    #df_aggculster_and_scenarios.pivot_table(index = 'Ticks', columns = 'Scenario', values = 'ClusterNo', aggfunc = np.mean).plot(figsize=(12,9))
+    d1 = data
+    
+    scenarios = max(d1['Scenario'])
+    if "labels" in params:    
+        lbl1 = params["labels"]
+    else:
+        lbl1 = None
+    for i in range(1,scenarios+1):
+        dt1 = d1.loc[d1['Scenario']==i]
+        if (lbl1):
+            plt.plot(dt1['Ticks'],  dt1[var_name], label = lbl1[i-1])
+        else:
+            plt.plot(dt1['Ticks'],  dt1[var_name], label = i)
+        #d1.loc[d1['Scenario']==i,['ClusterNo','Ticks']].plot(x='Ticks', y='ClusterNo')
+    
+    if "title" in params:
+        plt.title(params["title"])
+    plt.xlabel(params["xlabel"])
+    plt.ylabel(params["ylabel"])
+    plt.legend()
+    plt.show()
+    
+    # norint nupaisyti tiesiog galima naudoti dataFrame metoda.
+    #r.loc[r['Experiment']==10,['ClusterNo','Ticks']].plot(x='Ticks', y='ClusterNo')
+    return
 
 
 
@@ -310,31 +332,12 @@ def plot_pairs(data,ex,ticks):
 
 
 
-# cia sudetingesnis
-r2 = df
-sns.pairplot(r2.loc[(r2['Experiment'] == 30) & ( r2['Ticks'] == 100000),:], 
-                    vars= ['V1','V2','V3'], 
-                    #hue = 'Cluster', 
-                    diag_kind = 'hist')
 
-clustering = DBSCAN(eps=7, min_samples=30).fit(df.loc[((df['Experiment'] == 8) & (df['Ticks'] == 2500)),['V1','V2','V3']])
-df_10_2000.insert(loc = 7, column = 'ClusterNo', value = DBSCAN(eps=7, min_samples=30).fit(df_10_2000).labels_)
-
-dfg.agg(V1mean = pd.NamedAgg(column='V1', aggfunc = 'mean'))
  
 
 #%%
-import scipy.spatial as sp
-from scipy.spatial import distance
-from statistics import mean
-
-from math import sqrt
-a = (1, 2, 3)
-b = (4, 5, 6)
-dst = distance.euclidean(a, b)
 
 
-d = sp.distance_matrix(df_10_2000.loc[:,['V1','V2','V3']],df_10_2000.loc[:,['V1','V2','V3']])
 
 def tst(x):
     print(type(x))
@@ -343,50 +346,53 @@ def tst(x):
 #%% k-means 
 from sklearn.cluster import KMeans
 
-#bandome skaiciuoti pagal K-means. Cia kokkreciame eksperimente matom kad yra klasteriu
-# juos issitraukiam i X. 
-X = filter_e(df_with_cluster,1,1400)[['V1','V2','V3']]
 
-# skaiciuojam ivairiam klasteriu skaiciui ir ziurime grafika pagal elbow method
-wcss = []
-for i in range(1,11):
-    kmeans = KMeans(n_clusters=i, init='k-means++', max_iter=300, n_init=10, random_state=0)
-    kmeans.fit(X)
-    wcss.append(kmeans.inertia_)
+# pakeiciau bet netestavau
+def do_kmeans_for_step(data,experiment,tick):
+    
+    #bandome skaiciuoti pagal K-means. Cia kokkreciame eksperimente matom kad yra klasteriu
+    # juos issitraukiam i X. 
+    X = filter_e(data,experiment,tick)[['V1','V2','V3']]
+    
+    # skaiciuojam ivairiam klasteriu skaiciui ir ziurime grafika pagal elbow method
+    wcss = []
+    for i in range(1,11):
+        kmeans = KMeans(n_clusters=i, init='k-means++', max_iter=300, n_init=10, random_state=0)
+        kmeans.fit(X)
+        wcss.append(kmeans.inertia_)
+    
+    plt.plot(range(1, 11), wcss)
+    plt.title('Elbow Method')
+    plt.xlabel('Number of clusters')
+    plt.ylabel('WCSS')
+    plt.show()
+    
+    # jei luzis ant tam tikro skaiciaus issivedama ta vaizda. plius parenkam pagal klasteri spalvas
+    elbowBreakPoint = 4
+    kmeans = KMeans(n_clusters=elbowBreakPoint, init='k-means++', max_iter=300, n_init=10, random_state=0)
+    pred_y = kmeans.fit_predict(X)
+    X['clusterKM'] = pred_y
+    sns.pairplot(X, vars= ['V1','V2','V3'], hue = "clusterKM", diag_kind = 'hist')
+    
+    #plt.scatter(X[:,0], X[:,1])
+    #plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1], s=300, c='red')
+    #plt.show()
+    return
 
-plt.plot(range(1, 11), wcss)
-plt.title('Elbow Method')
-plt.xlabel('Number of clusters')
-plt.ylabel('WCSS')
-plt.show()
-
-# jei luzis ant tam tikro skaiciaus issivedama ta vaizda. plius parenkam pagal klasteri spalvas
-elbowBreakPoint = 4
-kmeans = KMeans(n_clusters=elbowBreakPoint, init='k-means++', max_iter=300, n_init=10, random_state=0)
-pred_y = kmeans.fit_predict(X)
-X['clusterKM'] = pred_y
-sns.pairplot(X, vars= ['V1','V2','V3'], hue = "clusterKM", diag_kind = 'hist')
-
-#plt.scatter(X[:,0], X[:,1])
-#plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1], s=300, c='red')
-#plt.show()
-
-#%% pca
 
 from sklearn.decomposition import PCA
 
-pca = PCA(n_components=2)
-
-X = X.reset_index()
-x2 = X[['V1','V2','V3']]
-principalComponents = pca.fit_transform(x2)
-principalDf = pd.DataFrame(data = principalComponents, columns = ['pcV1', 'pcV2'])
-print(pca.explained_variance_ratio_)
-
-finalDf = pd.concat([principalDf, X[['clusterKM']] ], axis = 1)
-
-
-plt.scatter(finalDf.pcV1,finalDf.pcV2,c =finalDf.clusterKM)
+def do__plot_pca(X):
+    pca = PCA(n_components=2)
+    
+    X = X.reset_index()
+    x2 = X[['V1','V2','V3']]
+    principalComponents = pca.fit_transform(x2)
+    principalDf = pd.DataFrame(data = principalComponents, columns = ['pcV1', 'pcV2'])
+    print(pca.explained_variance_ratio_)    
+    finalDf = pd.concat([principalDf, X[['clusterKM']] ], axis = 1)
+    
+    plt.scatter(finalDf.pcV1,finalDf.pcV2,c =finalDf.clusterKM)
 
 
 
