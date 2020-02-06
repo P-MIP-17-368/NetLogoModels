@@ -6,3 +6,4 @@ result.csv
 .RData
 .Rhistory
 *.png
+*.pyc
