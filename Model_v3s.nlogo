@@ -4,28 +4,83 @@ turtles-own [culture creator-gene inactivity-gene cluster ll custom-location soc
 ;custom-location - each agent has location, that doesn't change
 ; last-random-event - just for testing purposes - stores last random generated number which is used to determine participation in event
 
-globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-x color-list g-fixed last-event-participants-count avg-last-p-final-peer avg-last-p-final-event o-file export-file interaction-discount-weights ]
+globals [this-cluster max-cluster num-cluster num-cluster-bigger-than-x color-list g-fixed last-event-participants-count avg-last-p-final-peer avg-last-p-final-event o-file export-file interaction-discount-weights
+
+  ;for simplified view
+  file-exists
+  recalc-world-interval
+  verbose
+  random-peer-interaction-prob
+  negative-impact-prob
+  change-shape
+  color-cap
+  prob-inactivity-gene
+  event-distance-impact
+  sample-interval
+  save-world-png
+  fixed-features
+  event-exp-impact-scale
+
+]
 
 ;ask turtle 29 [ask max-n-of neighbours-to-choose-from other turtles [similarity [culture] of myself culture] [set color green ]]
 
+to setup-simplified
+  set file-exists false
+  set recalc-world-interval 0
+  set verbose false
+  set random-peer-interaction-prob 0
+  set negative-impact-prob 0
+  set change-shape false
+  set color-cap false
+  set prob-inactivity-gene 0
+  set event-distance-impact "Distance squared"
+  set sample-interval 0
+  set save-world-png false
+  set fixed-features 0
+  set event-exp-impact-scale 0
+end
+
+
 to setup
   clear-all
+  setup-simplified
   set export-file ( word "res-" behaviorspace-run-number ".csv" )
   if file-exists? export-file [ file-delete export-file]
+  if num-features <= x-axis-feature [set x-axis-feature 0]
+  if num-features <= y-axis-feature [set y-axis-feature num-features - 1]
   setup-patches
   setup-turtles
   reset-ticks
   log-data-if-needed
 end
 
+
+
+; ploting traits, since number feature is set by user
+to do-plot-traits
+  set-current-plot "traits"
+  clear-plot
+  let i 0
+  while [i < num-features] [
+    let n (word "feature "  ( i + 1 ))
+    create-temporary-plot-pen n
+    set-current-plot-pen n
+    set-plot-pen-color ( 5 + 10 * i )
+    histogram [item i culture] of turtles
+    set i i + 1
+  ]
+end
+
+
 to go
   tick
-  if recalc-world-interval > 0 and ticks mod recalc-world-interval = 0   [recalc-world]
   peers-interaction
   make-event
   strive-uniqueness
   if color-cap [set-color-on-cap]
   log-data-if-needed
+  do-plot-traits
 end
 
 to log-data-if-needed
@@ -43,7 +98,6 @@ end
 
 to setup-turtles
   create-turtles num-agents
-
   set interaction-discount-weights n-values history-size [ i -> interaction-history-discount ^ i]
 
   ask turtles [
@@ -591,32 +645,6 @@ prob-event
 NIL
 HORIZONTAL
 
-SLIDER
-661
-14
-833
-47
-sample-interval
-sample-interval
-0
-10000
-50.0
-50
-1
-NIL
-HORIZONTAL
-
-SWITCH
-1397
-10
-1500
-43
-verbose
-verbose
-1
-1
--1000
-
 TEXTBOX
 791
 619
@@ -651,46 +679,28 @@ neighbours-to-choose-from
 neighbours-to-choose-from
 1
 100
-8.0
+2.0
 1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-3
-283
-175
-316
-prob-inactivity-gene
-prob-inactivity-gene
-0
-1
-0.0
-0.01
 1
 NIL
 HORIZONTAL
 
 PLOT
-659
-125
-1062
-251
-plot traits
+656
+50
+1163
+247
+traits
 NIL
 NIL
 0.0
 100.0
 0.0
-102.0
+100.0
 true
 true
 "" ""
 PENS
-"1st " 1.0 0 -16777216 true "" "  plot-pen-reset\n  histogram [item 1 culture] of turtles"
-"2nd" 1.0 0 -7500403 true "" "  plot-pen-reset\n  histogram [item 2 culture] of turtles"
-"3rd" 1.0 0 -2674135 true "" "  plot-pen-reset\n  histogram [item 3 culture] of turtles\n  "
 
 SLIDER
 226
@@ -723,10 +733,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-1146
-20
-1298
-53
+656
+12
+808
+45
 x-axis-feature
 x-axis-feature
 0
@@ -738,10 +748,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-1146
-55
-1297
-88
+815
+12
+966
+45
 y-axis-feature
 y-axis-feature
 0
@@ -753,10 +763,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-1150
-96
-1284
-129
+969
+12
+1103
+45
 NIL
 update-position-all
 NIL
@@ -784,50 +794,6 @@ move-fraction
 NIL
 HORIZONTAL
 
-CHOOSER
-5
-391
-174
-436
-event-distance-impact
-event-distance-impact
-"None" "Linear World Distance" "Distance squared" "Distance exponential"
-2
-
-BUTTON
-340
-653
-437
-686
-NIL
-reset-colors\n
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-443
-653
-566
-686
-NIL
-set-color-on-cap
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
 PLOT
 660
 253
@@ -847,17 +813,6 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot mean [soc-capital] of turtles"
 
 SWITCH
-460
-616
-566
-649
-color-cap
-color-cap
-1
-1
--1000
-
-SWITCH
 5
 439
 189
@@ -868,72 +823,11 @@ event-cultural-distance
 1
 -1000
 
-BUTTON
-571
-654
-677
-687
-Reset shapes
-ask turtles [set shape \"dot\"] 
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-SWITCH
-573
-617
-707
-650
-change-shape
-change-shape
-1
-1
--1000
-
-SLIDER
-4
-476
-184
-509
-event-exp-impact-scale
-event-exp-impact-scale
-1
-100
-8.0
-1
-1
-NIL
-HORIZONTAL
-
 PLOT
-870
+864
 253
-1070
-403
-plot event participants count
-NIL
-NIL
-0.0
-10.0
-0.0
-10.0
-true
-false
-"" ""
-PENS
-"default" 1.0 0 -16777216 true "" "plot last-event-participants-count"
-
-PLOT
-1090
-261
-1393
-423
+1167
+415
 soc capital distribution
 NIL
 NIL
@@ -947,42 +841,6 @@ false
 PENS
 "default" 0.05 0 -16777216 true "" "  plot-pen-reset\nhistogram [soc-capital] of turtles"
 
-PLOT
-1069
-527
-1348
-721
-avg-last-p-final-peer
-NIL
-NIL
-0.0
-10.0
-0.0
-1.0
-true
-false
-"" ""
-PENS
-"default" 1.0 0 -16777216 true "" "plot avg-last-p-final-peer"
-
-PLOT
-1353
-526
-1617
-722
-avg-last-p-final-event
-NIL
-NIL
-0.0
-10.0
-0.0
-1.0
-true
-false
-"" ""
-PENS
-"default" 1.0 0 -16777216 true "" "plot avg-last-p-final-event"
-
 SLIDER
 213
 564
@@ -993,21 +851,6 @@ social-capital-weight
 0
 1
 0.1
-0.1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-763
-567
-978
-600
-random-peer-interaction-prob
-random-peer-interaction-prob
-0
-1
-0.0
 0.1
 1
 NIL
@@ -1029,77 +872,15 @@ NIL
 HORIZONTAL
 
 SLIDER
-763
-604
-935
-637
-negative-impact-prob
-negative-impact-prob
-0
-1
-0.0
-0.1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-763
-532
-935
-565
-recalc-world-interval
-recalc-world-interval
-0
-100
-0.0
-1
-1
-NIL
-HORIZONTAL
-
-BUTTON
-936
-532
-1034
-565
-NIL
-recalc-world
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-SLIDER
 7
 90
 179
 123
 num-features
 num-features
-1
+2
 10
 3.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-6
-127
-178
-160
-fixed-features
-fixed-features
-0
-num-features
-0.0
 1
 1
 NIL
@@ -1121,10 +902,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-678
-452
-850
-485
+657
+492
+829
+525
 c-uniqueness
 c-uniqueness
 0
@@ -1135,13 +916,6 @@ c-uniqueness
 NIL
 HORIZONTAL
 
-OUTPUT
-1400
-45
-1849
-522
-11
-
 SLIDER
 6
 564
@@ -1151,7 +925,7 @@ interaction-history-discount
 interaction-history-discount
 0
 1
-0.8
+0.0
 0.1
 1
 NIL
@@ -1166,7 +940,7 @@ soc-capital-init
 soc-capital-init
 0
 1
-0.5
+0.2
 0.1
 1
 NIL
@@ -1181,33 +955,28 @@ history-size
 history-size
 1
 100
-10.0
+1.0
 1
 1
 NIL
 HORIZONTAL
 
-SWITCH
-662
-49
-804
-82
-save-world-png
-save-world-png
-1
-1
--1000
-
 @#$#@#$#@
 ## WHAT IS IT?
-
-Similar to axelrod model, however turtles are used instead of patches.
+It is linked with publication - "Agent-based Simulation of Cultural Impact on Social Cohesio" by D. Plykynas, A. Miliauskas, V.Duskis, R.Lauzikas, L. Sakalauskas.
+This model presents an idea how cultural events can impact social capital. 
+It extends  Axelrod model of dissemination of cultures. Here features are numbers from 0, 100, which represents cultural space. Agents are located also in physical space (which is not visible and this location doesn't change). 
+Here agents are represented as turtles are used instead of patches.
+Location in world is location in cultural space. Cultural space can be multidimension, therefore only 2 dimension represented in world (but you choose which will be used)
 
 ## HOW IT WORKS
 
-During setup turtles are placed randomly and assigned random culture (array of features). During each step turtles interact (neighbors) and event potentialy generated by creator that affects all agents. Interaction and events changes culture similar way as in axelrod model
+During setup turtles are placed randomly and assigned random culture (array of features). During each step turtles interact (neighbors) and event potentialy generated by creator that affects multiple agents. Interaction and events changes culture similar way as in Axelrod model: there more similar interactings agents, the more likely they interact. After succesfull interaction they become more similar (move closer in culteral space). Since Netlogo world is used to represent cultural space, agents move in it. And this can be seen during simulation, in perspective of selected axis.
 
 Each agent has static location. It is controlled by custom-location-scale. Agent is assigned to grid (2 axis). Each axis has as cells as custom-location-scale. When custom-location-scale = 1, then there is one big cell and all agent will be assigned to it. That means static location will be irrelavant. This static location will be used to determine effect of event.
+
+
+This model doesn't terminate automaticaly.
 
 
 
@@ -1223,26 +992,34 @@ Model run until there exists only same culture or set of imcompatible culture (n
 
 Parameters:
 num-agents  - number of agents that will be created
-num-features - number of features each agent will have (features have values and define culture)
-fixed-features - number of features is given initially and won't change during simulation
-num-traits - traits define how how many different values each feature can have
+num-features - number of features each agent will have (features have value from 0 to 100 and makes culture)
 prob-creator-gene - probability that agent is creator. Only creators create culture events
-prob-inactivity-gene - probability that agent is iqnorant to any cultural events
 prob-event - probability of event in each step. When creator is selected, whether it emit an event depends on this value
 event-impact - allows lower impact of event. Probability of agent to participate in cultural event is based on many factors (ex. cultural similarity) and finally it will be additionaly multiplied by this value
-gradual-trait-update - when on agent update its trait not by changing value, but by incrementing toward "leader"
-use-event-distance - to take into account distance from event
-color-track - whether track color - don't works well.
-reset-color - when pressed colors in different colors clusters with same culture that are size bigger than xthr. Color application to cluster is random each time, doesn't keeps previous color of cluster
+event-cultural-distance - whether distance from event will be in cultural space, as opposed to physical space
+event-impact-radius - agents with distance from event divided by max distance (in world) bigger that this value, ignore event.
+interaction-history-discount - how much older interactions are discounted compared to last interaction. Used to calculate social capital of agents
+soc-capital-init - initial social capital of agent. All agents will start with this value'
+history-size - how many previuous interactions agent will remember. Is used to calculate social capital
+social-capital-weight - weight of social capital in interaction. 
+
+similar-over-neighborhood - probability that agent will look peer for interation based on position in cultural space (as opposed to looking on physical space)
 interaction-neighbours-per-tick - how many agents will interact per step (as neighbors) 
 neighbours-to-choose-from - how many neighbors are candidates for interaction. Each step chosen agents looks among closest neighbors (number is set by this value) for interaction and each will select only one.
-turtle-size - size of turtle on model
-update-size - to update model according turtle-size  value
+uniqueness-seekers-per-tick - how many agents per step will seek uniqueness
+c-uniqueness - uniquneess effect rate. The higher value, the stronger effect of uniqueness. Determines, how far agent change values, to feel uniqueness.
 
-check-incompatible-cultures - prints incompatible cultures, if there are such cultures. Print in ouptut field
-sample-interval - how often to check for clusters and for model termination. It slows model there and is tradeoff: should be big enough for performance, but low enough to have accurate data in plot
-xthr - threshlod to calculate clusters bigger that this value. Used in plot and colouring. If changed during run, affects line in plot.
-verbose - whether additional info is printed in output field. For debug purposes. Normally should be off.
+x-axis-feature - index of feature, that will be shown in x axis
+y-axis-feature - index of feature , that will be shown in x axis
+Please note - index of features is values from 0 till num-features - 1. 1st feature have index 0.
+
+
+Buttons:
+setup
+go
+step
+update-position-all
+
 
 ## THINGS TO NOTICE
 
@@ -1262,11 +1039,11 @@ verbose - whether additional info is printed in output field. For debug purposes
 
 ## RELATED MODELS
 
-(models in the NetLogo Models Library and elsewhere which are of related interest)
+Model based on publication - Axelrod, R. (1997). The dissemination of culture: A model with local convergence and global polarization. Journal of conflict resolution, 41(2), 203-226. This model is implemented in netlogo and can be found online
 
 ## CREDITS AND REFERENCES
 
-(a reference to the model's URL on the web if it has one, as well as any other necessary credits, citations, and links)
+This model is linked with publication "Agent-based Simulation of Cultural Impact on Social Cohesio" by D. Plykynas, A. Miliauskas, V.Duskis, R.Lauzikas, L. Sakalauskas. For more information, refer to the publication or contact D. Plikynas darius.plikynas@mii.vu.lt, 
 @#$#@#$#@
 default
 true
