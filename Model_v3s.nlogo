@@ -168,7 +168,7 @@ to turtle-strive-uniqueness
 
   let peers []
 
-  ifelse random-float 1 < similar-over-neighborhood [
+  ifelse random-float 1 < similar-over-neighbourhood [
     set peers max-n-of neighbours-to-choose-from other turtles [similarity [culture] of myself culture]
   ][
     set peers min-n-of neighbours-to-choose-from other turtles  [custom-distance custom-location [custom-location] of myself]
@@ -220,7 +220,7 @@ to peers-interaction
     ]
     [
       ; selecting one of neighbours-to-choose-from closest turtles to him without himself
-      ifelse random-float 1 < similar-over-neighborhood
+      ifelse random-float 1 < similar-over-neighbourhood
       [ ;similar
         let peers max-n-of neighbours-to-choose-from other turtles [similarity culture-A culture]
         set turtle-B one-of peers
@@ -707,8 +707,8 @@ SLIDER
 452
 431
 485
-similar-over-neighborhood
-similar-over-neighborhood
+similar-over-neighbourhood
+similar-over-neighbourhood
 0
 1
 0.7
@@ -963,11 +963,14 @@ HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
-It is linked with publication - "Agent-based Simulation of Cultural Impact on Social Cohesio" by D. Plykynas, A. Miliauskas, V.Duskis, R.Lauzikas, L. Sakalauskas.
-This model presents an idea how cultural events can impact social capital. 
-It extends  Axelrod model of dissemination of cultures. Here features are numbers from 0, 100, which represents cultural space. Agents are located also in physical space (which is not visible and this location doesn't change). 
-Here agents are represented as turtles are used instead of patches.
-Location in world is location in cultural space. Cultural space can be multidimension, therefore only 2 dimension represented in world (but you choose which will be used)
+This simulation is provided with publication - "Agent-based Simulation of Cultural Impact on Social Cohesio" by D. Plykynas, A. Miliauskas, V.Duskis, R.Lauzikas, L. Sakalauskas.
+It presents an idea how cultural events can impact social capital. 
+It extends  Axelrod model of dissemination of cultures. Main changes are: 
+ - features are numbers from 0, 100, which represents cultural space. Agents are located also in physical space (which is not visible and this location doesn't change). Here agents are represented as turtles are used instead of patches. Location in world is location in cultural space. Cultural space can be multidimension, therefore only 2 dimension represented in world (but you choose which will be used)
+ - aprart interacting with each other agents can broadcast events (one way influence) and strive for uniqueness
+ - agent peer interaction more complex. It can be based on similarity or one fixed neighborhood (like in axelrod)
+ - agent have social capital, which affects agents peer interactions are is affected by results of these interactions.
+
 
 ## HOW IT WORKS
 
@@ -991,18 +994,17 @@ Press "Go" button for continuous run (to stop press Go while it is marked/presse
 Model run until there exists only same culture or set of imcompatible culture (no borders and strong borders denoting clusters). The stronger color of boder the more imcompatible patches are. You can notice (usually using single Step) and patch that is an creator in particular step - it will have stronger red color (after step will change to previuos one).
 
 Parameters:
-num-agents  - number of agents that will be created
-num-features - number of features each agent will have (features have value from 0 to 100 and makes culture)
-prob-creator-gene - probability that agent is creator. Only creators create culture events
-prob-event - probability of event in each step. When creator is selected, whether it emit an event depends on this value
-event-impact - allows lower impact of event. Probability of agent to participate in cultural event is based on many factors (ex. cultural similarity) and finally it will be additionaly multiplied by this value
-event-cultural-distance - whether distance from event will be in cultural space, as opposed to physical space
-event-impact-radius - agents with distance from event divided by max distance (in world) bigger that this value, ignore event.
-interaction-history-discount - how much older interactions are discounted compared to last interaction. Used to calculate social capital of agents
-soc-capital-init - initial social capital of agent. All agents will start with this value'
-history-size - how many previuous interactions agent will remember. Is used to calculate social capital
+ - num-agents  - number of agents that will be created
+ - num-features - number of features each agent will have (features have value from 0 to 100 and makes culture)
+ - prob-creator-gene - probability that agent is creator. Only creators create culture events
+ - prob-event - probability of event in each step. When creator is selected, whether it emit an event depends on this value
+ - event-impact - allows lower impact of event. Probability of agent to participate in cultural event is based on many factors (ex. cultural similarity) and finally it will be additionaly multiplied by this value
+ - event-cultural-distance - whether distance from event will be in cultural space, as opposed to physical space
+ - event-impact-radius - agents with distance from event divided by max distance (in world) bigger that this value, ignore event.
+ - interaction-history-discount - how much older interactions are discounted compared to last interaction. Used to calculate social capital of agents
+ - soc-capital-init - initial social capital of agent. All agents will start with this value'
+history-size - how many previuous interactions agent will remember. Is used to calculate 
 social-capital-weight - weight of social capital in interaction. 
-
 similar-over-neighborhood - probability that agent will look peer for interation based on position in cultural space (as opposed to looking on physical space)
 interaction-neighbours-per-tick - how many agents will interact per step (as neighbors) 
 neighbours-to-choose-from - how many neighbors are candidates for interaction. Each step chosen agents looks among closest neighbors (number is set by this value) for interaction and each will select only one.
@@ -1010,16 +1012,15 @@ uniqueness-seekers-per-tick - how many agents per step will seek uniqueness
 c-uniqueness - uniquneess effect rate. The higher value, the stronger effect of uniqueness. Determines, how far agent change values, to feel uniqueness.
 
 x-axis-feature - index of feature, that will be shown in x axis
-y-axis-feature - index of feature , that will be shown in x axis
-Please note - index of features is values from 0 till num-features - 1. 1st feature have index 0.
+y-axis-feature - index of feature , that will be shown in y axis
+Please note - index of features is values from 0 till num-features - 1. 1st feature have index 0. If *-axis-feature is changed, then it will be reflected in positions of agent after next step or after button update-position-all click
 
 
 Buttons:
-setup
-go
-step
-update-position-all
-
+setup - setup model. Create world and fill with agents (turtles)
+go - run simulation. Does same as button step, but continuously
+step - executes one step in simulation
+update-position-all - updates positios in world based on there culture feature, and selected axis (x-axis-feature, y-axis-feature)
 
 ## THINGS TO NOTICE
 
